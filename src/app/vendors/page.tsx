@@ -338,7 +338,7 @@ function VendorsPageContent() {
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <div
                 key={i}
-                className="h-[390px] animate-pulse rounded-2xl border border-[#eee5df] bg-white"
+                className="h-97.5 animate-pulse rounded-2xl border border-[#eee5df] bg-white"
               />
             ))}
           </div>
