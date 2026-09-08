@@ -32,7 +32,7 @@ const navigationItems = [
     icon: BriefcaseBusiness,
   },
   {
-    label: "My Categories",
+    label: "Categories",
     href: "/vendor/categories",
     icon: Tags,
   },
@@ -81,6 +81,7 @@ export default function VendorSidebar({
 
   return (
     <>
+      {/* Mobile Overlay */}
       {mobileOpen && (
         <button
           type="button"
@@ -99,6 +100,7 @@ export default function VendorSidebar({
           ${mobileOpen ? "translate-x-0" : "-translate-x-full"}
         `}
       >
+        {/* Brand */}
         <div className="flex h-[82px] items-center justify-between border-b border-[#eee7e1] px-6">
           <Link
             href="/vendor"
@@ -122,6 +124,7 @@ export default function VendorSidebar({
           </button>
         </div>
 
+        {/* Vendor Profile */}
         <div className="border-b border-[#eee7e1] px-5 py-5">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#f4eee9]">
@@ -159,6 +162,7 @@ export default function VendorSidebar({
           </div>
         </div>
 
+        {/* Navigation */}
         <nav className="flex-1 overflow-y-auto px-4 py-6">
           <p className="mb-3 px-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#a99d94]">
             Workspace
@@ -213,6 +217,7 @@ export default function VendorSidebar({
           </div>
         </nav>
 
+        {/* Bottom */}
         <div className="border-t border-[#eee7e1] p-4">
           <button
             type="button"

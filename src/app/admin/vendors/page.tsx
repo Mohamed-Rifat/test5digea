@@ -30,9 +30,10 @@ import {
   deactivateVendor,
   activateVendor,
   rejectVendor,
-} from "@/services/vendors.service";
+} from "@/features/vendors/api";
 
 import { useAdminVendors } from "@/features/vendors/hooks/useAdminVendors";
+import { getApiErrorMessage } from "@/lib/error";
 
 import type { Vendor } from "@/types/vendor";
 
@@ -264,19 +265,14 @@ export default function AdminVendorsPage() {
 
       await refetch();
 
-    } catch (error: any) {
-const message =
-        error?.response?.data?.detail ||
-        error?.response?.data?.message ||
-        error?.response?.data?.title ||
-        error?.response?.data ||
-        "Something went wrong.";
+    } catch (error: unknown) {
 
-      setActionError(
-        typeof message === "string"
-          ? message
-          : "Something went wrong."
+      console.error(
+        "Vendor action error:",
+        error
       );
+
+      setActionError(getApiErrorMessage(error, "Something went wrong."));
 
     } finally {
 
@@ -372,19 +368,14 @@ const message =
 
       await refetch();
 
-    } catch (error: any) {
-const message =
-        error?.response?.data?.detail ||
-        error?.response?.data?.message ||
-        error?.response?.data?.title ||
-        error?.response?.data ||
-        "Failed to create vendor.";
+    } catch (error: unknown) {
 
-      setActionError(
-        typeof message === "string"
-          ? message
-          : "Failed to create vendor."
+      console.error(
+        "Create Vendor Error:",
+        error
       );
+
+      setActionError(getApiErrorMessage(error, "Failed to create vendor."));
 
     } finally {
 

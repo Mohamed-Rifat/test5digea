@@ -13,7 +13,6 @@ import {
 } from "lucide-react";
 
 import { useVendorServices } from "@/features/services/hooks/useVendorServices";
-import { useVendor } from "@/features/vendors/hooks/useVendor";
 import { useCategories } from "@/features/categories/hooks/useCategories";
 import type { CreateServicePriceRequest } from "@/types/service";
 
@@ -21,14 +20,7 @@ export default function NewVendorServicePage() {
   const router = useRouter();
 
   const { create, actionLoading, actionError } = useVendorServices();
-  const { vendor, loading: vendorLoading } = useVendor();
   const { categories, loading: categoriesLoading } = useCategories();
-  const assignedCategories = categories.filter((category) =>
-    vendor?.categories?.some(
-      (vendorCategory) =>
-        vendorCategory.toLowerCase() === category.name.toLowerCase()
-    )
-  );
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -38,7 +30,6 @@ export default function NewVendorServicePage() {
   ]);
   const [formError, setFormError] = useState("");
 
-  const loadingCategories = categoriesLoading || vendorLoading;
   const isSubmitting = actionLoading === "create";
 
   const addPriceRow = () => {
@@ -126,15 +117,6 @@ export default function NewVendorServicePage() {
             </div>
           )}
 
-          {assignedCategories.length === 0 && !loadingCategories && (
-            <div className="flex items-center gap-3 rounded-2xl border border-amber-100 bg-amber-50 p-4 text-sm text-amber-800">
-              <AlertCircle className="h-5 w-5 shrink-0" />
-              You haven't been assigned any categories yet. Please contact
-              an admin so they can enable categories for your account before
-              you add services.
-            </div>
-          )}
-
           <div>
             <label className="mb-2 block text-sm font-medium text-[#40352f]">
               Service Name
@@ -155,20 +137,18 @@ export default function NewVendorServicePage() {
             <select
               value={categoryId}
               onChange={(event) => setCategoryId(event.target.value)}
-              disabled={loadingCategories || assignedCategories.length === 0}
+              disabled={categoriesLoading}
               className="w-full rounded-xl border border-[#e3d9d1] bg-[#fcfaf8] px-4 py-3 text-sm text-[#30251f] outline-none transition focus:border-[#30251f]"
             >
               <option value="">Select a category</option>
-              {assignedCategories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
-              ))}
+              {categories
+                .filter((category) => category.isActive)
+                .map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
             </select>
-            <p className="mt-1.5 text-xs text-[#9b8f86]">
-              Only categories an admin has approved for your account are
-              shown here.
-            </p>
           </div>
 
           <div>
@@ -238,7 +218,7 @@ export default function NewVendorServicePage() {
           <div className="flex items-center gap-3 border-t border-[#eee7e2] pt-6">
             <button
               type="submit"
-              disabled={isSubmitting || assignedCategories.length === 0}
+              disabled={isSubmitting}
               className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#30251f] px-6 text-sm font-medium text-white transition hover:bg-[#463831] disabled:opacity-60"
             >
               {isSubmitting ? (

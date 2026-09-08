@@ -11,7 +11,8 @@ import {
   removeRoadmapVendor,
   completeRoadmapCategory,
   uncompleteRoadmapCategory,
-} from "@/services/roadmap.service";
+} from "@/features/roadmap/api";
+import { getApiErrorMessage } from "@/lib/error";
 
 import type {
   Roadmap,
@@ -60,10 +61,20 @@ export const useRoadmap = (): UseRoadmapReturn => {
 
       setRoadmap(data);
     } catch (err) {
-      if (isAxiosError(err) && err.response?.status === 404) {
+      // The backend signals "no roadmap yet" with a 400 Bad Request whose
+      // ProblemDetails `detail` says so (not a 404, and not any other
+      // structure) — treat that specific case as "no roadmap", and only
+      // that case, so genuine 400s aren't hidden.
+      const noRoadmapYet =
+        isAxiosError(err) &&
+        err.response?.status === 400 &&
+        typeof err.response?.data?.detail === "string" &&
+        err.response.data.detail.toLowerCase().includes("haven't created a roadmap");
+
+      if (noRoadmapYet || (isAxiosError(err) && err.response?.status === 404)) {
         setRoadmap(null);
       } else {
-        setError("Failed to load your wedding roadmap.");
+        setError(getApiErrorMessage(err, "Failed to load your wedding roadmap."));
       }
     } finally {
       setLoading(false);
@@ -85,7 +96,7 @@ export const useRoadmap = (): UseRoadmapReturn => {
 
         return true;
       } catch (err) {
-        setActionError("Failed to create your roadmap.");
+        setActionError(getApiErrorMessage(err, "Failed to create your roadmap."));
         return false;
       } finally {
         setActionLoading(null);
@@ -105,7 +116,7 @@ export const useRoadmap = (): UseRoadmapReturn => {
 
         return true;
       } catch (err) {
-        setActionError("Failed to update your roadmap.");
+        setActionError(getApiErrorMessage(err, "Failed to update your roadmap."));
         return false;
       } finally {
         setActionLoading(null);
@@ -128,7 +139,7 @@ export const useRoadmap = (): UseRoadmapReturn => {
 
         return true;
       } catch (err) {
-        setActionError("Failed to select this vendor.");
+        setActionError(getApiErrorMessage(err, "Failed to select this vendor."));
         return false;
       } finally {
         setActionLoading(null);
@@ -148,7 +159,7 @@ export const useRoadmap = (): UseRoadmapReturn => {
 
         return true;
       } catch (err) {
-        setActionError("Failed to remove this vendor.");
+        setActionError(getApiErrorMessage(err, "Failed to remove this vendor."));
         return false;
       } finally {
         setActionLoading(null);
@@ -168,7 +179,7 @@ export const useRoadmap = (): UseRoadmapReturn => {
 
         return true;
       } catch (err) {
-        setActionError("Failed to update this category.");
+        setActionError(getApiErrorMessage(err, "Failed to update this category."));
         return false;
       } finally {
         setActionLoading(null);
@@ -188,7 +199,7 @@ export const useRoadmap = (): UseRoadmapReturn => {
 
         return true;
       } catch (err) {
-        setActionError("Failed to update this category.");
+        setActionError(getApiErrorMessage(err, "Failed to update this category."));
         return false;
       } finally {
         setActionLoading(null);

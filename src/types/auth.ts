@@ -19,10 +19,16 @@ export interface RegisterRequest {
 
 export interface JwtPayload {
   sub: string;
+
   email: string;
+
   exp: number;
+
   iss: string;
+
   aud: string;
+
   role?: string;
+
   [key: string]: unknown;
 }

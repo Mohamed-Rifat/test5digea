@@ -6,7 +6,7 @@ import {
   rejectService,
   activateService,
   deactivateService,
-} from "@/services/services.service";
+} from "@/features/services/api";
 
 import type {
   Service,
@@ -45,11 +45,14 @@ export const useAdminServices = (
 
       setServices(data);
     } catch (error) {
+      console.error("Failed to fetch admin services:", error);
+
       setError("Failed to load services.");
     } finally {
       setLoading(false);
     }
-  }, [params]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params?.status]);
 
   useEffect(() => {
     fetchServices();
@@ -65,6 +68,8 @@ export const useAdminServices = (
 
         return true;
       } catch (error) {
+        console.error("Failed to approve service:", error);
+
         return false;
       } finally {
         setActionLoading(null);
@@ -86,6 +91,8 @@ export const useAdminServices = (
 
         return true;
       } catch (error) {
+        console.error("Failed to reject service:", error);
+
         return false;
       } finally {
         setActionLoading(null);
@@ -104,6 +111,8 @@ export const useAdminServices = (
 
         return true;
       } catch (error) {
+        console.error("Failed to activate service:", error);
+
         return false;
       } finally {
         setActionLoading(null);
@@ -122,6 +131,8 @@ export const useAdminServices = (
 
         return true;
       } catch (error) {
+        console.error("Failed to deactivate service:", error);
+
         return false;
       } finally {
         setActionLoading(null);

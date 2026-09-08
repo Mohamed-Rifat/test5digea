@@ -145,6 +145,7 @@ export default function VendorDashboardPage() {
   return (
     <main className="min-h-screen bg-[#faf8f6]">
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        {/* Header */}
         <div className="mb-8 flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="mb-2 text-sm font-medium text-[#9b8171]">
@@ -180,6 +181,7 @@ export default function VendorDashboardPage() {
           </div>
         </div>
 
+        {/* Status Alert */}
         {vendor.status !== "Approved" && (
           <div className="mb-8 rounded-2xl border border-[#e8ddd5] bg-white p-5 shadow-sm">
             <div className="flex items-start gap-4">
@@ -217,6 +219,7 @@ export default function VendorDashboardPage() {
           </div>
         )}
 
+        {/* Stats */}
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard
             title="Total Services"
@@ -251,7 +254,9 @@ export default function VendorDashboardPage() {
           />
         </div>
 
+        {/* Main Grid */}
         <div className="mt-8 grid gap-6 lg:grid-cols-3">
+          {/* Company Overview */}
           <section className="rounded-3xl border border-[#e8dfd8] bg-white p-6 shadow-sm lg:col-span-2">
             <div className="flex items-start justify-between gap-4">
               <div>
@@ -302,6 +307,7 @@ export default function VendorDashboardPage() {
               />
             </div>
 
+            {/* Categories */}
             <div className="mt-7 border-t border-[#eee7e2] pt-6">
               <p className="mb-3 text-sm font-semibold text-[#40352f]">
                 Categories
@@ -326,6 +332,7 @@ export default function VendorDashboardPage() {
             </div>
           </section>
 
+          {/* Quick Actions */}
           <section className="rounded-3xl border border-[#e8dfd8] bg-[#30251f] p-6 text-white shadow-sm">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#d9c7ba]">
               Quick Actions
@@ -358,6 +365,7 @@ export default function VendorDashboardPage() {
           </section>
         </div>
 
+        {/* Recent Services */}
         <section className="mt-8 rounded-3xl border border-[#e8dfd8] bg-white p-6 shadow-sm">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>

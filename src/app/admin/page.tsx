@@ -1,3 +1,4 @@
+
 "use client";
 
 import {
@@ -23,10 +24,15 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useMemo } from "react";
+
 import { useAdminCategories } from "@/features/categories/hooks/useAdminCategories";
 import { useServices } from "@/features/services/hooks/useServices";
 import { useAdminVendors } from "@/features/vendors/hooks/useAdminVendors";
+import type { Vendor } from "@/types/vendor";
 
+/* ========================================================= */
+/* HELPERS */
+/* ========================================================= */
 
 const normalizeStatus = (status?: string) => {
   return status?.toLowerCase().replace(/[_-]/g, " ").trim() || "";
@@ -66,6 +72,10 @@ const formatRating = (value: number) => {
   return Number.isFinite(value) ? value.toFixed(1) : "0.0";
 };
 
+/* ========================================================= */
+/* PAGE */
+/* ========================================================= */
+
 export default function AdminPage() {
   const {
     categories,
@@ -94,6 +104,10 @@ export default function AdminPage() {
     categoriesError ||
     servicesError ||
     vendorsError;
+
+  /* ========================================================= */
+  /* CATEGORY STATS */
+  /* ========================================================= */
 
   const totalCategories = categories.length;
 
@@ -135,6 +149,10 @@ export default function AdminPage() {
     ),
     1
   );
+
+  /* ========================================================= */
+  /* VENDOR STATS */
+  /* ========================================================= */
 
   const vendorStats = useMemo(() => {
     const total = vendors.length;
@@ -181,6 +199,10 @@ export default function AdminPage() {
     };
   }, [vendors]);
 
+  /* ========================================================= */
+  /* TOP VENDORS */
+  /* ========================================================= */
+
   const topVendorsByRating = useMemo(() => {
     return [...vendors]
       .filter(
@@ -208,6 +230,10 @@ export default function AdminPage() {
       )
       .slice(0, 5);
   }, [vendors]);
+
+  /* ========================================================= */
+  /* LOCATIONS */
+  /* ========================================================= */
 
   const locationStats = useMemo(() => {
     const locationMap =
@@ -244,6 +270,10 @@ export default function AdminPage() {
     1
   );
 
+  /* ========================================================= */
+  /* RECENT VENDORS */
+  /* ========================================================= */
+
   const recentVendors = useMemo(() => {
     return [...vendors]
       .sort(
@@ -253,6 +283,10 @@ export default function AdminPage() {
       )
       .slice(0, 5);
   }, [vendors]);
+
+  /* ========================================================= */
+  /* DASHBOARD STATS */
+/* ========================================================= */
 
   const stats = [
     {
@@ -317,6 +351,10 @@ export default function AdminPage() {
 
   return (
     <div className="mx-auto">
+      {/* ========================================================= */}
+      {/* HEADER */}
+      {/* ========================================================= */}
+
       <div className="mb-7 flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
         <div>
           <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#a18c7d]">
@@ -340,6 +378,11 @@ export default function AdminPage() {
           </div>
         </div>
       </div>
+
+      {/* ========================================================= */}
+      {/* ERROR */}
+      {/* ========================================================= */}
+
       {error && !loading && (
         <div className="mb-6 rounded-2xl border border-red-100 bg-red-50 px-4 py-3">
           <p className="text-sm font-medium text-red-700">
@@ -351,6 +394,10 @@ export default function AdminPage() {
           </p>
         </div>
       )}
+
+      {/* ========================================================= */}
+      {/* MAIN STATS */}
+      {/* ========================================================= */}
 
       {loading ? (
         <DashboardStatsSkeleton />
@@ -403,6 +450,10 @@ export default function AdminPage() {
         </div>
       )}
 
+      {/* ========================================================= */}
+      {/* VENDOR PERFORMANCE + STATUS */}
+      {/* ========================================================= */}
+
       <section className="mt-5 overflow-hidden rounded-2xl border border-[#ebe3dd] bg-white shadow-[0_2px_12px_rgba(48,37,31,0.03)]">
         <div className="flex flex-col justify-between gap-4 border-b border-[#f0e9e4] px-5 py-5 sm:flex-row sm:items-center sm:px-6">
           <div className="flex items-center gap-2.5">
@@ -434,6 +485,10 @@ export default function AdminPage() {
           <VendorOverviewSkeleton />
         ) : (
           <div className="grid lg:grid-cols-[1.4fr_0.8fr]">
+            {/* ===================================================== */}
+            {/* VENDOR STATUS */}
+            {/* ===================================================== */}
+
             <div className="border-b border-[#f0e9e4] p-5 lg:border-b-0 lg:border-r sm:p-6">
               <div className="mb-6">
                 <p className="text-xs font-semibold text-[#40342d]">
@@ -446,6 +501,7 @@ export default function AdminPage() {
               </div>
 
               <div className="grid gap-6 sm:grid-cols-[180px_1fr] sm:items-center">
+                {/* Donut */}
 
                 <div className="mx-auto">
                   <div
@@ -504,6 +560,7 @@ export default function AdminPage() {
                   </div>
                 </div>
 
+                {/* Legend */}
 
                 <div className="space-y-3">
                   <VendorStatusRow
@@ -536,6 +593,10 @@ export default function AdminPage() {
                 </div>
               </div>
             </div>
+
+            {/* ===================================================== */}
+            {/* VENDOR KPIs */}
+            {/* ===================================================== */}
 
             <div className="p-5 sm:p-6">
               <div className="mb-5">
@@ -597,7 +658,14 @@ export default function AdminPage() {
         )}
       </section>
 
+      {/* ========================================================= */}
+      {/* CATEGORIES + TOP VENDORS */}
+      {/* ========================================================= */}
+
       <div className="mt-5 grid gap-5 xl:grid-cols-[1.35fr_0.85fr]">
+        {/* ======================================================= */}
+        {/* SERVICES BY CATEGORY */}
+        {/* ======================================================= */}
 
         <section className="overflow-hidden rounded-2xl border border-[#ebe3dd] bg-white shadow-[0_2px_12px_rgba(48,37,31,0.03)]">
           <div className="flex items-center justify-between border-b border-[#f0e9e4] px-5 py-5 sm:px-6">
@@ -707,6 +775,10 @@ export default function AdminPage() {
           )}
         </section>
 
+        {/* ======================================================= */}
+        {/* TOP VENDORS */}
+        {/* ======================================================= */}
+
         <section className="overflow-hidden rounded-2xl border border-[#ebe3dd] bg-white shadow-[0_2px_12px_rgba(48,37,31,0.03)]">
           <div className="border-b border-[#f0e9e4] px-5 py-5 sm:px-6">
             <div className="flex items-center gap-2.5">
@@ -780,7 +852,14 @@ export default function AdminPage() {
         </section>
       </div>
 
+      {/* ========================================================= */}
+      {/* LOCATIONS + MOST REVIEWED */}
+      {/* ========================================================= */}
+
       <div className="mt-5 grid gap-5 lg:grid-cols-2">
+        {/* ======================================================= */}
+        {/* VENDOR LOCATIONS */}
+        {/* ======================================================= */}
 
         <section className="overflow-hidden rounded-2xl border border-[#ebe3dd] bg-white shadow-[0_2px_12px_rgba(48,37,31,0.03)]">
           <div className="border-b border-[#f0e9e4] px-5 py-5 sm:px-6">
@@ -865,6 +944,10 @@ export default function AdminPage() {
           </div>
         </section>
 
+        {/* ======================================================= */}
+        {/* MOST REVIEWED */}
+        {/* ======================================================= */}
+
         <section className="overflow-hidden rounded-2xl border border-[#ebe3dd] bg-white shadow-[0_2px_12px_rgba(48,37,31,0.03)]">
           <div className="border-b border-[#f0e9e4] px-5 py-5 sm:px-6">
             <div className="flex items-center gap-2.5">
@@ -907,6 +990,10 @@ export default function AdminPage() {
           )}
         </section>
       </div>
+
+      {/* ========================================================= */}
+      {/* RECENT VENDORS */}
+      {/* ========================================================= */}
 
       <section className="mt-5 overflow-hidden rounded-2xl border border-[#ebe3dd] bg-white shadow-[0_2px_12px_rgba(48,37,31,0.03)]">
         <div className="flex flex-col justify-between gap-4 border-b border-[#f0e9e4] px-5 py-5 sm:flex-row sm:items-center sm:px-6">
@@ -1008,6 +1095,10 @@ export default function AdminPage() {
         )}
       </section>
 
+      {/* ========================================================= */}
+      {/* QUICK ACTIONS */}
+      {/* ========================================================= */}
+
       <section className="mt-5 rounded-2xl border border-[#ebe3dd] bg-white p-5 shadow-[0_2px_12px_rgba(48,37,31,0.03)] sm:p-6">
         <div className="mb-5">
           <h2 className="text-sm font-semibold text-[#30251f]">
@@ -1050,6 +1141,10 @@ export default function AdminPage() {
         </div>
       </section>
 
+      {/* ========================================================= */}
+      {/* FOOTER */}
+      {/* ========================================================= */}
+
       <div className="py-7 text-center">
         <p className="text-[11px] text-[#aa9c93]">
           5Digea Admin Panel • 2026
@@ -1058,6 +1153,10 @@ export default function AdminPage() {
     </div>
   );
 }
+
+/* ========================================================= */
+/* VENDOR STATUS ROW */
+/* ========================================================= */
 
 function VendorStatusRow({
   label,
@@ -1111,6 +1210,10 @@ function VendorStatusRow({
   );
 }
 
+/* ========================================================= */
+/* INSIGHT CARD */
+/* ========================================================= */
+
 function InsightCard({
   icon: Icon,
   title,
@@ -1155,13 +1258,17 @@ function InsightCard({
   );
 }
 
+/* ========================================================= */
+/* VENDOR LIST ITEM */
+/* ========================================================= */
+
 function VendorListItem({
   vendor,
   rank,
   showRating = false,
   showReviews = false,
 }: {
-  vendor: any;
+  vendor: Vendor;
   rank: number;
   showRating?: boolean;
   showReviews?: boolean;
@@ -1226,6 +1333,10 @@ function VendorListItem({
   );
 }
 
+/* ========================================================= */
+/* STATUS BADGE */
+/* ========================================================= */
+
 function StatusBadge({
   status,
 }: {
@@ -1262,6 +1373,10 @@ function StatusBadge({
     </span>
   );
 }
+
+/* ========================================================= */
+/* QUICK ACTION */
+/* ========================================================= */
 
 function QuickAction({
   href,
@@ -1301,6 +1416,10 @@ function QuickAction({
   );
 }
 
+/* ========================================================= */
+/* EMPTY STATE */
+/* ========================================================= */
+
 function EmptyState({
   icon: Icon,
   text,
@@ -1321,6 +1440,10 @@ function EmptyState({
   );
 }
 
+/* ========================================================= */
+/* DATE FORMAT */
+/* ========================================================= */
+
 function formatDate(date?: string) {
   if (!date) return "—";
 
@@ -1338,6 +1461,10 @@ function formatDate(date?: string) {
     }
   );
 }
+
+/* ========================================================= */
+/* DASHBOARD SKELETON */
+/* ========================================================= */
 
 function DashboardStatsSkeleton() {
   return (
@@ -1371,6 +1498,10 @@ function DashboardStatsSkeleton() {
     </div>
   );
 }
+
+/* ========================================================= */
+/* VENDOR OVERVIEW SKELETON */
+/* ========================================================= */
 
 function VendorOverviewSkeleton() {
   return (

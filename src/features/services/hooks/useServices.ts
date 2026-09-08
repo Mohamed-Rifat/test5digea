@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 
-import { getServices } from "@/services/services.service";
+import { getServices } from "@/features/services/api";
 
 import type {
   Service,
@@ -30,11 +30,22 @@ export const useServices = (
 
       setServices(data);
     } catch (error) {
-setError("Failed to load services.");
+      console.error(
+        "Failed to fetch services:",
+        error
+      );
+
+      setError("Failed to load services.");
     } finally {
       setLoading(false);
     }
-  }, [params]);
+    // Depend on the primitive filter values rather than the `params` object
+    // itself — callers that pass an inline object literal (e.g.
+    // `useServices({ vendorId })`) create a new reference on every render,
+    // which would otherwise re-trigger this callback (and the effect below)
+    // on every render, causing an infinite fetch/re-render loop.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params?.vendorId, params?.categoryId]);
 
   useEffect(() => {
     fetchServices();

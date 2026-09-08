@@ -27,7 +27,7 @@ import {
     updateCategory,
     toggleCategoryActive,
     deleteCategory,
-} from "@/services/categories.service";
+} from "@/features/categories/api";
 
 import type { Category } from "@/types/category";
 
@@ -218,7 +218,12 @@ export default function AdminCategoriesPage() {
                 "Category created successfully."
             );
         } catch (error) {
-setActionError(
+            console.error(
+                "Failed to create category:",
+                error
+            );
+
+            setActionError(
                 "Failed to create category. Please try again."
             );
         } finally {
@@ -280,7 +285,12 @@ setActionError(
                 "Category updated successfully."
             );
         } catch (error) {
-setActionError(
+            console.error(
+                "Failed to update category:",
+                error
+            );
+
+            setActionError(
                 "Failed to update category. Please try again."
             );
         } finally {
@@ -313,7 +323,12 @@ setActionError(
                     : `"${category.name}" has been activated.`
             );
         } catch (error) {
-setActionError(
+            console.error(
+                "Failed to toggle category:",
+                error
+            );
+
+            setActionError(
                 "Failed to update category status."
             );
         } finally {
@@ -353,7 +368,12 @@ setActionError(
                 `"${deletedName}" was deleted successfully.`
             );
         } catch (error) {
-setActionError(
+            console.error(
+                "Failed to delete category:",
+                error
+            );
+
+            setActionError(
                 "Failed to delete category. Please try again."
             );
         } finally {

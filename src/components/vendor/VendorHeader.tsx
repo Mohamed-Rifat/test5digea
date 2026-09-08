@@ -19,7 +19,8 @@ export default function VendorHeader({
   const { vendor } = useVendor();
 
   return (
-    <header className="sticky top-0 z-30 flex h-[82px] items-center justify-between border-b border-[#eee7e1] bg-white/95 px-4 backdrop-blur-md sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-30 flex h-18 sm:h-[82px] items-center justify-between border-b border-[#eee7e1] bg-white/95 px-3 backdrop-blur-md sm:px-6 lg:px-8">
+      {/* Left */}
       <div className="flex items-center gap-3">
         <button
           type="button"
@@ -41,7 +42,9 @@ export default function VendorHeader({
         </div>
       </div>
 
+      {/* Right */}
       <div className="flex items-center gap-2 sm:gap-4">
+        {/* Notifications */}
         <button
           type="button"
           aria-label="Notifications"
@@ -54,6 +57,7 @@ export default function VendorHeader({
 
         <div className="hidden h-8 w-px bg-[#eee7e1] sm:block" />
 
+        {/* Vendor */}
         <div className="flex items-center gap-2.5">
           <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl bg-[#f4eee9]">
             {vendor?.profileImageUrl ? (

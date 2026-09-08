@@ -8,7 +8,8 @@ import {
   updateService,
   updateServicePrices,
   resubmitService,
-} from "@/services/services.service";
+} from "@/features/services/api";
+import { getApiErrorMessage } from "@/lib/error";
 
 import type {
   Service,
@@ -52,7 +53,8 @@ export const useVendorServices = (): UseVendorServicesReturn => {
 
       setServices(data);
     } catch (error) {
-      setError("Failed to load services.");
+      console.error("Failed to fetch vendor services:", error);
+      setError(getApiErrorMessage(error, "Failed to load services."));
     } finally {
       setLoading(false);
     }
@@ -73,7 +75,8 @@ export const useVendorServices = (): UseVendorServicesReturn => {
 
         return id;
       } catch (error) {
-        setActionError("Failed to create service.");
+        console.error("Failed to create service:", error);
+        setActionError(getApiErrorMessage(error, "Failed to create service."));
 
         return null;
       } finally {
@@ -94,7 +97,8 @@ export const useVendorServices = (): UseVendorServicesReturn => {
 
         return true;
       } catch (error) {
-        setActionError("Failed to update service.");
+        console.error("Failed to update service:", error);
+        setActionError(getApiErrorMessage(error, "Failed to update service."));
 
         return false;
       } finally {
@@ -118,7 +122,8 @@ export const useVendorServices = (): UseVendorServicesReturn => {
 
         return true;
       } catch (error) {
-        setActionError("Failed to update prices.");
+        console.error("Failed to update service prices:", error);
+        setActionError(getApiErrorMessage(error, "Failed to update prices."));
 
         return false;
       } finally {
@@ -139,7 +144,8 @@ export const useVendorServices = (): UseVendorServicesReturn => {
 
         return true;
       } catch (error) {
-        setActionError("Failed to resubmit service.");
+        console.error("Failed to resubmit service:", error);
+        setActionError(getApiErrorMessage(error, "Failed to resubmit service."));
 
         return false;
       } finally {

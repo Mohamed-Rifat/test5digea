@@ -6,7 +6,9 @@ import {
   getFavorites,
   addFavorite,
   removeFavorite,
-} from "@/services/favorites.service";
+} from "@/features/favorites/api";
+import { getApiErrorMessage } from "@/lib/error";
+import { useToast } from "@/components/providers/ToastProvider";
 
 import type {
   Favorite,
@@ -43,6 +45,7 @@ const favoriteKey = (
 export const useFavorites = (
   params?: GetFavoritesParams
 ): UseFavoritesReturn => {
+  const { toast } = useToast();
   const [favorites, setFavorites] = useState<Favorite[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -104,12 +107,14 @@ export const useFavorites = (
 
         return true;
       } catch (err) {
+        toast(getApiErrorMessage(err, "Failed to remove favorite."), "error");
+
         return false;
       } finally {
         setActionLoading(null);
       }
     },
-    []
+    [toast]
   );
 
   const toggleFavorite = useCallback(
@@ -142,12 +147,14 @@ export const useFavorites = (
 
         return true;
       } catch (err) {
+        toast(getApiErrorMessage(err, "Failed to update favorites."), "error");
+
         return false;
       } finally {
         setActionLoading(null);
       }
     },
-    [isFavorited, fetchFavorites]
+    [isFavorited, fetchFavorites, toast]
   );
 
   return {

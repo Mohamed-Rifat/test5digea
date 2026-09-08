@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { getAdminCategories } from "@/services/categories.service";
+import { getAdminCategories } from "@/features/categories/api";
 import type { Category } from "@/types/category";
 
 interface UseAdminCategoriesReturn {
@@ -24,7 +24,12 @@ export const useAdminCategories =
 
         setCategories(data);
       } catch (error) {
-setError("Failed to load admin categories.");
+        console.error(
+          "Failed to fetch admin categories:",
+          error
+        );
+
+        setError("Failed to load admin categories.");
       } finally {
         setLoading(false);
       }

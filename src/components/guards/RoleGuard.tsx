@@ -32,11 +32,13 @@ export default function RoleGuard({
       return;
     }
 
+    // User is not logged in
     if (!isAuthenticated) {
       router.replace("/login");
       return;
     }
 
+    // User is logged in but doesn't have permission
     if (!role || !allowedRoles.includes(role)) {
       router.replace(getHomePath(role));
     }

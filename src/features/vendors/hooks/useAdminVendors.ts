@@ -6,7 +6,7 @@ import {
 
 import {
     getAdminVendorsList,
-} from "@/services/vendors.service";
+} from "@/features/vendors/api";
 
 import type { Vendor } from "@/types/vendor";
 
@@ -33,7 +33,12 @@ export const useAdminVendors =
                 const data = await getAdminVendorsList();
                 setVendors(data);
             } catch (error) {
-setError(
+                console.error(
+                    "Failed to fetch admin vendors:",
+                    error
+                );
+
+                setError(
                     "Failed to load vendors."
                 );
             } finally {

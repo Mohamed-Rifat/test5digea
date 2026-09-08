@@ -19,9 +19,10 @@ import {
 import {
   getAdminVendorDetails,
   updateVendorCategories,
-} from "@/services/vendors.service";
+} from "@/features/vendors/api";
 
-import { getCategories } from "@/services/categories.service";
+import { getAdminCategories } from "@/features/categories/api";
+import { getApiErrorMessage } from "@/lib/error";
 
 import type { Vendor } from "@/types/vendor";
 import type { Category } from "@/types/category";
@@ -156,7 +157,7 @@ export default function AdminVendorDetailsPage({
         const data = await getAdminVendorDetails(id);
 
         // Load all categories
-        const allCategories = await getCategories();
+        const allCategories = await getAdminCategories();
 
         if (mounted) {
           setVendor(data);
@@ -175,19 +176,11 @@ export default function AdminVendorDetailsPage({
 
           setSelectedCategoryIds(currentCategoryIds);
         }
-      } catch (err: any) {
-        const message =
-          err?.response?.data?.detail ||
-          err?.response?.data?.message ||
-          err?.response?.data?.title ||
-          "Failed to load vendor details.";
+      } catch (err: unknown) {
+        console.error("Failed to load vendor details:", err);
 
         if (mounted) {
-          setError(
-            typeof message === "string"
-              ? message
-              : "Failed to load vendor details."
-          );
+          setError(getApiErrorMessage(err, "Failed to load vendor details."));
         }
       } finally {
         if (mounted) {
@@ -249,18 +242,10 @@ export default function AdminVendorDetailsPage({
       );
 
       setCategoriesSuccess("Categories updated successfully.");
-    } catch (err: any) {
-      const message =
-        err?.response?.data?.detail ||
-        err?.response?.data?.message ||
-        err?.response?.data?.title ||
-        "Failed to update categories.";
+    } catch (err: unknown) {
+      console.error("Failed to update vendor categories:", err);
 
-      setCategoriesError(
-        typeof message === "string"
-          ? message
-          : "Failed to update categories."
-      );
+      setCategoriesError(getApiErrorMessage(err, "Failed to update categories."));
     } finally {
       setSavingCategories(false);
     }

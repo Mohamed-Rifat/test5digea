@@ -209,6 +209,7 @@ export default function EditVendorServicePage({ params }: PageProps) {
           </div>
         )}
 
+        {/* Details form */}
         <form
           onSubmit={handleSaveDetails}
           className="mt-6 space-y-6 rounded-3xl border border-[#e8dfd8] bg-white p-6 shadow-sm sm:p-8"
@@ -264,6 +265,7 @@ export default function EditVendorServicePage({ params }: PageProps) {
           </div>
         </form>
 
+        {/* Prices form */}
         <form
           onSubmit={handleSavePrices}
           className="mt-6 space-y-6 rounded-3xl border border-[#e8dfd8] bg-white p-6 shadow-sm sm:p-8"

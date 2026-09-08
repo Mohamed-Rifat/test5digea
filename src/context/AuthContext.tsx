@@ -44,19 +44,36 @@ export function AuthProvider({
 
   const [isLoading] = useState(false);
 
+  /**
+   * Get the current user's role from the JWT.
+   */
   const role: UserRole | null = user?.token
     ? getRoleFromToken(user.token)
     : null;
 
+  /**
+   * Authentication state.
+   */
   const isAuthenticated = !!user;
+
+  /**
+   * Role helpers.
+   */
   const isAdmin = role === "Admin";
   const isVendor = role === "Vendor";
   const isUser = role === "User";
+
+  /**
+   * Save authentication data.
+   */
   const setAuth = (data: LoginResponse) => {
     authStorage.set(data);
     setUser(data);
   };
 
+  /**
+   * Logout user.
+   */
   const logout = () => {
     authStorage.remove();
     setUser(null);

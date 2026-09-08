@@ -6,14 +6,9 @@ import {
   getCurrentVendor,
   updateVendor,
   resubmitVendor,
-  updateVendorCategories,
-} from "@/services/vendors.service";
+} from "@/features/vendors/api";
 
-import type {
-  Vendor,
-  UpdateVendorRequest,
-  UpdateVendorCategoriesRequest,
-} from "@/types/vendor";
+import type { Vendor, UpdateVendorRequest } from "@/types/vendor";
 
 interface UseVendorReturn {
   vendor: Vendor | null;
@@ -26,9 +21,6 @@ interface UseVendorReturn {
 
   update: (data: UpdateVendorRequest) => Promise<boolean>;
   resubmit: () => Promise<boolean>;
-  updateCategories: (
-    data: UpdateVendorCategoriesRequest
-  ) => Promise<boolean>;
 }
 
 export const useVendor = (): UseVendorReturn => {
@@ -48,6 +40,7 @@ export const useVendor = (): UseVendorReturn => {
 
       setVendor(data);
     } catch (error) {
+      console.error("Failed to fetch current vendor:", error);
       setError("Failed to load vendor information.");
     } finally {
       setLoading(false);
@@ -71,6 +64,7 @@ export const useVendor = (): UseVendorReturn => {
 
         return true;
       } catch (error) {
+        console.error("Failed to update vendor:", error);
         setActionError("Failed to update your profile.");
 
         return false;
@@ -93,6 +87,7 @@ export const useVendor = (): UseVendorReturn => {
 
       return true;
     } catch (error) {
+      console.error("Failed to resubmit vendor:", error);
       setActionError("Failed to resubmit your profile.");
 
       return false;
@@ -100,29 +95,6 @@ export const useVendor = (): UseVendorReturn => {
       setActionLoading(null);
     }
   }, [vendor, fetchVendor]);
-
-  const updateCategories = useCallback(
-    async (data: UpdateVendorCategoriesRequest): Promise<boolean> => {
-      if (!vendor) return false;
-
-      try {
-        setActionLoading("categories");
-        setActionError(null);
-
-        await updateVendorCategories(vendor.id, data);
-        await fetchVendor();
-
-        return true;
-      } catch (error) {
-        setActionError("Failed to update categories.");
-
-        return false;
-      } finally {
-        setActionLoading(null);
-      }
-    },
-    [vendor, fetchVendor]
-  );
 
   return {
     vendor,
@@ -133,6 +105,5 @@ export const useVendor = (): UseVendorReturn => {
     refetch: fetchVendor,
     update,
     resubmit,
-    updateCategories,
   };
 };

@@ -28,7 +28,7 @@ import {
   deactivateService,
   getAdminService,
   rejectService,
-} from "@/services/services.service";
+} from "@/features/services/api";
 
 import type { Service } from "@/types/service";
 
@@ -185,7 +185,12 @@ export default function AdminServiceDetailsPage() {
 
       setService(data);
     } catch (err) {
-setError(
+      console.error(
+        "Failed to fetch service:",
+        err
+      );
+
+      setError(
         "Failed to load service details."
       );
     } finally {
@@ -229,7 +234,11 @@ setError(
 
       setService(data);
     } catch (err) {
-}
+      console.error(
+        "Failed to refresh service:",
+        err
+      );
+    }
   };
 
   /* =========================
@@ -257,7 +266,12 @@ setError(
         "Service approved successfully."
       );
     } catch (err) {
-showMessage(
+      console.error(
+        "Failed to approve service:",
+        err
+      );
+
+      showMessage(
         "error",
         "Failed to approve service."
       );
@@ -317,7 +331,12 @@ showMessage(
         "Service rejected successfully."
       );
     } catch (err) {
-showMessage(
+      console.error(
+        "Failed to reject service:",
+        err
+      );
+
+      showMessage(
         "error",
         "Failed to reject service."
       );
@@ -351,7 +370,12 @@ showMessage(
         "Service activated successfully."
       );
     } catch (err) {
-showMessage(
+      console.error(
+        "Failed to activate service:",
+        err
+      );
+
+      showMessage(
         "error",
         "Failed to activate service."
       );
@@ -385,7 +409,12 @@ showMessage(
         "Service deactivated successfully."
       );
     } catch (err) {
-showMessage(
+      console.error(
+        "Failed to deactivate service:",
+        err
+      );
+
+      showMessage(
         "error",
         "Failed to deactivate service."
       );

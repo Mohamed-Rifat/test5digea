@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { getCategories } from "@/services/categories.service";
+import { getCategories } from "@/features/categories/api";
 import type { Category } from "@/types/category";
 
 interface UseCategoriesReturn {
@@ -23,6 +23,8 @@ export const useCategories = (): UseCategoriesReturn => {
 
       setCategories(data);
     } catch (error) {
+      console.error("Failed to fetch categories:", error);
+
       setError("Failed to load categories.");
     } finally {
       setLoading(false);

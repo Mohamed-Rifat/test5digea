@@ -1,28 +1,118 @@
 "use client";
 
 import Link from "next/link";
-import { Heart, MapPin, Star, ArrowUpRight } from "lucide-react";
+import { Building2, MapPin, Check } from "lucide-react";
+
+import FavoriteButton from "@/components/shared/FavoriteButton";
+import RatingStars from "@/components/shared/RatingStars";
+import { FavoriteTargetType } from "@/types/favorite";
 import type { Vendor } from "@/types/vendor";
 
-export default function VendorCard({ vendor, favorite, onFavorite }: { vendor: Vendor; favorite?: boolean; onFavorite?: () => void }) {
+interface VendorCardProps {
+  vendor: Vendor;
+  favorited?: boolean;
+  favoriteLoading?: boolean;
+  onToggleFavorite?: (targetType: FavoriteTargetType, targetId: string) => void;
+  selected?: boolean;
+  onSelect?: (vendorId: string) => void;
+}
+
+export default function VendorCard({
+  vendor,
+  favorited,
+  favoriteLoading,
+  onToggleFavorite,
+  selected,
+  onSelect,
+}: VendorCardProps) {
   return (
-    <article className="group overflow-hidden rounded-2xl border border-[#eee5df] bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl">
-      <div className="relative aspect-[16/10] overflow-hidden bg-[#f5efeb]">
-        {vendor.profileImageUrl ? <img src={vendor.profileImageUrl} alt={vendor.businessName} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" /> : <div className="flex h-full items-center justify-center text-4xl text-[#a39287]">✦</div>}
-        {onFavorite && <button onClick={onFavorite} className={`absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-full backdrop-blur-md ${favorite ? "bg-[#30251f] text-white" : "bg-white/90 text-[#675b54]"}`}><Heart size={18} fill={favorite ? "currentColor" : "none"} /></button>}
-      </div>
-      <div className="p-5">
-        <div className="flex items-center justify-between gap-3">
-          <h3 className="truncate text-lg font-semibold text-[#30251f]">{vendor.businessName}</h3>
-          <span className="flex shrink-0 items-center gap-1 text-sm font-semibold text-[#55483f]"><Star size={15} fill="currentColor" /> {Number(vendor.averageRating || 0).toFixed(1)}</span>
+    <div
+      className={`group relative flex flex-col overflow-hidden rounded-2xl border bg-white transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(48,37,31,0.1)] ${
+        selected ? "border-[#30251f] ring-2 ring-[#30251f]/10" : "border-[#eee7e1]"
+      }`}
+    >
+      <Link href={`/vendors/${vendor.id}`} className="flex min-h-0 flex-1 flex-col">
+        <div className="relative h-36 w-full shrink-0 bg-gradient-to-br sm:h-40 from-[#f0e9e0] to-[#e4d8c8]">
+          <div className="absolute -bottom-8 left-5 flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl border-4 border-white bg-[#f4eee9] shadow-sm">
+            {vendor.profileImageUrl ? (
+              <img
+                src={vendor.profileImageUrl}
+                alt={vendor.businessName}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <Building2 size={24} className="text-[#a47e43]" />
+            )}
+          </div>
         </div>
-        <p className="mt-1 line-clamp-1 text-sm text-[#9a8c83]">{vendor.slogan || "Wedding specialist"}</p>
-        <div className="mt-3 flex items-center gap-1.5 text-xs text-[#81746d]"><MapPin size={14} /> {vendor.location || "Location not specified"} <span>•</span> {vendor.reviewsCount || 0} reviews</div>
-        <div className="mt-4 flex items-center justify-between border-t border-[#f1eae5] pt-4">
-          <div className="flex flex-wrap gap-1.5">{(vendor.categories || []).slice(0, 2).map((c) => <span key={c} className="rounded-full bg-[#faf5f1] px-2.5 py-1 text-[10px] font-medium text-[#806f64]">{c}</span>)}</div>
-          <Link href={`/vendors/${vendor.id}`} className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#514740]">View <ArrowUpRight size={16} /></Link>
+
+        <div className="flex min-w-0 flex-1 flex-col p-4 pt-11 sm:p-5 sm:pt-11">
+          <h3 className="line-clamp-1 text-base font-semibold text-[#30251f]">
+            {vendor.businessName}
+          </h3>
+
+          {vendor.slogan && (
+            <p className="mt-1 line-clamp-1 text-xs italic text-[#a47e43]">
+              {vendor.slogan}
+            </p>
+          )}
+
+          <div className="mt-3">
+            <RatingStars rating={vendor.averageRating} reviewsCount={vendor.reviewsCount} />
+          </div>
+
+          {vendor.location && (
+            <p className="mt-3 flex items-center gap-1.5 text-xs text-[#9b8f86]">
+              <MapPin size={12} />
+              {vendor.location}
+            </p>
+          )}
+
+          {vendor.categories && vendor.categories.length > 0 && (
+            <div className="mt-4 flex flex-wrap gap-1.5 border-t border-[#f0e9e0] pt-4">
+              {vendor.categories.slice(0, 3).map((cat) => (
+                <span
+                  key={cat}
+                  className="rounded-full bg-[#f0e9e0] px-2.5 py-1 text-[11px] font-medium text-[#5f544d]"
+                >
+                  {cat}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
-      </div>
-    </article>
+      </Link>
+
+      {onToggleFavorite && (
+        <FavoriteButton
+          targetType={FavoriteTargetType.Vendor}
+          targetId={vendor.id}
+          isFavorited={!!favorited}
+          loading={!!favoriteLoading}
+          onToggle={onToggleFavorite}
+          className="absolute right-3 top-3 z-10 shadow-sm"
+        />
+      )}
+
+      {onSelect && (
+        <div className="border-t border-[#f0e9e0] px-4 py-3 sm:px-5">
+          <button
+            type="button"
+            onClick={() => onSelect(vendor.id)}
+            aria-pressed={selected}
+            className={`flex w-full items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-xs font-semibold transition ${
+              selected
+                ? "bg-[#30251f] text-white shadow-sm"
+                : "border border-[#e4dbd0] bg-white text-[#514740] hover:border-[#b99a62] hover:bg-[#faf7f4]"
+            }`}
+          >
+            <span className={`flex h-4 w-4 items-center justify-center rounded border ${selected ? "border-white bg-white text-[#30251f]" : "border-[#cbbdb4]"}`}>
+              {selected && <Check size={11} />}
+            </span>
+            {selected ? "Selected for comparison" : "Add to compare"}
+          </button>
+        </div>
+      )}
+    </div>
   );
 }
