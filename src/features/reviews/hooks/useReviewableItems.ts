@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-import { getReviewableServices } from "@/features/reviews/api";
+import { fetchReviewableServices } from "@/features/reviews/api";
 import type { ReviewableService } from "@/types/review";
 
 interface UseReviewableItemsReturn {
@@ -21,8 +21,9 @@ export const useReviewableItems = (
   const [error, setError] = useState<string | null>(null);
 
   const fetchItems = useCallback(async () => {
-    if (!enabled) {
+    if (!enabled || !roadmapItemId) {
       setItems([]);
+      setLoading(false);
       return;
     }
 
@@ -30,10 +31,11 @@ export const useReviewableItems = (
       setLoading(true);
       setError(null);
 
-      const data = await getReviewableServices(roadmapItemId);
+      const data = await fetchReviewableServices(roadmapItemId);
 
       setItems(data);
     } catch (err) {
+      console.error("Failed to load reviewable services:", err);
       setError("Failed to load reviewable services.");
     } finally {
       setLoading(false);
