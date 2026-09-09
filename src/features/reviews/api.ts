@@ -26,9 +26,12 @@ export const fetchServiceReviews = async (
 export const fetchReviewableServices = async (
   roadmapItemId: string
 ): Promise<ReviewableService[]> => {
-  const response = await api.get<ReviewableService[]>("/api/reviews/reviewable", {
-    params: { roadmapItemId },
-  });
+  const response = await api.get<ReviewableService[]>(
+    "/api/reviews/reviewable",
+    {
+      params: { roadmapItemId },
+    }
+  );
 
   return response.data;
 };
@@ -36,7 +39,10 @@ export const fetchReviewableServices = async (
 export const submitReview = async (
   data: CreateReviewRequest
 ): Promise<CreateReviewResponse> => {
-  const response = await api.post<CreateReviewResponse>("/api/reviews", data);
+  const response = await api.post<CreateReviewResponse>(
+    "/api/reviews",
+    data
+  );
 
   return response.data;
 };
@@ -49,6 +55,25 @@ export const fetchMyReviews = async (): Promise<Review[]> => {
 
 export const fetchPendingReviews = async (): Promise<Review[]> => {
   const response = await api.get<Review[]>("/api/reviews/admin/pending");
+
+  return response.data;
+};
+
+/* =========================
+   Admin Approved Reviews
+========================= */
+
+export interface GetApprovedReviewsParams {
+  vendorId?: string;
+  isDisplayed?: boolean;
+}
+
+export const fetchApprovedReviews = async (
+  params?: GetApprovedReviewsParams
+): Promise<Review[]> => {
+  const response = await api.get<Review[]>("/api/reviews/admin/approved", {
+    params,
+  });
 
   return response.data;
 };

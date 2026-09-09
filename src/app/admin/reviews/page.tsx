@@ -16,7 +16,7 @@ import RatingStars from "@/components/shared/RatingStars";
 import { useAdminReviews } from "@/features/reviews/hooks/useAdminReviews";
 import { useAdminServices } from "@/features/services/hooks/useAdminServices";
 import {
-  fetchServiceReviews,
+  fetchApprovedReviews,
   toggleReviewDisplay,
 } from "@/features/reviews/api";
 import { formatDate } from "@/lib/format";
@@ -226,6 +226,7 @@ function PendingReviews() {
 
 function ServiceReviewsManager() {
   const { services } = useAdminServices();
+
   const [serviceId, setServiceId] = useState("");
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(false);
@@ -235,6 +236,7 @@ function ServiceReviewsManager() {
   useEffect(() => {
     if (!serviceId) {
       setReviews([]);
+      setError(null);
       return;
     }
 
@@ -245,16 +247,41 @@ function ServiceReviewsManager() {
         setLoading(true);
         setError(null);
 
-        const data = await fetchServiceReviews(serviceId, {
-          page: 1,
-          pageSize: 50,
+        /*
+         * Admin endpoint:
+         * Get all approved reviews that are currently hidden.
+         */
+        const data = await fetchApprovedReviews({
+          isDisplayed: false,
         });
 
-        if (!cancelled) setReviews(data.items);
+        console.log("APPROVED HIDDEN REVIEWS:", data);
+
+        /*
+         * The endpoint filters by vendorId, not serviceId,
+         * so we filter by serviceId on the frontend.
+         */
+        const serviceReviews = data.filter(
+          (review) => review.serviceId === serviceId
+        );
+
+        console.log("SELECTED SERVICE ID:", serviceId);
+        console.log("REVIEWS FOR SELECTED SERVICE:", serviceReviews);
+
+        if (!cancelled) {
+          setReviews(serviceReviews);
+        }
       } catch (err) {
-        if (!cancelled) setError("Failed to load reviews for this service.");
+        console.error("Failed to load approved reviews:", err);
+
+        if (!cancelled) {
+          setError("Failed to load approved reviews for this service.");
+          setReviews([]);
+        }
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     };
 
@@ -269,17 +296,27 @@ function ServiceReviewsManager() {
     try {
       setBusyId(review.id);
 
+      const nextDisplayed = !review.isDisplayed;
+
       await toggleReviewDisplay(review.id, {
-        isDisplayed: !review.isDisplayed,
+        isDisplayed: nextDisplayed,
       });
 
+      /*
+       * Update local state immediately.
+       */
       setReviews((prev) =>
         prev.map((r) =>
-          r.id === review.id ? { ...r, isDisplayed: !r.isDisplayed } : r
+          r.id === review.id
+            ? {
+                ...r,
+                isDisplayed: nextDisplayed,
+              }
+            : r
         )
       );
     } catch (err) {
-      // no-op — the button state simply won't change
+      console.error("Failed to toggle review display:", err);
     } finally {
       setBusyId(null);
     }
@@ -289,9 +326,16 @@ function ServiceReviewsManager() {
     <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
       <div className="mb-4 flex items-center gap-2">
         <Search size={16} className="text-[#c59b6d]" />
-        <h3 className="text-sm font-semibold text-gray-900">
-          Show or hide a service&apos;s approved reviews
-        </h3>
+
+        <div>
+          <h3 className="text-sm font-semibold text-gray-900">
+            Manage approved reviews
+          </h3>
+
+          <p className="mt-0.5 text-xs text-gray-500">
+            Activate or hide approved reviews for a specific service.
+          </p>
+        </div>
       </div>
 
       <select
@@ -300,6 +344,7 @@ function ServiceReviewsManager() {
         className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-[#c59b6d] focus:bg-white"
       >
         <option value="">Select a service...</option>
+
         {services.map((s) => (
           <option key={s.id} value={s.id}>
             {s.name} — {s.vendorBusinessName}
@@ -314,57 +359,107 @@ function ServiceReviewsManager() {
       )}
 
       {!loading && error && (
-        <p className="mt-4 text-sm text-red-600">{error}</p>
+        <div className="mt-4 rounded-xl bg-red-50 p-4 text-sm text-red-600">
+          {error}
+        </div>
       )}
 
       {!loading && !error && serviceId && reviews.length === 0 && (
-        <p className="mt-4 text-sm text-gray-500">
-          This service has no approved reviews yet.
-        </p>
+        <div className="mt-4 rounded-xl border border-dashed border-gray-200 bg-gray-50 p-6 text-center">
+          <p className="text-sm text-gray-500">
+            This service has no approved hidden reviews.
+          </p>
+        </div>
       )}
 
       {!loading && !error && reviews.length > 0 && (
         <div className="mt-4 space-y-3">
-          {reviews.map((review) => (
-            <div
-              key={review.id}
-              className="flex items-start justify-between gap-3 rounded-xl border border-gray-100 bg-gray-50 p-4"
-            >
-              <div>
-                <div className="flex items-center gap-2">
-                  <p className="text-sm font-medium text-gray-900">
-                    {review.userFullName || "Anonymous"}
-                  </p>
-                  <RatingStars rating={review.rating} size={12} />
-                </div>
-                {review.comment && (
-                  <p className="mt-1 text-xs text-gray-600">
-                    {review.comment}
-                  </p>
-                )}
-              </div>
+          {reviews.map((review) => {
+            const isBusy = busyId === review.id;
 
-              <button
-                type="button"
-                disabled={busyId === review.id}
-                onClick={() => handleToggle(review)}
-                title={review.isDisplayed ? "Hide from public" : "Show publicly"}
-                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border transition disabled:opacity-50 ${
-                  review.isDisplayed
-                    ? "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
-                    : "border-gray-200 bg-white text-gray-400 hover:bg-gray-100"
-                }`}
+            return (
+              <div
+                key={review.id}
+                className="rounded-xl border border-gray-100 bg-gray-50 p-4"
               >
-                {busyId === review.id ? (
-                  <Loader2 size={15} className="animate-spin" />
-                ) : review.isDisplayed ? (
-                  <Eye size={15} />
-                ) : (
-                  <EyeOff size={15} />
-                )}
-              </button>
-            </div>
-          ))}
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-sm font-medium text-gray-900">
+                        {review.userFullName || "Anonymous"}
+                      </p>
+
+                      <RatingStars
+                        rating={review.rating}
+                        size={12}
+                      />
+                    </div>
+
+                    {review.comment && (
+                      <p className="mt-2 text-sm leading-6 text-gray-600">
+                        {review.comment}
+                      </p>
+                    )}
+
+                    <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-gray-400">
+                      <span>{review.serviceName}</span>
+
+                      <span>•</span>
+
+                      <span>{review.vendorBusinessName}</span>
+
+                      <span>•</span>
+
+                      <span>
+                        {formatDate(review.createdAt)}
+                      </span>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    disabled={isBusy}
+                    onClick={() => handleToggle(review)}
+                    title={
+                      review.isDisplayed
+                        ? "Hide from public"
+                        : "Activate and show publicly"
+                    }
+                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border transition disabled:cursor-not-allowed disabled:opacity-50 ${
+                      review.isDisplayed
+                        ? "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                        : "border-gray-200 bg-white text-gray-400 hover:bg-gray-100"
+                    }`}
+                  >
+                    {isBusy ? (
+                      <Loader2
+                        size={15}
+                        className="animate-spin"
+                      />
+                    ) : review.isDisplayed ? (
+                      <Eye size={15} />
+                    ) : (
+                      <EyeOff size={15} />
+                    )}
+                  </button>
+                </div>
+
+                <div className="mt-3">
+                  <span
+                    className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-medium ${
+                      review.isDisplayed
+                        ? "bg-emerald-50 text-emerald-700"
+                        : "bg-amber-50 text-amber-700"
+                    }`}
+                  >
+                    {review.isDisplayed
+                      ? "Active"
+                      : "Approved • Hidden"}
+                  </span>
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
