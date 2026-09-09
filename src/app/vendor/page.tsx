@@ -124,7 +124,7 @@ const COLORS = ["#a47e43", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#06b6d4"
 const CustomTooltip = ({ active, payload, label, unit = "reviews", prefix = "" }: any) => {
   if (active && payload && payload.length) {
     return (
-      <div className="rounded-xl border border-[#e8dfd8] bg-white px-3 py-2 shadow-lg max-w-[200px] sm:max-w-none">
+      <div className="rounded-xl border border-[#e8dfd8] bg-white px-3 py-2 shadow-lg max-w-50 sm:max-w-none">
         <p className="text-xs sm:text-sm font-semibold text-[#30251f] truncate">
           {label || payload[0]?.payload?.name || payload[0]?.payload?.month || payload[0]?.payload?.category}
         </p>

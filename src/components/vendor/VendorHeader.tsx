@@ -126,7 +126,7 @@ export default function VendorHeader({ onMenuClick }: VendorHeaderProps) {
   const notificationCount = 0;
 
   return (
-    <header className="sticky top-0 z-30 flex h-15 items-center justify-between border-b border-[#eee7e1] bg-white/95 px-3 backdrop-blur-md supports-[backdrop-filter]:bg-white/80 sm:h-18 sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-30 flex h-15 items-center justify-between border-b border-[#eee7e1] bg-white/95 px-3 backdrop-blur-md supports-backdrop-filter:bg-white/80 sm:h-18 sm:px-6 lg:px-8">
       {/* =================================================
           LEFT SECTION
       ================================================= */}

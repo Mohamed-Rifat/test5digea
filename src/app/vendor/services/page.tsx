@@ -288,7 +288,7 @@ export default function VendorServicesPage() {
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-2">
               <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#f5eee9] sm:h-8 sm:w-8">
-                <Filter size={12} className="text-[#a47e43] sm:h-[14px] sm:w-[14px]" />
+                <Filter size={12} className="text-[#a47e43] sm:h-3.5 sm:w-3.5" />
               </div>
               <span className="text-xs font-medium text-[#40352f] sm:text-sm">Filter</span>
             </div>

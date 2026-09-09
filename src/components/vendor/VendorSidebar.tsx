@@ -54,32 +54,32 @@ const navigationItems = [
     href: "/vendor",
     icon: LayoutDashboard,
   },
-  {
-    label: "My Services",
-    href: "/vendor/services",
-    icon: BriefcaseBusiness,
+     {
+    label: "Company Profile",
+    href: "/vendor/profile",
+    icon: Building2,
   },
   {
     label: "Categories",
     href: "/vendor/categories",
     icon: Tags,
   },
+    {
+    label: "My Services",
+    href: "/vendor/services",
+    icon: BriefcaseBusiness,
+  },
   {
     label: "Reviews",
     href: "/vendor/reviews",
     icon: MessageSquareText,
   },
-  {
-    label: "Company Profile",
-    href: "/vendor/profile",
-    icon: Building2,
-  },
 ];
 
 // ✅ Quick actions
 const quickActions = [
-  { label: "Help Center", icon: HelpCircle, href: "/support" },
-  { label: "Settings", icon: Settings, href: "/vendor/settings" },
+  { label: "Help Center", icon: HelpCircle, href: "/vendor/support" },
+  { label: "Settings", icon: Settings, href: "/vendor/profile" },
 ];
 
 export default function VendorSidebar({
@@ -157,7 +157,7 @@ export default function VendorSidebar({
 
       <aside
         className={`
-          fixed inset-y-0 left-0 z-50 flex w-[280px] flex-col
+          fixed inset-y-0 left-0 z-50 flex w-70 flex-col
           border-r border-[#eee7e1] bg-white
           transition-transform duration-300 ease-in-out
           lg:static lg:z-auto lg:translate-x-0
@@ -168,7 +168,7 @@ export default function VendorSidebar({
             BRAND / HEADER
         ================================================= */}
 
-        <div className="flex h-[72px] items-center justify-between border-b border-[#eee7e1] px-5">
+        <div className="flex h-18 items-center justify-between border-b border-[#eee7e1] px-5">
           <Link
             href="/vendor"
             onClick={onClose}
@@ -200,7 +200,7 @@ export default function VendorSidebar({
         <div className="border-b border-[#eee7e1] px-4 py-4">
           <div className="flex items-center gap-3">
             {/* Avatar */}
-            <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-[#f5eee9] to-[#e8dfd8]">
+            <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-linear-to-br from-[#f5eee9] to-[#e8dfd8]">
               {loading ? (
                 <div className="h-full w-full animate-pulse bg-[#e8dfd8]" />
               ) : vendor?.profileImageUrl ? (
