@@ -2,17 +2,18 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-import { fetchMyReviews } from "@/features/reviews/api";
+import { fetchVendorReviews } from "@/features/reviews/api";
 import type { Review } from "@/types/review";
 
-interface UseMyReviewsReturn {
+interface UseVendorReviewsReturn {
   reviews: Review[];
   loading: boolean;
   error: string | null;
   refetch: () => Promise<void>;
 }
 
-export const useMyReviews = (): UseMyReviewsReturn => {
+// Reviews left on the currently authenticated vendor's own services.
+export const useVendorReviews = (): UseVendorReviewsReturn => {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -22,7 +23,7 @@ export const useMyReviews = (): UseMyReviewsReturn => {
       setLoading(true);
       setError(null);
 
-      const data = await fetchMyReviews();
+      const data = await fetchVendorReviews();
 
       setReviews(data);
     } catch (err) {

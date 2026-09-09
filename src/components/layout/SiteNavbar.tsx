@@ -12,7 +12,6 @@ import {
   User as UserIcon,
   LogOut,
   LayoutDashboard,
-  MessageSquareText,
 } from "lucide-react";
 
 import { useAuth } from "@/context/AuthContext";
@@ -161,14 +160,6 @@ export default function SiteNavbar() {
                           <Map size={16} />
                           Wedding Roadmap
                         </Link>
-                        <Link
-                          href="/reviews"
-                          onClick={() => setMenuOpen(false)}
-                          className="flex items-center gap-2 px-4 py-2.5 text-sm text-[#5f544d] hover:bg-[#faf7f4] hover:text-[#30251f]"
-                        >
-                          <MessageSquareText size={16} />
-                          My Reviews
-                        </Link>
                       </>
                     )}
 
@@ -233,13 +224,6 @@ export default function SiteNavbar() {
                   className="rounded-xl px-4 py-2.5 text-sm font-medium text-[#5f544d] hover:bg-[#f0e9e0]"
                 >
                   Wedding Roadmap
-                </Link>
-                <Link
-                  href="/reviews"
-                  onClick={() => setMobileOpen(false)}
-                  className="rounded-xl px-4 py-2.5 text-sm font-medium text-[#5f544d] hover:bg-[#f0e9e0]"
-                >
-                  My Reviews
                 </Link>
               </>
             )}

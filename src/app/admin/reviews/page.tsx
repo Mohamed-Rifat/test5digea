@@ -255,8 +255,6 @@ function ServiceReviewsManager() {
           isDisplayed: false,
         });
 
-        console.log("APPROVED HIDDEN REVIEWS:", data);
-
         /*
          * The endpoint filters by vendorId, not serviceId,
          * so we filter by serviceId on the frontend.
@@ -264,9 +262,6 @@ function ServiceReviewsManager() {
         const serviceReviews = data.filter(
           (review) => review.serviceId === serviceId
         );
-
-        console.log("SELECTED SERVICE ID:", serviceId);
-        console.log("REVIEWS FOR SELECTED SERVICE:", serviceReviews);
 
         if (!cancelled) {
           setReviews(serviceReviews);

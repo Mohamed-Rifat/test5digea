@@ -19,9 +19,6 @@ export default function ReviewsSection({ serviceId }: { serviceId: string }) {
 
   const reviews = data?.items ?? [];
   const totalPages = data?.totalPages ?? 1;
-console.log("REVIEWS SECTION SERVICE ID:", serviceId);
-console.log("REVIEWS SECTION DATA:", data);
-console.log("REVIEWS SECTION REVIEWS:", reviews);
   return (
     <section className="mt-10">
       <div className="mb-4 flex items-center gap-2">

@@ -47,7 +47,9 @@ export const submitReview = async (
   return response.data;
 };
 
-export const fetchMyReviews = async (): Promise<Review[]> => {
+// Returns the reviews left on the currently authenticated vendor's own
+// services (not the current user's authored reviews).
+export const fetchVendorReviews = async (): Promise<Review[]> => {
   const response = await api.get<Review[]>("/api/reviews/me");
 
   return response.data;
