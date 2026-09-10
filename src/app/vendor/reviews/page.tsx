@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useCallback, memo, useEffect, useRef } from "react";
+import { useMemo, useState, useCallback, memo } from "react";
 import Link from "next/link";
 import {
   AlertCircle,
@@ -15,16 +15,12 @@ import {
   User,
   X,
   XCircle,
-  Download,
+  FileSpreadsheet,
   RefreshCw,
-  TrendingUp,
-  Calendar,
   Eye,
   EyeOff,
   ArrowUpDown,
-  FileSpreadsheet,
   Menu as MenuIcon,
-  ChevronLeft,
 } from "lucide-react";
 
 import {
@@ -32,20 +28,15 @@ import {
   Chip,
   MenuItem,
   Select,
-  type SelectChangeEvent,
   TextField,
   Tooltip,
   Badge,
-  CircularProgress,
   InputAdornment,
   Menu,
   ListItemIcon,
   ListItemText,
   Button,
   IconButton,
-  Drawer,
-  Box,
-  Typography,
   Divider,
   useMediaQuery,
   useTheme,
@@ -60,19 +51,24 @@ import { formatDate } from "@/lib/format";
 import { ReviewStatus } from "@/types/review";
 import type { Review } from "@/types/review";
 
-// ✅ استيراد xlsx
 import * as XLSX from 'xlsx';
 
 /* =========================================================
-   Constants & Configuration
+   Constants
 ========================================================= */
 
-// ✅ استخدام ReviewStatus الصحيح
 const STATUS_FILTERS = [
-  { value: "all", label: "All statuses", shortLabel: "All", icon: Filter },
-  { value: String(ReviewStatus.Approved), label: "Approved", shortLabel: "Approved", icon: CheckCircle2 },
-  { value: String(ReviewStatus.Pending), label: "Pending", shortLabel: "Pending", icon: Clock3 },
-  { value: String(ReviewStatus.Rejected), label: "Rejected", shortLabel: "Rejected", icon: XCircle },
+  { value: "all", label: "All statuses", icon: Filter },
+  { value: String(ReviewStatus.Approved), label: "Approved", icon: CheckCircle2 },
+  { value: String(ReviewStatus.Pending), label: "Pending", icon: Clock3 },
+  { value: String(ReviewStatus.Rejected), label: "Rejected", icon: XCircle },
+] as const;
+
+// ✅ فلتر جديد للـ Visibility
+const VISIBILITY_FILTERS = [
+  { value: "all", label: "All visibility", icon: Filter },
+  { value: "visible", label: "Visible only", icon: Eye },
+  { value: "hidden", label: "Hidden only", icon: EyeOff },
 ] as const;
 
 const SORT_OPTIONS = [
@@ -85,7 +81,7 @@ const SORT_OPTIONS = [
 const PAGE_SIZE = 5;
 
 /* =========================================================
-   Helpers - ✅ استخدام ReviewStatus الصحيح
+   Helpers
 ========================================================= */
 
 function getStatusMeta(status: ReviewStatus) {
@@ -137,7 +133,7 @@ function getTimeAgo(date: string): string {
 }
 
 /* =========================================================
-   Excel Export Helper - ✅ تم إصلاح أخطاء TypeScript
+   Excel Export
 ========================================================= */
 
 function exportReviewsToExcel(reviews: Review[], vendorName?: string) {
@@ -146,14 +142,10 @@ function exportReviewsToExcel(reviews: Review[], vendorName?: string) {
     return;
   }
 
-  // ✅ استخدام reduce مع typing صحيح
   const reviewsByService = reviews.reduce<Record<string, { serviceName: string; reviews: Review[] }>>((acc, review) => {
     const key = review.serviceId;
     if (!acc[key]) {
-      acc[key] = {
-        serviceName: review.serviceName,
-        reviews: [],
-      };
+      acc[key] = { serviceName: review.serviceName, reviews: [] };
     }
     acc[key].reviews.push(review);
     return acc;
@@ -164,11 +156,12 @@ function exportReviewsToExcel(reviews: Review[], vendorName?: string) {
   const totalApproved = reviews.filter(r => r.status === ReviewStatus.Approved).length;
   const totalPending = reviews.filter(r => r.status === ReviewStatus.Pending).length;
   const totalRejected = reviews.filter(r => r.status === ReviewStatus.Rejected).length;
+  const totalVisible = reviews.filter(r => r.status === ReviewStatus.Approved && r.isDisplayed).length;
+  const totalHidden = reviews.filter(r => r.status === ReviewStatus.Approved && !r.isDisplayed).length;
   const avgRating = reviews
     .filter(r => r.status === ReviewStatus.Approved)
     .reduce((acc, r) => acc + r.rating, 0) / (totalApproved || 1);
 
-  // Summary Sheet - ✅ استخدام Object.values مع typing
   const summaryData: any[][] = [
     ['📊 REVIEWS REPORT SUMMARY'],
     [''],
@@ -181,6 +174,8 @@ function exportReviewsToExcel(reviews: Review[], vendorName?: string) {
     ['Approved Reviews', totalApproved],
     ['Pending Reviews', totalPending],
     ['Rejected Reviews', totalRejected],
+    ['Visible Reviews', totalVisible],
+    ['Hidden Reviews', totalHidden],
     ['Average Rating', String(avgRating.toFixed(1)) + ' ⭐'],
     ['Approval Rate', String(((totalApproved / reviews.length) * 100).toFixed(1)) + '%'],
     [''],
@@ -188,15 +183,10 @@ function exportReviewsToExcel(reviews: Review[], vendorName?: string) {
     ['Service Name', 'Reviews Count', 'Avg Rating'],
   ];
 
-  // ✅ إضافة بيانات الخدمات مع typing صحيح
   Object.values(reviewsByService).forEach(({ serviceName, reviews: r }) => {
     const avg = r.filter(rev => rev.status === ReviewStatus.Approved)
       .reduce((acc, rev) => acc + rev.rating, 0) / (r.filter(rev => rev.status === ReviewStatus.Approved).length || 1);
-    summaryData.push([
-      serviceName,
-      r.length,
-      String(avg.toFixed(1)) + ' ⭐'
-    ]);
+    summaryData.push([serviceName, r.length, String(avg.toFixed(1)) + ' ⭐']);
   });
 
   const summaryWS = XLSX.utils.aoa_to_sheet(summaryData);
@@ -204,85 +194,71 @@ function exportReviewsToExcel(reviews: Review[], vendorName?: string) {
   summaryWS['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 2 } }];
   XLSX.utils.book_append_sheet(workbook, summaryWS, 'Summary');
 
-  // Service Sheets - ✅ استخدام forEach مع typing صحيح
   Object.values(reviewsByService).forEach(({ serviceName, reviews: serviceReviews }) => {
-    const serviceStats = {
-      total: serviceReviews.length,
-      approved: serviceReviews.filter(r => r.status === ReviewStatus.Approved).length,
-      pending: serviceReviews.filter(r => r.status === ReviewStatus.Pending).length,
-      rejected: serviceReviews.filter(r => r.status === ReviewStatus.Rejected).length,
-      avgRating: serviceReviews
-        .filter(r => r.status === ReviewStatus.Approved)
-        .reduce((acc, r) => acc + r.rating, 0) / (serviceReviews.filter(r => r.status === ReviewStatus.Approved).length || 1),
-    };
-
     const rows: any[][] = [
       [`📋 ${serviceName} - Reviews Report`],
       [""],
-      [`📊 Total: ${serviceStats.total} | ✅ Approved: ${serviceStats.approved} | ⏳ Pending: ${serviceStats.pending} | ❌ Rejected: ${serviceStats.rejected} | ⭐ Avg: ${serviceStats.avgRating.toFixed(1)}`],
-      [""],
-      ["#", "Customer", "Rating", "Status", "Comment", "Date"],
+      ["#", "Customer", "Rating", "Status", "Visibility", "Comment", "Date"],
     ];
 
     serviceReviews.forEach((review, index) => {
       const statusLabel = getStatusMeta(review.status).label;
-      const ratingLabel = getRatingLabel(review.rating);
+      const visibility = review.status === ReviewStatus.Approved
+        ? (review.isDisplayed ? "✅ Visible" : "🚫 Hidden")
+        : "—";
       const stars = '⭐'.repeat(Math.round(review.rating));
       rows.push([
         index + 1,
         review.userFullName || 'Anonymous',
-        `${review.rating} ${stars} (${ratingLabel})`,
+        `${review.rating} ${stars}`,
         statusLabel,
+        visibility,
         review.comment || '(No comment)',
         formatDate(review.createdAt),
       ]);
     });
 
     const ws = XLSX.utils.aoa_to_sheet(rows);
-    ws['!cols'] = [{ wch: 6 }, { wch: 30 }, { wch: 30 }, { wch: 18 }, { wch: 55 }, { wch: 22 }];
-    ws['!merges'] = [
-      { s: { r: 0, c: 0 }, e: { r: 0, c: 5 } },
-      { s: { r: 2, c: 0 }, e: { r: 2, c: 5 } },
-    ];
-
-    let sheetName = serviceName.slice(0, 27);
-    XLSX.utils.book_append_sheet(workbook, ws, sheetName);
+    ws['!cols'] = [{ wch: 6 }, { wch: 28 }, { wch: 22 }, { wch: 16 }, { wch: 16 }, { wch: 50 }, { wch: 22 }];
+    ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 6 } }];
+    XLSX.utils.book_append_sheet(workbook, ws, serviceName.slice(0, 27));
   });
 
-  // All Reviews Sheet
   const allReviewsData: any[][] = [
     ['📋 ALL REVIEWS - Complete List'],
     [''],
-    ['#', 'Customer', 'Service', 'Rating', 'Status', 'Comment', 'Date'],
+    ['#', 'Customer', 'Service', 'Rating', 'Status', 'Visibility', 'Comment', 'Date'],
   ];
 
   reviews.forEach((review, index) => {
     const stars = '⭐'.repeat(Math.round(review.rating));
+    const visibility = review.status === ReviewStatus.Approved
+      ? (review.isDisplayed ? "✅ Visible" : "🚫 Hidden")
+      : "—";
     allReviewsData.push([
       index + 1,
       review.userFullName || 'Anonymous',
       review.serviceName,
       `${review.rating} ${stars}`,
       getStatusMeta(review.status).label,
+      visibility,
       review.comment || '(No comment)',
       formatDate(review.createdAt),
     ]);
   });
 
   const allWS = XLSX.utils.aoa_to_sheet(allReviewsData);
-  allWS['!cols'] = [{ wch: 6 }, { wch: 30 }, { wch: 35 }, { wch: 25 }, { wch: 18 }, { wch: 55 }, { wch: 22 }];
-  allWS['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 6 } }];
+  allWS['!cols'] = [{ wch: 6 }, { wch: 28 }, { wch: 32 }, { wch: 22 }, { wch: 16 }, { wch: 16 }, { wch: 50 }, { wch: 22 }];
+  allWS['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 7 } }];
   XLSX.utils.book_append_sheet(workbook, allWS, 'All Reviews');
 
-  const fileName = `reviews_report_${new Date().toISOString().split('T')[0]}.xlsx`;
-  XLSX.writeFile(workbook, fileName);
+  XLSX.writeFile(workbook, `reviews_report_${new Date().toISOString().split('T')[0]}.xlsx`);
 }
 
 /* =========================================================
    Components
 ========================================================= */
 
-// ✅ Status Badge - استخدام ReviewStatus الصحيح
 const StatusBadge = memo(function StatusBadge({ status }: { status: ReviewStatus }) {
   const meta = getStatusMeta(status);
   const Icon = meta.icon;
@@ -302,21 +278,18 @@ const StatusBadge = memo(function StatusBadge({ status }: { status: ReviewStatus
 
 StatusBadge.displayName = "StatusBadge";
 
-// ✅ Stat Card
 const StatCard = memo(function StatCard({
   title,
   value,
   icon: Icon,
   description,
   highlight = false,
-  trend,
 }: {
   title: string;
   value: string | number;
   icon: React.ElementType;
   description: string;
   highlight?: boolean;
-  trend?: { value: number; label: string };
 }) {
   return (
     <div
@@ -332,16 +305,9 @@ const StatCard = memo(function StatCard({
             {title}
           </p>
 
-          <div className="mt-1.5 flex items-baseline gap-2 sm:mt-2 sm:gap-3">
-            <p className="text-xl font-semibold tracking-tight text-[#30251f] sm:text-3xl">
-              {value}
-            </p>
-            {trend && (
-              <span className={`text-[10px] font-medium sm:text-xs ${trend.value >= 0 ? "text-emerald-600" : "text-red-600"}`}>
-                {trend.value >= 0 ? "↑" : "↓"} {Math.abs(trend.value)}%
-              </span>
-            )}
-          </div>
+          <p className="mt-1.5 text-xl font-semibold tracking-tight text-[#30251f] sm:mt-2 sm:text-3xl">
+            {value}
+          </p>
 
           <p className="mt-1 truncate text-[10px] text-[#9a8d85] sm:mt-1.5 sm:text-xs">
             {description}
@@ -362,11 +328,14 @@ const StatCard = memo(function StatCard({
 
 StatCard.displayName = "StatCard";
 
-// ✅ Review Card - استخدام ReviewStatus الصحيح
+/* =========================================================
+   ✅ Review Card - مع border ملون حسب الـ Visibility
+========================================================= */
+
 const ReviewCard = memo(function ReviewCard({
   review,
   index,
-  onViewDetails
+  onViewDetails,
 }: {
   review: Review;
   index: number;
@@ -381,19 +350,43 @@ const ReviewCard = memo(function ReviewCard({
     ? review.comment.slice(0, 150) + "..."
     : review.comment;
 
+  // ✅ تحديد لون الـ border حسب الحالة
+  const getCardBorderClass = () => {
+    if (review.status !== ReviewStatus.Approved) {
+      return "border-[#eee7e1]"; // محايد للـ Pending و Rejected
+    }
+    return review.isDisplayed
+      ? "border-emerald-300 hover:border-emerald-400" // ✅ أخضر للـ Visible
+      : "border-red-300 hover:border-red-400"; // ❌ أحمر للـ Hidden
+  };
+
   return (
     <article
-      className="group rounded-2xl border border-[#eee7e1] bg-white p-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-[#e2d8d0] hover:shadow-md sm:p-6"
+      className={`group relative rounded-2xl border-2 bg-white p-4 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md sm:p-6 ${getCardBorderClass()}`}
       style={{ animationDelay: `${index * 50}ms` }}
     >
+      {/* ✅ شريط علوي ملون حسب الحالة */}
+      {review.status === ReviewStatus.Approved && (
+        <div
+          className={`absolute left-0 right-0 top-0 h-1 rounded-t-2xl ${
+            review.isDisplayed ? "bg-emerald-400" : "bg-red-400"
+          }`}
+        />
+      )}
+
       {/* Top Section */}
       <div className="flex items-start justify-between gap-2 sm:gap-4">
         <div className="flex min-w-0 flex-1 gap-2 sm:gap-3">
-          <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#f5eee9] text-[#705b4e] sm:h-10 sm:w-10">
-            <User size={15} strokeWidth={1.8} className="sm:h-[17px] sm:w-[17px]" />
-            {review.status === ReviewStatus.Approved && review.isDisplayed && (
-              <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-emerald-400 ring-2 ring-white sm:h-3 sm:w-3" />
-            )}
+          <div
+            className={`relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full sm:h-10 sm:w-10 ${
+              review.status === ReviewStatus.Approved
+                ? review.isDisplayed
+                  ? "bg-emerald-50 text-emerald-700"
+                  : "bg-red-50 text-red-700"
+                : "bg-[#f5eee9] text-[#705b4e]"
+            }`}
+          >
+            <User size={15} strokeWidth={1.8} className="sm:h-4.25 sm:w-4.25" />
           </div>
 
           <div className="min-w-0 flex-1">
@@ -401,20 +394,6 @@ const ReviewCard = memo(function ReviewCard({
               <p className="truncate text-xs font-semibold text-[#30251f] sm:text-sm">
                 {review.userFullName || "Anonymous"}
               </p>
-              {review.status === ReviewStatus.Approved && (
-                <Badge
-                  color="success"
-                  variant="dot"
-                  sx={{
-                    "& .MuiBadge-dot": {
-                      backgroundColor: "#10b981",
-                      width: 5,
-                      height: 5,
-                      sm: { width: 6, height: 6 },
-                    }
-                  }}
-                />
-              )}
             </div>
             <div className="mt-0.5 flex flex-wrap items-center gap-1.5 sm:gap-2">
               <p className="text-[10px] text-[#a39891] sm:text-[11px]">Customer</p>
@@ -425,13 +404,29 @@ const ReviewCard = memo(function ReviewCard({
         </div>
 
         <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+          {/* ✅ Visibility Badge واضح */}
           {review.status === ReviewStatus.Approved && (
-            <Tooltip title={review.isDisplayed ? "Visible" : "Hidden"} arrow>
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#f5eee9] sm:h-7 sm:w-7">
+            <Tooltip
+              title={review.isDisplayed ? "Visible on listing" : "Hidden by admin"}
+              arrow
+            >
+              <span
+                className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[9px] font-semibold uppercase tracking-[0.04em] sm:gap-1.5 sm:px-2.5 sm:text-[10px] ${
+                  review.isDisplayed
+                    ? "border border-emerald-200 bg-emerald-50 text-emerald-700"
+                    : "border border-red-200 bg-red-50 text-red-700"
+                }`}
+              >
                 {review.isDisplayed ? (
-                  <Eye size={12} className="text-emerald-600 sm:h-[14px] sm:w-[14px]" />
+                  <>
+                    <Eye size={11} strokeWidth={2.3} />
+                    <span className="hidden xs:inline">Visible</span>
+                  </>
                 ) : (
-                  <EyeOff size={12} className="text-amber-600 sm:h-[14px] sm:w-[14px]" />
+                  <>
+                    <EyeOff size={11} strokeWidth={2.3} />
+                    <span className="hidden xs:inline">Hidden</span>
+                  </>
                 )}
               </span>
             </Tooltip>
@@ -486,11 +481,11 @@ const ReviewCard = memo(function ReviewCard({
         </p>
       )}
 
-      {/* Rejection Reason - استخدام ReviewStatus.Rejected */}
+      {/* Rejection Reason */}
       {review.status === ReviewStatus.Rejected && review.rejectionReason && (
         <div className="mt-3 rounded-xl border border-red-100 bg-red-50/70 p-2.5 sm:mt-5 sm:p-3.5">
           <div className="flex gap-2 sm:gap-2.5">
-            <AlertCircle size={13} className="mt-0.5 shrink-0 text-red-500 sm:h-[15px] sm:w-[15px]" />
+            <AlertCircle size={13} className="mt-0.5 shrink-0 text-red-500 sm:h-3.75 sm:w-3.75" />
             <div>
               <p className="text-[10px] font-semibold text-red-700 sm:text-xs">
                 Moderation feedback
@@ -524,7 +519,6 @@ const ReviewCard = memo(function ReviewCard({
 
 ReviewCard.displayName = "ReviewCard";
 
-// ✅ Loading Skeleton
 const ReviewSkeleton = memo(function ReviewSkeleton({ count = 3 }: { count?: number }) {
   return (
     <div className="space-y-3 sm:space-y-4">
@@ -553,7 +547,6 @@ const ReviewSkeleton = memo(function ReviewSkeleton({ count = 3 }: { count?: num
 
 ReviewSkeleton.displayName = "ReviewSkeleton";
 
-// ✅ Empty State
 const EmptyState = memo(function EmptyState({
   filtered,
   onClear,
@@ -596,7 +589,7 @@ const EmptyState = memo(function EmptyState({
 EmptyState.displayName = "EmptyState";
 
 /* =========================================================
-   Mobile Filter Drawer
+   ✅ Mobile Filter Drawer - مع فلتر الـ Visibility
 ========================================================= */
 
 function MobileFilterDrawer({
@@ -607,6 +600,8 @@ function MobileFilterDrawer({
   setServiceFilter,
   statusFilter,
   setStatusFilter,
+  visibilityFilter,
+  setVisibilityFilter,
   sortBy,
   setSortBy,
   searchQuery,
@@ -621,6 +616,8 @@ function MobileFilterDrawer({
   setServiceFilter: (value: string) => void;
   statusFilter: string;
   setStatusFilter: (value: string) => void;
+  visibilityFilter: string;
+  setVisibilityFilter: (value: string) => void;
   sortBy: string;
   setSortBy: (value: any) => void;
   searchQuery: string;
@@ -638,7 +635,7 @@ function MobileFilterDrawer({
         "& .MuiDrawer-paper": {
           borderTopLeftRadius: "20px",
           borderTopRightRadius: "20px",
-          maxHeight: "85vh",
+          maxHeight: "90vh",
           padding: "20px",
         },
       }}
@@ -770,6 +767,47 @@ function MobileFilterDrawer({
           </Select>
         </div>
 
+        {/* ✅ فلتر الـ Visibility */}
+        <div>
+          <label className="text-xs font-medium text-[#8d8077] block mb-1.5">Visibility</label>
+          <Select
+            value={visibilityFilter}
+            onChange={(e) => setVisibilityFilter(e.target.value)}
+            fullWidth
+            IconComponent={ChevronDown}
+            renderValue={(value) => {
+              const current = VISIBILITY_FILTERS.find(item => item.value === value) ?? VISIBILITY_FILTERS[0];
+              const Icon = current.icon;
+              return (
+                <div className="flex items-center gap-2">
+                  <Icon size={16} className="text-[#8d796a]" />
+                  <span>{current.label}</span>
+                </div>
+              );
+            }}
+            sx={{
+              borderRadius: "12px",
+              backgroundColor: "#fcfaf8",
+              fontSize: "13px",
+              "& .MuiOutlinedInput-notchedOutline": { borderColor: "#e3d9d1" },
+              "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "#d5c8be" },
+              "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: "#a47e43", borderWidth: "1px" },
+            }}
+          >
+            {VISIBILITY_FILTERS.map((option) => {
+              const Icon = option.icon;
+              return (
+                <MenuItem key={option.value} value={option.value}>
+                  <div className="flex items-center gap-2.5">
+                    <Icon size={15} className="text-[#806a5c]" />
+                    <span>{option.label}</span>
+                  </div>
+                </MenuItem>
+              );
+            })}
+          </Select>
+        </div>
+
         <div>
           <label className="text-xs font-medium text-[#8d8077] block mb-1.5">Sort by</label>
           <Select
@@ -813,7 +851,7 @@ function MobileFilterDrawer({
 }
 
 /* =========================================================
-   Main Page Component - ✅ استخدام ReviewStatus الصحيح
+   Main Page
 ========================================================= */
 
 export default function VendorReviewsPage() {
@@ -826,6 +864,7 @@ export default function VendorReviewsPage() {
 
   const [serviceFilter, setServiceFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [visibilityFilter, setVisibilityFilter] = useState("all"); // ✅ جديد
   const [sortBy, setSortBy] = useState<"newest" | "oldest" | "highest" | "lowest">("newest");
   const [searchQuery, setSearchQuery] = useState("");
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
@@ -835,7 +874,7 @@ export default function VendorReviewsPage() {
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
 
   /* =======================================================
-     Stats - ✅ استخدام ReviewStatus الصحيح
+     Stats
   ======================================================= */
 
   const stats = useMemo(() => {
@@ -843,6 +882,8 @@ export default function VendorReviewsPage() {
     const approved = reviews.filter(r => r.status === ReviewStatus.Approved).length;
     const pending = reviews.filter(r => r.status === ReviewStatus.Pending).length;
     const rejected = reviews.filter(r => r.status === ReviewStatus.Rejected).length;
+    const visible = reviews.filter(r => r.status === ReviewStatus.Approved && r.isDisplayed).length;
+    const hidden = reviews.filter(r => r.status === ReviewStatus.Approved && !r.isDisplayed).length;
     const averageRating = reviews
       .filter(r => r.status === ReviewStatus.Approved)
       .reduce((acc, r) => acc + r.rating, 0) / (approved || 1);
@@ -852,6 +893,8 @@ export default function VendorReviewsPage() {
       approved,
       pending,
       rejected,
+      visible,
+      hidden,
       averageRating: averageRating || 0,
       approvalRate: total > 0 ? (approved / total) * 100 : 0,
     };
@@ -873,7 +916,7 @@ export default function VendorReviewsPage() {
   }, [services, reviews]);
 
   /* =======================================================
-     Filtering & Sorting - ✅ استخدام ReviewStatus الصحيح
+     ✅ Filtering - مع فلتر الـ Visibility
   ======================================================= */
 
   const filteredReviews = useMemo(() => {
@@ -884,7 +927,14 @@ export default function VendorReviewsPage() {
         review.userFullName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         review.comment?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         review.serviceName.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesService && matchesStatus && matchesSearch;
+
+      // ✅ فلتر الـ Visibility
+      const matchesVisibility =
+        visibilityFilter === "all" ||
+        (visibilityFilter === "visible" && review.status === ReviewStatus.Approved && review.isDisplayed) ||
+        (visibilityFilter === "hidden" && review.status === ReviewStatus.Approved && !review.isDisplayed);
+
+      return matchesService && matchesStatus && matchesSearch && matchesVisibility;
     });
 
     filtered.sort((a, b) => {
@@ -903,14 +953,25 @@ export default function VendorReviewsPage() {
     });
 
     return filtered;
-  }, [reviews, serviceFilter, statusFilter, searchQuery, sortBy]);
+  }, [reviews, serviceFilter, statusFilter, visibilityFilter, searchQuery, sortBy]);
 
   const displayedReviews = useMemo(() => {
     return filteredReviews.slice(0, visibleCount);
   }, [filteredReviews, visibleCount]);
 
   const hasMore = displayedReviews.length < filteredReviews.length;
-  const hasActiveFilters = serviceFilter !== "all" || statusFilter !== "all" || searchQuery !== "";
+  const hasActiveFilters =
+    serviceFilter !== "all" ||
+    statusFilter !== "all" ||
+    visibilityFilter !== "all" ||
+    searchQuery !== "";
+
+  const activeFiltersCount = [
+    serviceFilter !== "all",
+    statusFilter !== "all",
+    visibilityFilter !== "all",
+    searchQuery !== "",
+  ].filter(Boolean).length;
 
   /* =======================================================
      Handlers
@@ -929,6 +990,7 @@ export default function VendorReviewsPage() {
   const handleClearFilters = useCallback(() => {
     setServiceFilter("all");
     setStatusFilter("all");
+    setVisibilityFilter("all");
     setSearchQuery("");
     setSortBy("newest");
     setVisibleCount(PAGE_SIZE);
@@ -966,13 +1028,13 @@ export default function VendorReviewsPage() {
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
             <div>
               <p className="mb-1.5 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#9b8171] sm:mb-2 sm:text-xs">
-                <Sparkles size={11} className="sm:h-[13px] sm:w-[13px]" />
+                <Sparkles size={11} className="sm:h-3.25 sm:w-3.25" />
                 Vendor Dashboard
               </p>
 
               <div className="flex items-center gap-2 sm:gap-3">
                 <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#f5eee9] sm:h-10 sm:w-10">
-                  <MessageSquareText size={16} className="text-[#a47e43] sm:h-[20px] sm:w-[20px]" strokeWidth={1.8} />
+                  <MessageSquareText size={16} className="text-[#a47e43] sm:h-5 sm:w-5" strokeWidth={1.8} />
                 </div>
                 <h1 className="text-2xl font-semibold tracking-tight text-[#30251f] sm:text-3xl lg:text-4xl">
                   Reviews
@@ -990,7 +1052,7 @@ export default function VendorReviewsPage() {
                 disabled={isRefreshing}
                 className="inline-flex items-center gap-1.5 rounded-xl border border-[#e3d9d1] bg-white px-2.5 py-1.5 text-[10px] font-medium text-[#665950] transition-all hover:border-[#cfc1b7] hover:bg-[#faf8f6] disabled:opacity-50 sm:gap-2 sm:px-3.5 sm:py-2 sm:text-sm"
               >
-                <RefreshCw size={13} className={isRefreshing ? "animate-spin" : "sm:h-[16px] sm:w-[16px]"} />
+                <RefreshCw size={13} className={isRefreshing ? "animate-spin" : "sm:h-4 sm:w-4"} />
                 <span className="hidden xs:inline">{isRefreshing ? "Refreshing..." : "Refresh"}</span>
                 <span className="xs:hidden">{isRefreshing ? "..." : "⟳"}</span>
               </button>
@@ -999,7 +1061,7 @@ export default function VendorReviewsPage() {
                 <Button
                   onClick={handleExportClick}
                   disabled={reviews.length === 0}
-                  startIcon={<FileSpreadsheet size={16} className="sm:h-[18px] sm:w-[18px]" />}
+                  startIcon={<FileSpreadsheet size={16} className="sm:h-4.5 sm:w-4.5" />}
                   variant="contained"
                   size={isMobile ? "small" : "medium"}
                   sx={{
@@ -1010,12 +1072,8 @@ export default function VendorReviewsPage() {
                     fontWeight: 500,
                     padding: isMobile ? "4px 12px" : "8px 18px",
                     minHeight: isMobile ? "32px" : "auto",
-                    "&:hover": {
-                      backgroundColor: "#46382f",
-                    },
-                    "&:disabled": {
-                      opacity: 0.5,
-                    },
+                    "&:hover": { backgroundColor: "#46382f" },
+                    "&:disabled": { opacity: 0.5 },
                   }}
                 >
                   <span className="hidden xs:inline">Export</span>
@@ -1044,11 +1102,7 @@ export default function VendorReviewsPage() {
                     <ListItemText
                       primary="Export All"
                       secondary={`${reviews.length} reviews`}
-                      slotProps={{
-                        secondary: {
-                          sx: { fontSize: "11px", color: "#9b8f86" }
-                        }
-                      }}
+                      slotProps={{ secondary: { sx: { fontSize: "11px", color: "#9b8f86" } } }}
                     />
                   </MenuItem>
 
@@ -1059,11 +1113,7 @@ export default function VendorReviewsPage() {
                     <ListItemText
                       primary="Export Filtered"
                       secondary={`${filteredReviews.length} reviews`}
-                      slotProps={{
-                        secondary: {
-                          sx: { fontSize: "11px", color: "#9b8f86" }
-                        }
-                      }}
+                      slotProps={{ secondary: { sx: { fontSize: "11px", color: "#9b8f86" } } }}
                     />
                   </MenuItem>
                 </Menu>
@@ -1073,7 +1123,7 @@ export default function VendorReviewsPage() {
         </header>
 
         {/* Stats */}
-        <section aria-label="Review statistics" className="grid grid-cols-2 gap-2 sm:gap-3 lg:gap-4">
+        <section aria-label="Review statistics" className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-5 lg:gap-4">
           <StatCard
             title="Average Rating"
             value={stats.averageRating.toFixed(1)}
@@ -1090,17 +1140,24 @@ export default function VendorReviewsPage() {
           />
 
           <StatCard
-            title="Pending"
-            value={stats.pending}
-            icon={Clock3}
-            description="Awaiting moderation"
+            title="Visible"
+            value={stats.visible}
+            icon={Eye}
+            description="Shown on listing"
           />
 
           <StatCard
-            title="Rejected"
-            value={stats.rejected}
-            icon={XCircle}
-            description={`${stats.approvalRate.toFixed(0)}% rate`}
+            title="Hidden"
+            value={stats.hidden}
+            icon={EyeOff}
+            description="Hidden by admin"
+          />
+
+          <StatCard
+            title="Pending"
+            value={stats.pending}
+            icon={Clock3}
+            description={`${stats.rejected} rejected`}
           />
         </section>
 
@@ -1109,12 +1166,12 @@ export default function VendorReviewsPage() {
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2 sm:gap-3">
               <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#f5eee9] sm:h-9 sm:w-9">
-                <Filter size={14} className="text-[#a47e43] sm:h-[16px] sm:w-[16px]" />
+                <Filter size={14} className="text-[#a47e43] sm:h-4 sm:w-4" />
               </div>
               <div>
                 <h2 className="text-xs font-semibold text-[#40342e] sm:text-sm">Filter reviews</h2>
                 <p className="hidden text-[10px] text-[#9b8f86] sm:mt-0.5 sm:block sm:text-[11px]">
-                  Refine reviews by service, status, or search
+                  Refine reviews by service, status, visibility, or search
                 </p>
               </div>
             </div>
@@ -1133,9 +1190,9 @@ export default function VendorReviewsPage() {
               >
                 <MenuIcon size={14} />
                 Filters
-                {hasActiveFilters && (
+                {activeFiltersCount > 0 && (
                   <span className="flex h-4 w-4 items-center justify-center rounded-full bg-[#a47e43] text-[8px] font-bold text-white">
-                    {[serviceFilter !== "all", statusFilter !== "all", searchQuery !== ""].filter(Boolean).length}
+                    {activeFiltersCount}
                   </span>
                 )}
               </button>
@@ -1151,8 +1208,8 @@ export default function VendorReviewsPage() {
             </div>
           </div>
 
-          {/* Desktop Filters */}
-          <div className="mt-4 hidden grid-cols-1 gap-3 md:grid lg:grid-cols-[1fr_200px_180px_auto]">
+          {/* Desktop Filters - ✅ 5 columns مع Visibility */}
+          <div className="mt-4 hidden grid-cols-1 gap-3 md:grid lg:grid-cols-[1fr_180px_170px_170px_180px]">
             <TextField
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -1167,10 +1224,7 @@ export default function VendorReviewsPage() {
                   ),
                   endAdornment: searchQuery ? (
                     <InputAdornment position="end">
-                      <button
-                        onClick={() => setSearchQuery("")}
-                        className="text-[#9b8f86] hover:text-[#30251f]"
-                      >
+                      <button onClick={() => setSearchQuery("")} className="text-[#9b8f86] hover:text-[#30251f]">
                         <X size={16} />
                       </button>
                     </InputAdornment>
@@ -1254,6 +1308,44 @@ export default function VendorReviewsPage() {
               })}
             </Select>
 
+            {/* ✅ فلتر الـ Visibility */}
+            <Select
+              value={visibilityFilter}
+              onChange={(e) => setVisibilityFilter(e.target.value)}
+              IconComponent={ChevronDown}
+              renderValue={(value) => {
+                const current = VISIBILITY_FILTERS.find(item => item.value === value) ?? VISIBILITY_FILTERS[0];
+                const Icon = current.icon;
+                return (
+                  <div className="flex items-center gap-2">
+                    <Icon size={16} className="text-[#8d796a]" />
+                    <span>{current.label}</span>
+                  </div>
+                );
+              }}
+              sx={{
+                height: 42,
+                borderRadius: "12px",
+                backgroundColor: "#fcfaf8",
+                fontSize: "13px",
+                "& .MuiOutlinedInput-notchedOutline": { borderColor: "#e3d9d1" },
+                "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "#d5c8be" },
+                "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: "#a47e43", borderWidth: "1px" },
+              }}
+            >
+              {VISIBILITY_FILTERS.map((option) => {
+                const Icon = option.icon;
+                return (
+                  <MenuItem key={option.value} value={option.value}>
+                    <div className="flex items-center gap-2.5">
+                      <Icon size={15} className="text-[#806a5c]" />
+                      <span>{option.label}</span>
+                    </div>
+                  </MenuItem>
+                );
+              })}
+            </Select>
+
             <Select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
@@ -1283,7 +1375,7 @@ export default function VendorReviewsPage() {
             </Select>
           </div>
 
-          {/* Active Filters - ✅ تم إصلاح مشكلة Chip */}
+          {/* Active Filters */}
           {hasActiveFilters && (
             <div className="mt-3 flex flex-wrap items-center gap-1.5 border-t border-[#f1ece8] pt-3 sm:gap-2 sm:pt-4">
               <span className="mr-0.5 text-[9px] font-medium text-[#958a83] sm:mr-1 sm:text-[11px]">Active:</span>
@@ -1341,6 +1433,32 @@ export default function VendorReviewsPage() {
                 />
               )}
 
+              {/* ✅ Chip للـ Visibility */}
+              {visibilityFilter !== "all" && (
+                <Chip
+                  icon={visibilityFilter === "visible" ? <Eye size={12} /> : <EyeOff size={12} />}
+                  label={VISIBILITY_FILTERS.find(s => s.value === visibilityFilter)?.label || "Unknown"}
+                  onDelete={() => setVisibilityFilter("all")}
+                  size="small"
+                  sx={{
+                    height: 24,
+                    borderRadius: "6px",
+                    backgroundColor: visibilityFilter === "visible" ? "#ecfdf5" : "#fef2f2",
+                    color: visibilityFilter === "visible" ? "#047857" : "#b91c1c",
+                    fontSize: "10px",
+                    fontWeight: 600,
+                    "& .MuiChip-icon": {
+                      color: visibilityFilter === "visible" ? "#047857" : "#b91c1c",
+                    },
+                    "& .MuiChip-deleteIcon": {
+                      width: 13,
+                      height: 13,
+                      color: visibilityFilter === "visible" ? "#047857" : "#b91c1c",
+                    },
+                  }}
+                />
+              )}
+
               <button
                 onClick={handleClearFilters}
                 className="text-[9px] font-medium text-[#8b6d55] hover:text-[#30251f] transition-colors sm:text-xs"
@@ -1358,7 +1476,7 @@ export default function VendorReviewsPage() {
           {!loading && error && (
             <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-center sm:p-8">
               <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-white text-red-500 shadow-sm sm:h-12 sm:w-12">
-                <AlertCircle size={18} className="sm:h-[21px] sm:w-[21px]" />
+                <AlertCircle size={18} className="sm:h-5.25 sm:w-5.25" />
               </div>
               <h3 className="mt-3 text-sm font-semibold text-red-800 sm:mt-4">Unable to load reviews</h3>
               <p className="mx-auto mt-1.5 max-w-md text-xs leading-5 text-red-600 sm:mt-2">{error}</p>
@@ -1391,6 +1509,18 @@ export default function VendorReviewsPage() {
                     Showing {displayedReviews.length} of {filteredReviews.length}
                   </p>
                 </div>
+
+                {/* ✅ Legend للـ Visibility */}
+                <div className="hidden items-center gap-3 sm:flex">
+                  <div className="flex items-center gap-1.5">
+                    <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
+                    <span className="text-[10px] text-[#9b8f86]">Visible</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="h-2.5 w-2.5 rounded-full bg-red-400" />
+                    <span className="text-[10px] text-[#9b8f86]">Hidden</span>
+                  </div>
+                </div>
               </div>
 
               <div className="space-y-3 sm:space-y-4">
@@ -1411,7 +1541,7 @@ export default function VendorReviewsPage() {
                     className="inline-flex items-center gap-2 rounded-xl border border-[#e3d9d1] bg-white px-4 py-2 text-xs font-medium text-[#665950] transition-all hover:border-[#cfc1b7] hover:bg-[#faf8f6] sm:px-6 sm:py-3 sm:text-sm"
                   >
                     Load more reviews
-                    <ChevronDown size={14} className="sm:h-[16px] sm:w-[16px]" />
+                    <ChevronDown size={14} className="sm:h-4 sm:w-4" />
                   </button>
                 </div>
               )}
@@ -1428,6 +1558,8 @@ export default function VendorReviewsPage() {
           setServiceFilter={setServiceFilter}
           statusFilter={statusFilter}
           setStatusFilter={setStatusFilter}
+          visibilityFilter={visibilityFilter}
+          setVisibilityFilter={setVisibilityFilter}
           sortBy={sortBy}
           setSortBy={setSortBy}
           searchQuery={searchQuery}
@@ -1452,14 +1584,14 @@ export default function VendorReviewsPage() {
                   onClick={() => setSelectedReview(null)}
                   className="rounded-lg p-1 hover:bg-[#f5eee9] transition-colors"
                 >
-                  <X size={18} className="text-[#8d8077] sm:h-[20px] sm:w-[20px]" />
+                  <X size={18} className="text-[#8d8077] sm:h-5 sm:w-5" />
                 </button>
               </div>
 
               <div className="space-y-3 sm:space-y-4">
                 <div className="flex items-center gap-2 sm:gap-3">
                   <div className="h-10 w-10 rounded-full bg-[#f5eee9] flex items-center justify-center sm:h-12 sm:w-12">
-                    <User size={16} className="text-[#705b4e] sm:h-[20px] sm:w-[20px]" />
+                    <User size={16} className="text-[#705b4e] sm:h-5 sm:w-5" />
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-[#30251f] sm:text-base">

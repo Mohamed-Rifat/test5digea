@@ -370,7 +370,7 @@ export default function VendorProfilePage() {
   if (loading) {
     return (
       <main className="min-h-screen bg-[#faf8f6] px-4 py-8">
-        <div className="mx-auto max-w-6xl animate-pulse space-y-6">
+        <div className="mx-auto max-w-full animate-pulse space-y-6">
           <div className="h-72 rounded-4xl bg-white" />
           <div className="grid gap-6 lg:grid-cols-3">
             <div className="h-64 rounded-4xl bg-white" />

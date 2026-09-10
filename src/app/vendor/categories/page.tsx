@@ -153,7 +153,7 @@ export default function VendorCategoriesPage() {
           <p className="leading-5 sm:leading-6">
             Categories are assigned by the <span className="font-semibold text-[#30251f]">5digea team</span> and shown here for
             reference only. If you&apos;d like a category added or changed,
-            please <a href="/support" className="font-semibold text-[#a47e43] hover:underline">contact support</a>.
+            please <a href="/vendor/support" className="font-semibold text-[#a47e43] hover:underline">contact support</a>.
           </p>
         </div>
 
@@ -258,7 +258,7 @@ export default function VendorCategoriesPage() {
               </div>
 
               <a
-                href="/support"
+                href="/vendor/support"
                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#30251f] px-4 py-2 text-xs font-semibold text-white transition hover:bg-[#46382f] sm:px-5 sm:py-2.5 sm:text-sm"
               >
                 Contact Support
