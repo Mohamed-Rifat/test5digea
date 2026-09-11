@@ -38,7 +38,7 @@ export default function SiteNavbar() {
 
   return (
     <header className="relative z-40 border-b border-[#eee7e1] bg-[#f8f5ef]/95 backdrop-blur-md">
-      <div className="mx-auto flex h-18 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto flex h-18 lg:max-w-10/12 items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link href="/" className="flex shrink-0 items-center gap-2">
           <Image
             src="/Logo.png"
@@ -119,7 +119,7 @@ export default function SiteNavbar() {
                 <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#f0e9e0] text-[#a47e43]">
                   <UserIcon size={16} />
                 </span>
-                <span className="max-w-[110px] truncate">
+                <span className="max-w-27.5 truncate">
                   {user?.fullName || "Account"}
                 </span>
               </button>

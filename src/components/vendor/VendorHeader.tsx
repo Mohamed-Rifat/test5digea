@@ -5,7 +5,6 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   Menu,
-  Bell,
   ChevronDown,
   Building2,
   Sparkles,
@@ -24,7 +23,6 @@ import {
 import {
   Menu as MuiMenu,
   MenuItem,
-  Badge,
   Tooltip,
   Divider,
   ListItemIcon,
@@ -34,6 +32,7 @@ import {
 
 import { useVendor } from "@/features/vendors/hooks/useVendor";
 import { useAuth } from "@/context/AuthContext";
+import NotificationBell from "@/components/notifications/NotificationBell";
 
 interface VendorHeaderProps {
   onMenuClick: () => void;
@@ -121,10 +120,6 @@ export default function VendorHeader({ onMenuClick }: VendorHeaderProps) {
     day: "numeric",
   });
 
-  // ✅ حساب عدد الإشعارات الحقيقية (من الـ API)
-  // ملاحظة: دي هتجيبيها من API حقيقي، حالياً صفر
-  const notificationCount = 0;
-
   return (
     <header className="sticky top-0 z-30 flex h-15 items-center justify-between border-b border-[#eee7e1] bg-white/95 px-3 backdrop-blur-md supports-backdrop-filter:bg-white/80 sm:h-18 sm:px-6 lg:px-8">
       {/* =================================================
@@ -207,34 +202,7 @@ export default function VendorHeader({ onMenuClick }: VendorHeaderProps) {
         </Tooltip>
 
         {/* Notifications */}
-        <Tooltip title="Notifications" arrow>
-          <button
-            type="button"
-            aria-label="Notifications"
-            className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-[#eee7e1] text-[#756860] transition hover:bg-[#faf7f4] hover:text-[#30251f] sm:h-10 sm:w-10"
-          >
-            <Bell size={16} strokeWidth={1.8} className="sm:h-4.5 sm:w-4.5" />
-            
-            {/* ✅ Badge حقيقي - يظهر بس لو في إشعارات */}
-            {notificationCount > 0 && (
-              <Badge
-                badgeContent={notificationCount}
-                color="error"
-                sx={{
-                  "& .MuiBadge-badge": {
-                    backgroundColor: "#ef4444",
-                    fontSize: 10,
-                    height: 18,
-                    minWidth: 18,
-                    fontWeight: 600,
-                    top: 4,
-                    right: 4,
-                  },
-                }}
-              />
-            )}
-          </button>
-        </Tooltip>
+        <NotificationBell viewAllHref="/vendor/notifications" />
 
         {/* Divider */}
         <div className="hidden h-7 w-px bg-[#eee7e1] sm:block" />

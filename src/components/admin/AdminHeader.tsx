@@ -1,8 +1,9 @@
 "use client";
 
-import { Bell, Menu, Search } from "lucide-react";
+import { Menu, Search } from "lucide-react";
 
 import { useAuth } from "@/context/AuthContext";
+import NotificationBell from "@/components/notifications/NotificationBell";
 
 interface AdminHeaderProps {
   onMenuClick: () => void;
@@ -45,14 +46,7 @@ export default function AdminHeader({ onMenuClick }: AdminHeaderProps) {
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3">
-          <button
-            type="button"
-            className="relative rounded-xl border border-[#eee5df] p-2.5 text-[#766860] transition hover:bg-[#faf7f4]"
-            aria-label="Notifications"
-          >
-            <Bell size={19} strokeWidth={1.8} />
-            <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-[#a76a63]" />
-          </button>
+          <NotificationBell viewAllHref="/admin/notifications" />
 
           <div className="h-8 w-px bg-[#eee5df]" />
 

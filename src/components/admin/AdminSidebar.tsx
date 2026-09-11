@@ -8,6 +8,7 @@ import {
   Store,
   BriefcaseBusiness,
   Star,
+  ClipboardList,
   LogOut,
   X,
   Heart,
@@ -30,6 +31,7 @@ const navigation = [
   {
     title: "Management",
     items: [
+      { label: "Moderation", href: "/admin/moderation", icon: ClipboardList },
       { label: "Categories", href: "/admin/categories", icon: Tags },
       { label: "Vendors", href: "/admin/vendors", icon: Store },
       { label: "Services", href: "/admin/services", icon: BriefcaseBusiness },

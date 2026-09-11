@@ -129,7 +129,7 @@ function VendorsPageContent() {
   return (
     <main className="min-h-screen bg-[#faf8f6]">
       <section className="border-b border-[#eee7e1] bg-[#f8f5ef] px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
-        <div className="mx-auto max-w-7xl">
+        <div className="mx-auto max-w-10/12">
           <div className="mb-2 flex items-center gap-2">
             <Sparkles className="h-3.5 w-3.5 text-[#b99a62]" />
             <span className="text-[10px] font-medium uppercase tracking-[0.4em] text-[#9b8367]">
@@ -259,7 +259,7 @@ function VendorsPageContent() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+      <section className="mx-auto max-w-10/12 px-4 py-12 sm:px-6 lg:px-8">
         {selected.length > 0 && (
           <div className="sticky bottom-3 z-20 mb-6 flex flex-col gap-3 rounded-2xl bg-[#30251f] px-4 py-3 text-white shadow-[0_16px_40px_rgba(48,37,31,0.22)] sm:flex-row sm:items-center sm:justify-between sm:px-5">
             <span className="text-sm">{selected.length} vendors selected</span>
