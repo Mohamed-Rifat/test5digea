@@ -12,6 +12,7 @@ import {
   User as UserIcon,
   LogOut,
   LayoutDashboard,
+  User,
 } from "lucide-react";
 
 import { useAuth } from "@/context/AuthContext";
@@ -144,6 +145,14 @@ export default function SiteNavbar() {
 
                     {isUser && (
                       <>
+                       <Link
+                          href="/profile"
+                          onClick={() => setMenuOpen(false)}
+                          className="flex items-center gap-2 px-4 py-2.5 text-sm text-[#5f544d] hover:bg-[#faf7f4] hover:text-[#30251f]"
+                        >
+                          <User size={16} />
+                          My Profile
+                        </Link>
                         <Link
                           href="/favorites"
                           onClick={() => setMenuOpen(false)}
