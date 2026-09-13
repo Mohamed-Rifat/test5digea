@@ -116,7 +116,7 @@ function ServicesPageContent() {
 
       {/* Header */}
       <section className="border-b border-[#eee7e1] bg-[#f8f5ef] px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
-        <div className="mx-auto max-w-7xl">
+        <div className="mx-auto lg:max-w-10/12">
           <div className="mb-2 flex items-center gap-2">
             <Sparkles className="h-3.5 w-3.5 text-[#b99a62]" />
             <span className="text-[10px] font-medium uppercase tracking-[0.4em] text-[#9b8367]">
@@ -249,7 +249,7 @@ function ServicesPageContent() {
       </section>
 
       {/* Results */}
-      <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+      <section className="mx-auto lg:max-w-10/12 px-4 py-12 sm:px-6 lg:px-8">
         {loading && (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 6 }).map((_, i) => (
