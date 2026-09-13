@@ -1,7 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import {
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useSearchParams } from "next/navigation";
 import {
   Search,
@@ -11,6 +18,10 @@ import {
   Sparkles,
   GitCompare,
   X,
+  MapPin,
+  Star,
+  Tag,
+  Check,
 } from "lucide-react";
 
 import VendorCard from "@/components/public/VendorCard";
@@ -53,6 +64,8 @@ function VendorsPageContent() {
   const [result, setResult] = useState<VendorSearchResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const filtersRef = useRef<HTMLDivElement>(null);
 
   const params: VendorSearchParams = useMemo(
     () => ({
@@ -107,6 +120,32 @@ function VendorsPageContent() {
     setPage(1);
   }, [searchParams]);
 
+  // Close filters panel on outside click or Escape
+  useEffect(() => {
+    if (!filtersOpen) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        filtersRef.current &&
+        !filtersRef.current.contains(event.target as Node)
+      ) {
+        setFiltersOpen(false);
+      }
+    };
+
+    const handleEsc = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setFiltersOpen(false);
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleEsc);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEsc);
+    };
+  }, [filtersOpen]);
+
   const handleSearchSubmit = (event: React.FormEvent) => {
     event.preventDefault();
     setPage(1);
@@ -154,7 +193,7 @@ function VendorsPageContent() {
   return (
     <main className="min-h-screen bg-[#faf8f6]">
       {/* ============ HERO SECTION ============ */}
-      <section className="relative overflow-hidden border-b border-[#eee7e1] bg-linear-to-b from-[#f8f5ef] to-[#faf8f6] px-4 py-10 sm:px-6 sm:py-12 lg:px-8">
+      <section className="relative overflow-visible border-b border-[#eee7e1] bg-linear-to-b from-[#f8f5ef] to-[#faf8f6] px-4 py-10 sm:px-6 sm:py-12 lg:px-8">
         {/* Decorative blobs */}
         <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-[#b99a62]/10 blur-3xl" />
         <div className="pointer-events-none absolute -left-24 bottom-0 h-64 w-64 rounded-full bg-[#a47e43]/5 blur-3xl" />
@@ -181,158 +220,243 @@ function VendorsPageContent() {
             locations, and find the right fit for every part of your day.
           </p>
 
-          {/* Search Form */}
-          <form
-            onSubmit={handleSearchSubmit}
-            className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center"
-          >
-            <div className="relative flex-1">
-              <Search className="pointer-events-none absolute left-5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9b8f86]" />
-              <input
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                placeholder="Search vendors by name..."
-                className="w-full rounded-full border border-[#e4dbd0] bg-white py-3.5 pl-12 pr-4 text-sm text-[#30251f] shadow-sm outline-none transition placeholder:text-[#b0a69c] focus:border-[#b99a62] focus:ring-4 focus:ring-[#b99a62]/10"
-              />
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setFiltersOpen((v) => !v)}
-              className={`relative flex min-h-12 items-center justify-center gap-2 rounded-full border px-5 py-3 text-sm font-medium transition ${
-                filtersOpen
-                  ? "border-[#b99a62] bg-[#f9f1e9] text-[#8c6a3c]"
-                  : "border-[#e4dbd0] bg-white text-[#5f544d] hover:border-[#b99a62]"
-              }`}
+          {/* Search Form + Filters Panel Wrapper */}
+          <div ref={filtersRef} className="relative">
+            <form
+              onSubmit={handleSearchSubmit}
+              className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center"
             >
-              <SlidersHorizontal size={16} />
-              Filters
-              {activeFiltersCount > 0 && (
-                <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-[#a47e43] text-[10px] font-bold text-white">
-                  {activeFiltersCount}
-                </span>
-              )}
-            </button>
-
-            <button
-              type="submit"
-              className="min-h-12 rounded-full bg-[#30251f] px-7 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#42332a] hover:shadow-md"
-            >
-              Search
-            </button>
-          </form>
-
-          {/* Filters Panel */}
-          {filtersOpen && (
-            <div className="mt-4 grid gap-5 rounded-2xl border border-[#eee7e1] bg-white p-5 shadow-sm sm:grid-cols-3">
-              {/* Category */}
-              <div>
-                <div className="mb-2 flex items-center justify-between">
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-[#9b8367]">
-                    Category
-                  </label>
-                  {categoryId && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setPage(1);
-                        setCategoryId("");
-                        setSelected([]);
-                      }}
-                      className="text-[10px] font-medium text-[#a47e43] hover:underline"
-                    >
-                      Clear
-                    </button>
-                  )}
-                </div>
-                <div className="flex max-h-32 flex-wrap gap-2 overflow-y-auto pr-1">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setPage(1);
-                      setCategoryId("");
-                      setSelected([]);
-                    }}
-                    className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition ${
-                      !categoryId
-                        ? "bg-[#30251f] text-white shadow-sm"
-                        : "bg-[#faf7f4] text-[#6f625a] hover:bg-[#f1e9e3]"
-                    }`}
-                  >
-                    All
-                  </button>
-                  {categories.map((c) => (
-                    <button
-                      key={c.id}
-                      type="button"
-                      onClick={() => {
-                        setPage(1);
-                        setCategoryId(c.id);
-                        setSelected([]);
-                      }}
-                      className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition ${
-                        categoryId === c.id
-                          ? "bg-[#a47e43] text-white shadow-sm"
-                          : "bg-[#faf7f4] text-[#6f625a] hover:bg-[#f1e9e3]"
-                      }`}
-                    >
-                      {c.name}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Location */}
-              <div>
-                <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-[#9b8367]">
-                  Location
-                </label>
+              <div className="relative flex-1">
+                <Search className="pointer-events-none absolute left-5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9b8f86]" />
                 <input
-                  value={location}
-                  onChange={(e) => {
-                    setPage(1);
-                    setLocation(e.target.value);
-                  }}
-                  placeholder="e.g. Cairo"
-                  className="w-full rounded-xl border border-[#e4dbd0] bg-white px-3.5 py-2.5 text-sm text-[#30251f] outline-none transition focus:border-[#b99a62] focus:ring-4 focus:ring-[#b99a62]/10"
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  placeholder="Search vendors by name..."
+                  className="w-full rounded-full border border-[#e4dbd0] bg-white py-3.5 pl-12 pr-4 text-sm text-[#30251f] shadow-sm outline-none transition placeholder:text-[#b0a69c] focus:border-[#b99a62] focus:ring-4 focus:ring-[#b99a62]/10"
                 />
               </div>
 
-              {/* Min Rating */}
-              <div>
-                <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-[#9b8367]">
-                  Minimum Rating
-                </label>
-                <select
-                  value={minRating}
-                  onChange={(e) => {
-                    setPage(1);
-                    setMinRating(e.target.value);
-                  }}
-                  className="w-full rounded-xl border border-[#e4dbd0] bg-white px-3.5 py-2.5 text-sm text-[#30251f] outline-none transition focus:border-[#b99a62] focus:ring-4 focus:ring-[#b99a62]/10"
-                >
-                  <option value="">Any rating</option>
-                  <option value="3">3+ stars</option>
-                  <option value="4">4+ stars</option>
-                  <option value="4.5">4.5+ stars</option>
-                </select>
-              </div>
+              <button
+                type="button"
+                onClick={() => setFiltersOpen((v) => !v)}
+                className={`relative flex min-h-12 items-center justify-center gap-2 rounded-full border px-5 py-3 text-sm font-medium transition ${
+                  filtersOpen
+                    ? "border-[#b99a62] bg-[#f9f1e9] text-[#8c6a3c]"
+                    : "border-[#e4dbd0] bg-white text-[#5f544d] hover:border-[#b99a62]"
+                }`}
+              >
+                <SlidersHorizontal size={16} />
+                Filters
+                {activeFiltersCount > 0 && (
+                  <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-[#a47e43] text-[10px] font-bold text-white">
+                    {activeFiltersCount}
+                  </span>
+                )}
+              </button>
 
-              {/* Clear All */}
-              {activeFiltersCount > 0 && (
-                <div className="sm:col-span-3">
+              <button
+                type="submit"
+                className="min-h-12 rounded-full bg-[#30251f] px-7 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#42332a] hover:shadow-md"
+              >
+                Search
+              </button>
+            </form>
+
+            {/* ============ FILTERS PANEL ============ */}
+            {filtersOpen && (
+              <div className="relative z-30 mt-3 overflow-hidden rounded-3xl border border-[#eee7e1] bg-white shadow-[0_24px_60px_-12px_rgba(48,37,31,0.18)]">
+                {/* Header */}
+                <div className="flex items-center justify-between border-b border-[#f1ece6] px-6 py-4">
+                  <div className="flex items-center gap-2.5">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#f9f1e9]">
+                      <SlidersHorizontal size={14} className="text-[#a47e43]" />
+                    </span>
+                    <div>
+                      <p className="text-sm font-semibold text-[#30251f]">
+                        Refine your search
+                      </p>
+                      <p className="text-[11px] text-[#9b8f86]">
+                        Narrow down vendors that fit your day
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setFiltersOpen(false)}
+                    className="flex h-8 w-8 items-center justify-center rounded-full text-[#9b8f86] transition hover:bg-[#faf7f4] hover:text-[#30251f]"
+                    aria-label="Close filters"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+
+                {/* Body */}
+                <div className="grid gap-8 px-6 py-6 lg:grid-cols-[1.4fr_1fr]">
+                  {/* LEFT: Category */}
+                  <div>
+                    <div className="mb-3 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Tag size={13} className="text-[#b99a62]" />
+                        <label className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#9b8367]">
+                          Category
+                        </label>
+                      </div>
+                      {categoryId && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setPage(1);
+                            setCategoryId("");
+                            setSelected([]);
+                          }}
+                          className="text-[11px] font-medium text-[#a47e43] transition hover:text-[#8c6a3c]"
+                        >
+                          Reset
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPage(1);
+                          setCategoryId("");
+                          setSelected([]);
+                        }}
+                        className={`group flex items-center justify-between rounded-xl border px-3.5 py-2.5 text-left text-xs font-medium transition ${
+                          !categoryId
+                            ? "border-[#30251f] bg-[#30251f] text-white"
+                            : "border-[#eee7e1] bg-white text-[#5f544d] hover:border-[#d9cbb8] hover:bg-[#faf7f4]"
+                        }`}
+                      >
+                        <span>All categories</span>
+                        {!categoryId && <Check size={12} />}
+                      </button>
+
+                      {categories.map((c) => {
+                        const active = categoryId === c.id;
+                        return (
+                          <button
+                            key={c.id}
+                            type="button"
+                            onClick={() => {
+                              setPage(1);
+                              setCategoryId(c.id);
+                              setSelected([]);
+                            }}
+                            className={`group flex items-center justify-between rounded-xl border px-3.5 py-2.5 text-left text-xs font-medium transition ${
+                              active
+                                ? "border-[#a47e43] bg-[#f9f1e9] text-[#8c6a3c]"
+                                : "border-[#eee7e1] bg-white text-[#5f544d] hover:border-[#d9cbb8] hover:bg-[#faf7f4]"
+                            }`}
+                          >
+                            <span className="truncate">{c.name}</span>
+                            {active && (
+                              <Check size={12} className="shrink-0" />
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* RIGHT: Location + Rating */}
+                  <div className="space-y-6">
+                    {/* Location */}
+                    <div>
+                      <div className="mb-3 flex items-center gap-2">
+                        <MapPin size={13} className="text-[#b99a62]" />
+                        <label className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#9b8367]">
+                          Location
+                        </label>
+                      </div>
+                      <div className="relative">
+                        <MapPin className="pointer-events-none absolute left-3.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#b0a69c]" />
+                        <input
+                          value={location}
+                          onChange={(e) => {
+                            setPage(1);
+                            setLocation(e.target.value);
+                          }}
+                          placeholder="e.g. Cairo, Alexandria"
+                          className="w-full rounded-xl border border-[#eee7e1] bg-[#faf7f4] py-2.5 pl-10 pr-3 text-sm text-[#30251f] outline-none transition placeholder:text-[#b0a69c] focus:border-[#b99a62] focus:bg-white focus:ring-4 focus:ring-[#b99a62]/10"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Rating */}
+                    <div>
+                      <div className="mb-3 flex items-center gap-2">
+                        <Star size={13} className="text-[#b99a62]" />
+                        <label className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#9b8367]">
+                          Minimum rating
+                        </label>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {[
+                          { value: "", label: "Any" },
+                          { value: "3", label: "3+" },
+                          { value: "4", label: "4+" },
+                          { value: "4.5", label: "4.5+" },
+                        ].map((option) => {
+                          const active = minRating === option.value;
+                          return (
+                            <button
+                              key={option.value || "any"}
+                              type="button"
+                              onClick={() => {
+                                setPage(1);
+                                setMinRating(option.value);
+                              }}
+                              className={`flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition ${
+                                active
+                                  ? "border-[#a47e43] bg-[#a47e43] text-white"
+                                  : "border-[#eee7e1] bg-white text-[#5f544d] hover:border-[#d9cbb8] hover:bg-[#faf7f4]"
+                              }`}
+                            >
+                              {option.value && (
+                                <Star
+                                  size={11}
+                                  className={
+                                    active
+                                      ? "fill-white text-white"
+                                      : "fill-[#e8c98a] text-[#e8c98a]"
+                                  }
+                                />
+                              )}
+                              {option.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Footer */}
+                <div className="flex items-center justify-between border-t border-[#f1ece6] bg-[#faf7f4] px-6 py-4">
                   <button
                     type="button"
                     onClick={clearAllFilters}
-                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#a47e43] hover:underline"
+                    disabled={activeFiltersCount === 0}
+                    className="text-xs font-semibold text-[#8c6a3c] transition hover:text-[#30251f] disabled:cursor-not-allowed disabled:opacity-40"
                   >
-                    <X size={12} />
                     Clear all filters
                   </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setFiltersOpen(false)}
+                    className="rounded-full bg-[#30251f] px-6 py-2.5 text-xs font-semibold text-white transition hover:bg-[#42332a]"
+                  >
+                    Show results
+                  </button>
                 </div>
-              )}
-            </div>
-          )}
+              </div>
+            )}
+          </div>
         </div>
       </section>
 

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Building2, MapPin, Check } from "lucide-react";
+import { Building2, MapPin, Check, GitCompare } from "lucide-react";
 
 import FavoriteButton from "@/components/shared/FavoriteButton";
 import RatingStars from "@/components/shared/RatingStars";
@@ -95,23 +95,23 @@ export default function VendorCard({
       )}
 
       {onSelect && (
-        <div className="border-t border-[#f0e9e0] px-4 py-3 sm:px-5">
-          <button
-            type="button"
-            onClick={() => onSelect(vendor.id)}
-            aria-pressed={selected}
-            className={`flex w-full items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-xs font-semibold transition ${
-              selected
-                ? "bg-[#30251f] text-white shadow-sm"
-                : "border border-[#e4dbd0] bg-white text-[#514740] hover:border-[#b99a62] hover:bg-[#faf7f4]"
-            }`}
-          >
-            <span className={`flex h-4 w-4 items-center justify-center rounded border ${selected ? "border-white bg-white text-[#30251f]" : "border-[#cbbdb4]"}`}>
-              {selected && <Check size={11} />}
-            </span>
-            {selected ? "Selected for comparison" : "Add to compare"}
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onSelect(vendor.id);
+          }}
+          aria-pressed={selected}
+          aria-label={selected ? "Remove from comparison" : "Add to comparison"}
+          className={`absolute left-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full border shadow-sm transition ${
+            selected
+              ? "border-[#30251f] bg-[#30251f] text-white"
+              : "border-[#e4dbd0] bg-white/90 text-[#8d7b70] hover:border-[#b99a62] hover:text-[#a47e43]"
+          }`}
+        >
+          {selected ? <Check size={16} /> : <GitCompare size={16} />}
+        </button>
       )}
     </div>
   );
