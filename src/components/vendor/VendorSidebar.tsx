@@ -74,6 +74,11 @@ const navigationItems = [
     href: "/vendor/reviews",
     icon: MessageSquareText,
   },
+  {
+    label: "Security",
+    href: "/vendor/security",
+    icon: Shield,
+  },
 ];
 
 // ✅ Quick actions
