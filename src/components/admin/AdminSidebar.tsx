@@ -21,8 +21,6 @@ interface AdminSidebarProps {
   onClose: () => void;
 }
 
-// Only routes that actually exist under src/app/admin.
-// Add Analytics / Users / Settings back here once their pages and APIs exist.
 const navigation = [
   {
     title: "Overview",

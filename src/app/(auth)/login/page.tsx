@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useState } from "react";
-import { useRouter } from "next/navigation";
+import { FormEvent, Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
   Eye,
@@ -21,9 +21,12 @@ import {
   getRoleFromToken,
 } from "@/lib/auth-utils";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { setAuth } = useAuth();
+
+  const justReset = searchParams.get("reset") === "success";
 
   const [formData, setFormData] = useState({
     email: "",
@@ -191,6 +194,17 @@ export default function LoginPage() {
                   Continue your wedding journey with 5digea.
                 </p>
               </div>
+
+              {/* Reset success banner */}
+              {justReset && (
+                <div
+                  role="status"
+                  className="mb-5 flex items-center justify-center gap-2 rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700 animate-fade-in"
+                >
+                  <CheckCircle size={16} />
+                  Password reset successfully. Please sign in.
+                </div>
+              )}
 
               {/* Login Form */}
               <form
@@ -439,5 +453,13 @@ export default function LoginPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
   );
 }

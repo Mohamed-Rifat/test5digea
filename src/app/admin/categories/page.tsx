@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import {
     Archive,
     Check,
@@ -57,7 +58,8 @@ export default function AdminCategoriesPage() {
         null
     );
 
-    const [search, setSearch] = useState("");
+    const searchParams = useSearchParams();
+    const [search, setSearch] = useState(() => searchParams.get("q") ?? "");
 
     const [statusFilter, setStatusFilter] =
         useState<StatusFilter>("all");

@@ -8,6 +8,7 @@ import {
   CalendarDays,
   ChevronRight,
   CircleCheck,
+  ClipboardList,
   Clock3,
   Loader2,
   MapPin,
@@ -26,9 +27,64 @@ import Link from "next/link";
 import { useMemo } from "react";
 
 import { useAdminCategories } from "@/features/categories/hooks/useAdminCategories";
+import { useModerationDashboard } from "@/features/moderation/hooks/useModerationDashboard";
 import { useServices } from "@/features/services/hooks/useServices";
 import { useAdminVendors } from "@/features/vendors/hooks/useAdminVendors";
+import {
+  ModerationEntityType,
+  ModerationStatus,
+} from "@/types/moderation";
+import type { ModerationQueueItem } from "@/types/moderation";
 import type { Vendor } from "@/types/vendor";
+
+// Where a recent request should send the admin — the dashboard summary
+// is read-only, so it links out to the page that has the real actions
+// for that entity type. Reviews don't have an individual admin page yet,
+// only the list at /admin/reviews.
+function requestHref(item: ModerationQueueItem): string {
+  switch (item.entityType) {
+    case ModerationEntityType.Vendor:
+      return `/admin/vendors/${item.entityId}`;
+    case ModerationEntityType.Service:
+      return `/admin/services/${item.entityId}`;
+    case ModerationEntityType.Review:
+    default:
+      return "/admin/reviews";
+  }
+}
+
+const requestEntityMeta: Record<
+  ModerationEntityType,
+  { label: string; icon: typeof Store; className: string }
+> = {
+  [ModerationEntityType.Vendor]: {
+    label: "Vendor",
+    icon: Store,
+    className: "bg-[#f0e9e0] text-[#a47e43]",
+  },
+  [ModerationEntityType.Service]: {
+    label: "Service",
+    icon: BriefcaseBusiness,
+    className: "bg-[#eef2f7] text-[#4d6b8f]",
+  },
+  [ModerationEntityType.Review]: {
+    label: "Review",
+    icon: Star,
+    className: "bg-[#f7f0e8] text-[#b99a62]",
+  },
+};
+
+const requestStatusStyles: Record<ModerationStatus, string> = {
+  [ModerationStatus.Pending]: "bg-amber-50 text-amber-700",
+  [ModerationStatus.Approved]: "bg-emerald-50 text-emerald-700",
+  [ModerationStatus.Rejected]: "bg-red-50 text-red-600",
+};
+
+const requestStatusLabels: Record<ModerationStatus, string> = {
+  [ModerationStatus.Pending]: "Pending",
+  [ModerationStatus.Approved]: "Approved",
+  [ModerationStatus.Rejected]: "Rejected",
+};
 
 /* ========================================================= */
 /* HELPERS */
@@ -95,15 +151,26 @@ export default function AdminPage() {
     error: vendorsError,
   } = useAdminVendors();
 
+  const {
+    summary: dashboardSummary,
+    loading: dashboardLoading,
+    error: dashboardError,
+  } = useModerationDashboard();
+
   const loading =
     categoriesLoading ||
     servicesLoading ||
-    vendorsLoading;
+    vendorsLoading ||
+    dashboardLoading;
 
   const error =
     categoriesError ||
     servicesError ||
-    vendorsError;
+    vendorsError ||
+    dashboardError;
+
+ const recentRequests: ModerationQueueItem[] =
+  dashboardSummary?.recentRequests ?? [];
 
   /* ========================================================= */
   /* CATEGORY STATS */
@@ -347,6 +414,20 @@ export default function AdminPage() {
       icon: UserX,
       href: "/admin/vendors",
     },
+    {
+      title: "Total Users",
+      value: dashboardSummary?.totalUsers ?? 0,
+      description: "registered accounts",
+      icon: Users,
+      href: undefined,
+    },
+    {
+      title: "Pending Reviews",
+      value: dashboardSummary?.pendingReviews ?? 0,
+      description: "awaiting moderation",
+      icon: ClipboardList,
+      href: "/admin/moderation",
+    },
   ];
 
   return (
@@ -406,12 +487,12 @@ export default function AdminPage() {
           {stats.map((stat) => {
             const Icon = stat.icon;
 
-            return (
-              <Link
-                key={stat.title}
-                href={stat.href}
-                className="group rounded-2xl border border-[#ebe3dd] bg-white p-4 shadow-[0_2px_12px_rgba(48,37,31,0.03)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_8px_25px_rgba(48,37,31,0.06)] sm:p-5"
-              >
+            const cardClassName = stat.href
+              ? "group rounded-2xl border border-[#ebe3dd] bg-white p-4 shadow-[0_2px_12px_rgba(48,37,31,0.03)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_8px_25px_rgba(48,37,31,0.06)] sm:p-5"
+              : "group rounded-2xl border border-[#ebe3dd] bg-white p-4 shadow-[0_2px_12px_rgba(48,37,31,0.03)] sm:p-5";
+
+            const cardContent = (
+              <>
                 <div className="flex items-start justify-between">
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#f7f1ed] text-[#79675c] transition group-hover:bg-[#30251f] group-hover:text-white">
                     <Icon
@@ -444,6 +525,24 @@ export default function AdminPage() {
                     </p>
                   </div>
                 </div>
+              </>
+            );
+
+            if (!stat.href) {
+              return (
+                <div key={stat.title} className={cardClassName}>
+                  {cardContent}
+                </div>
+              );
+            }
+
+            return (
+              <Link
+                key={stat.title}
+                href={stat.href}
+                className={cardClassName}
+              >
+                {cardContent}
               </Link>
             );
           })}
@@ -990,6 +1089,101 @@ export default function AdminPage() {
           )}
         </section>
       </div>
+
+      {/* ========================================================= */}
+      {/* RECENT MODERATION REQUESTS */}
+      {/* ========================================================= */}
+
+      <section className="mt-5 overflow-hidden rounded-2xl border border-[#ebe3dd] bg-white shadow-[0_2px_12px_rgba(48,37,31,0.03)]">
+        <div className="flex flex-col justify-between gap-4 border-b border-[#f0e9e4] px-5 py-5 sm:flex-row sm:items-center sm:px-6">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#f6f0ec] text-[#806d61]">
+              <ClipboardList size={17} />
+            </div>
+
+            <div>
+              <h2 className="text-sm font-semibold text-[#30251f]">
+                Recent Requests
+              </h2>
+
+              <p className="mt-0.5 text-[11px] text-[#9b8e86]">
+                Latest vendor, service and review submissions
+              </p>
+            </div>
+          </div>
+
+          <Link
+            href="/admin/moderation"
+            className="flex items-center gap-1.5 self-start rounded-lg border border-[#e9e0da] px-3 py-2 text-xs font-semibold text-[#806d61] transition hover:bg-[#faf7f4] hover:text-[#30251f] sm:self-auto"
+          >
+            View Moderation Queue
+            <ArrowUpRight size={14} />
+          </Link>
+        </div>
+
+        {recentRequests.length === 0 ? (
+          <div className="p-8">
+            <EmptyState
+              icon={ClipboardList}
+              text="Nothing waiting on a decision right now."
+            />
+          </div>
+        ) : (
+          <div className="divide-y divide-[#f0e9e4]">
+            {recentRequests.slice(0, 5).map((item) => {
+              const meta = requestEntityMeta[item.entityType] ?? {
+                label: "Item",
+                icon: ClipboardList,
+                className: "bg-[#f0e9e0] text-[#a47e43]",
+              };
+
+              const Icon = meta.icon;
+
+              return (
+                <Link
+                  key={`${item.entityType}-${item.entityId}`}
+                  href={requestHref(item)}
+                  className="flex items-center justify-between gap-4 px-5 py-3.5 transition hover:bg-[#fcfaf8] sm:px-6"
+                >
+                  <div className="flex min-w-0 items-center gap-3">
+                    <span
+                      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${meta.className}`}
+                    >
+                      <Icon size={15} />
+                    </span>
+
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="truncate text-xs font-semibold text-[#30251f]">
+                          {item.title}
+                        </p>
+
+                        <span className="shrink-0 rounded-full bg-[#f4eee9] px-2 py-0.5 text-[9px] font-medium text-[#766d67]">
+                          {meta.label}
+                        </span>
+                      </div>
+
+                      <p className="mt-0.5 truncate text-[10px] text-[#9b8e86]">
+                        {item.vendorBusinessName} ·{" "}
+                        {formatDate(item.submittedAt)}
+                      </p>
+                    </div>
+                  </div>
+
+                  <span
+                    className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-semibold ${
+                      requestStatusStyles[item.status] ??
+                      "bg-[#f4eee9] text-[#766d67]"
+                    }`}
+                  >
+                    {requestStatusLabels[item.status] ?? "Unknown"}
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
+        )}
+      </section>
 
       {/* ========================================================= */}
       {/* RECENT VENDORS */}

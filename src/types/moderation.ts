@@ -1,10 +1,3 @@
-// NOTE: same caveat as ReviewStatus in types/review.ts — the backend Swagger
-// doc shows numeric enum examples as `1` regardless of what the value
-// actually means. These mappings follow the natural order the admin panel
-// already manages entities in (Vendors -> Services -> Reviews) and the
-// Pending -> Approved/Rejected lifecycle used elsewhere. Confirm with the
-// backend team before relying on the exact numbers for anything beyond
-// display.
 export enum ModerationEntityType {
   Vendor = 1,
   Service = 2,
@@ -33,4 +26,10 @@ export interface GetModerationQueueParams {
   status?: ModerationStatus;
   dateFrom?: string;
   dateTo?: string;
+}
+
+export interface ModerationDashboardSummary {
+  totalUsers: number;
+  pendingReviews: number;
+  recentRequests: ModerationQueueItem[];
 }

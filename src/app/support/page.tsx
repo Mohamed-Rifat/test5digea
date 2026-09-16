@@ -66,9 +66,9 @@ const ADMIN_QUICK_ACTIONS: QuickAction[] = [
     color: "#a47e43",
   },
   {
-    title: "Manage Users",
+    title: "Admin Dashboard",
     icon: Users,
-    href: "/admin/users",
+    href: "/admin",
     color: "#8b5cf6",
   },
   {

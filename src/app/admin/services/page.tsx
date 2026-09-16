@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import {
   AlertCircle,
@@ -130,7 +131,8 @@ export default function AdminServicesPage() {
     loading: categoriesLoading,
   } = useAdminCategories();
 
-  const [search, setSearch] = useState("");
+  const searchParams = useSearchParams();
+  const [search, setSearch] = useState(() => searchParams.get("q") ?? "");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
 
@@ -655,12 +657,195 @@ export default function AdminServicesPage() {
       </div>
 
       {/* =========================
-          Table
+          Mobile Cards
       ========================= */}
 
-      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+      <div className="space-y-3 md:hidden">
+        {filteredServices.length === 0 ? (
+          <div className="rounded-2xl border border-gray-200 bg-white px-5 py-14 text-center shadow-sm">
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-gray-100">
+              <Search size={22} className="text-gray-400" />
+            </div>
+
+            <h3 className="font-medium text-gray-900">No services found</h3>
+
+            <p className="mt-1 text-sm text-gray-500">
+              Try changing your search or filters.
+            </p>
+          </div>
+        ) : (
+          filteredServices.map((service) => {
+            const statusStyles = getStatusStyles(service.status);
+            const StatusIcon = statusStyles.icon;
+            const startingPrice = getStartingPrice(service);
+
+            const isApproving =
+              actionLoading === `approve-${service.id}`;
+            const isRejecting =
+              actionLoading === `reject-${service.id}`;
+            const isActivating =
+              actionLoading === `activate-${service.id}`;
+            const isDeactivating =
+              actionLoading === `deactivate-${service.id}`;
+
+            const busy =
+              isApproving || isRejecting || isActivating || isDeactivating;
+
+            const normalizedStatus = service.status
+              ?.toLowerCase()
+              .replace(/[_-\s]/g, "");
+
+            const canApprove = normalizedStatus?.includes("pending");
+            const canReject = normalizedStatus?.includes("pending");
+            const canActivate =
+              normalizedStatus?.includes("inactive") ||
+              normalizedStatus?.includes("deactiv");
+            const canDeactivate =
+              normalizedStatus?.includes("approved") ||
+              normalizedStatus?.includes("active");
+
+            return (
+              <div
+                key={service.id}
+                className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gray-100">
+                    {service.images?.[0]?.url ? (
+                      <img
+                        src={service.images[0].url}
+                        alt={service.name}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-sm font-semibold text-gray-400">
+                        {service.name?.charAt(0)?.toUpperCase() || "S"}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-gray-900">
+                      {service.name}
+                    </p>
+
+                    <p className="mt-0.5 truncate text-xs text-gray-500">
+                      {service.vendorBusinessName || "-"}
+                    </p>
+                  </div>
+
+                  <span
+                    className={`inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-1 text-[10px] font-medium ${statusStyles.wrapper}`}
+                  >
+                    <StatusIcon size={11} />
+                    {getStatusLabel(service.status)}
+                  </span>
+                </div>
+
+                <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-gray-500">
+                  <span className="inline-flex rounded-lg bg-gray-100 px-2.5 py-1 font-medium text-gray-700">
+                    {service.categoryName || "-"}
+                  </span>
+
+                  <span>
+                    {startingPrice !== null
+                      ? `${formatPrice(startingPrice)}${
+                          service.prices?.length > 1
+                            ? ` · ${service.prices.length} options`
+                            : ""
+                        }`
+                      : "No price"}
+                  </span>
+
+                  <span>{formatDate(service.createdAt)}</span>
+                </div>
+
+                <div className="mt-3 flex items-center gap-2 border-t border-gray-100 pt-3">
+                  <Link
+                    href={`/admin/services/${service.id}`}
+                    className="flex h-9 flex-1 items-center justify-center gap-1.5 rounded-lg border border-gray-200 text-xs font-medium text-gray-700 transition hover:bg-gray-50"
+                  >
+                    <Eye size={14} />
+                    View
+                  </Link>
+
+                  {canApprove && (
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => handleApprove(service)}
+                      className="flex h-9 flex-1 items-center justify-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 text-xs font-medium text-emerald-700 transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {isApproving ? (
+                        <Loader2 size={14} className="animate-spin" />
+                      ) : (
+                        <Check size={14} />
+                      )}
+                      Approve
+                    </button>
+                  )}
+
+                  {canReject && (
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => openRejectModal(service)}
+                      className="flex h-9 flex-1 items-center justify-center gap-1.5 rounded-lg border border-red-200 bg-red-50 text-xs font-medium text-red-700 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {isRejecting ? (
+                        <Loader2 size={14} className="animate-spin" />
+                      ) : (
+                        <X size={14} />
+                      )}
+                      Reject
+                    </button>
+                  )}
+
+                  {canActivate && (
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => handleActivate(service)}
+                      className="flex h-9 flex-1 items-center justify-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 text-xs font-medium text-emerald-700 transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {isActivating ? (
+                        <Loader2 size={14} className="animate-spin" />
+                      ) : (
+                        <Power size={14} />
+                      )}
+                      Activate
+                    </button>
+                  )}
+
+                  {canDeactivate && (
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => handleDeactivate(service)}
+                      className="flex h-9 flex-1 items-center justify-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 text-xs font-medium text-amber-700 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {isDeactivating ? (
+                        <Loader2 size={14} className="animate-spin" />
+                      ) : (
+                        <Power size={14} />
+                      )}
+                      Deactivate
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* =========================
+          Table (desktop)
+      ========================= */}
+
+      <div className="hidden overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm md:block">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[1050px]">
+          <table className="w-full min-w-262.5">
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50/80">
                 <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
@@ -814,11 +999,11 @@ export default function AdminServicesPage() {
                           </div>
 
                           <div className="min-w-0">
-                            <p className="max-w-[220px] truncate text-sm font-semibold text-gray-900">
+                            <p className="max-w-55 truncate text-sm font-semibold text-gray-900">
                               {service.name}
                             </p>
 
-                            <p className="mt-0.5 max-w-[220px] truncate text-xs text-gray-500">
+                            <p className="mt-0.5 max-w-55 truncate text-xs text-gray-500">
                               {service.description ||
                                 "No description"}
                             </p>
@@ -829,7 +1014,7 @@ export default function AdminServicesPage() {
                       {/* Vendor */}
 
                       <td className="px-5 py-4">
-                        <p className="max-w-[180px] truncate text-sm font-medium text-gray-800">
+                        <p className="max-w-45 truncate text-sm font-medium text-gray-800">
                           {service.vendorBusinessName ||
                             "-"}
                         </p>

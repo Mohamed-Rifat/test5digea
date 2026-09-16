@@ -1,5 +1,5 @@
 "use client";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   FormEvent,
   useMemo,
@@ -122,8 +122,9 @@ export default function AdminVendorsPage() {
     refetch,
   } = useAdminVendors();
   const router = useRouter();
-  // Search
-  const [search, setSearch] = useState("");
+  const searchParams = useSearchParams();
+  // Search — seeded from ?q= so the header's quick search can deep-link here.
+  const [search, setSearch] = useState(() => searchParams.get("q") ?? "");
 
   // Status filter
   const [statusFilter, setStatusFilter] =
