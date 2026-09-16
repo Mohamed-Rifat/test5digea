@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -18,6 +18,8 @@ import {
   XCircle,
   Clock3,
   RefreshCw,
+  Search,
+  X,
 } from "lucide-react";
 
 import {
@@ -45,6 +47,27 @@ export default function VendorHeader({ onMenuClick }: VendorHeaderProps) {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [query, setQuery] = useState("");
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const mobileSearchInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (mobileSearchOpen) {
+      mobileSearchInputRef.current?.focus();
+    }
+  }, [mobileSearchOpen]);
+
+  // The vendor dashboard only manages the vendor's own services, so the
+  // quick search only ever has one place to go — unlike the admin
+  // dashboard's search, which lets you pick between vendors/services.
+  const runSearch = (event: React.FormEvent) => {
+    event.preventDefault();
+    const trimmed = query.trim();
+    router.push(
+      trimmed ? `/vendor/services?q=${encodeURIComponent(trimmed)}` : "/vendor/services"
+    );
+    setMobileSearchOpen(false);
+  };
 
   // ✅ Real-time clock
   useEffect(() => {
@@ -169,6 +192,26 @@ export default function VendorHeader({ onMenuClick }: VendorHeaderProps) {
       </div>
 
       {/* =================================================
+          SEARCH - Services
+      ================================================= */}
+
+      <div className="relative hidden max-w-xs flex-1 md:block">
+        <form onSubmit={runSearch} className="relative">
+          <Search
+            size={16}
+            className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[#a89c92]"
+          />
+          <input
+            type="text"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Search your services…"
+            className="h-10 w-full rounded-xl border border-[#eee7e1] bg-[#faf7f4] pl-10 pr-4 text-sm text-[#30251f] outline-none transition placeholder:text-[#b2a59d] focus:border-[#c8b4a6] focus:bg-white"
+          />
+        </form>
+      </div>
+
+      {/* =================================================
           CENTER - Current Time
       ================================================= */}
 
@@ -189,6 +232,17 @@ export default function VendorHeader({ onMenuClick }: VendorHeaderProps) {
       ================================================= */}
 
       <div className="flex items-center gap-1 sm:gap-2">
+        {/* Mobile search toggle */}
+        <button
+          type="button"
+          onClick={() => setMobileSearchOpen((prev) => !prev)}
+          className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#eee7e1] text-[#756860] transition hover:bg-[#faf7f4] hover:text-[#30251f] md:hidden"
+          aria-label="Search your services"
+          aria-expanded={mobileSearchOpen}
+        >
+          {mobileSearchOpen ? <X size={18} /> : <Search size={18} />}
+        </button>
+
         {/* Refresh Button */}
         <Tooltip title="Refresh data" arrow>
           <button
@@ -365,6 +419,26 @@ export default function VendorHeader({ onMenuClick }: VendorHeaderProps) {
           </MuiMenu>
         </div>
       </div>
+
+      {/* Mobile search panel */}
+      {mobileSearchOpen && (
+        <div className="absolute inset-x-0 top-full z-30 border-b border-[#eee7e1] bg-white p-3 shadow-lg md:hidden">
+          <form onSubmit={runSearch} className="relative">
+            <Search
+              size={16}
+              className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[#a89c92]"
+            />
+            <input
+              ref={mobileSearchInputRef}
+              type="text"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Search your services…"
+              className="h-11 w-full rounded-xl border border-[#eee7e1] bg-[#faf8f6] pl-10 pr-4 text-sm text-[#30251f] outline-none transition placeholder:text-[#b2a59d] focus:border-[#c8b4a6] focus:bg-white"
+            />
+          </form>
+        </div>
+      )}
     </header>
   );
 }

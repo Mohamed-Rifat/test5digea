@@ -44,13 +44,14 @@ export default function ServicesPage() {
 function ServicesPageContent() {
   const searchParams = useSearchParams();
   const initialCategoryId = searchParams.get("categoryId") || "";
+  const initialSearch = searchParams.get("search") || "";
 
   const { categories } = useCategories();
   const { isFavorited, toggleFavorite, actionLoading } = useFavorites();
   const { selected, isSelected, toggleService, clearAll } = useCompare();
 
-  const [searchTerm, setSearchTerm] = useState("");
-  const [searchInput, setSearchInput] = useState("");
+  const [searchTerm, setSearchTerm] = useState(initialSearch);
+  const [searchInput, setSearchInput] = useState(initialSearch);
   const [categoryId, setCategoryId] = useState(initialCategoryId);
   const [sortBy, setSortBy] = useState(0);
   const [minPrice, setMinPrice] = useState("");

@@ -17,18 +17,34 @@ import {
   ChevronDown,
   ChevronRight,
   LayoutGrid,
+  Store,
+  BriefcaseBusiness,
+  KeyRound,
 } from "lucide-react";
 
 import { useAuth } from "@/context/AuthContext";
 import { getHomePath } from "@/lib/auth-utils";
 import { useCategories } from "@/features/categories/hooks/useCategories";
 
-const navLinks = [
+// Primary links rendered before the Categories dropdown.
+const primaryLinks = [
   { label: "Home", href: "/" },
-  { label: "Services", href: "/services" },
   { label: "Vendors", href: "/vendors" },
+];
+
+// Links rendered after the Categories dropdown.
+const secondaryLinks = [
   { label: "About", href: "/about" },
   { label: "Contact", href: "/contact" },
+];
+
+// Where the navbar search can jump to. "Services" no longer has its own
+// nav link (Categories covers that ground), but it's still a real page,
+// so search can send people there directly — same pattern as the admin
+// dashboard's quick search.
+const searchTargets = [
+  { label: "Vendors", href: "/vendors", icon: Store },
+  { label: "Services", href: "/services", icon: BriefcaseBusiness },
 ];
 
 export default function SiteNavbar() {
@@ -43,8 +59,14 @@ export default function SiteNavbar() {
   const [categoriesOpen, setCategoriesOpen] = useState(false);
   const [mobileCategoriesOpen, setMobileCategoriesOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [showSearchTargets, setShowSearchTargets] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const [mobileAccountOpen, setMobileAccountOpen] = useState(false);
 
   const categoriesRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLDivElement>(null);
+  const mobileSearchInputRef = useRef<HTMLInputElement>(null);
+  const mobileAccountRef = useRef<HTMLDivElement>(null);
 
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname?.startsWith(href);
@@ -68,6 +90,47 @@ export default function SiteNavbar() {
     return () => document.removeEventListener("mousedown", handleClick);
   }, [categoriesOpen]);
 
+  // Close the desktop search targets dropdown on outside click.
+  useEffect(() => {
+    if (!showSearchTargets) return;
+
+    const handleClick = (event: MouseEvent) => {
+      if (
+        searchRef.current &&
+        !searchRef.current.contains(event.target as Node)
+      ) {
+        setShowSearchTargets(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [showSearchTargets]);
+
+  // Close the mobile account dropdown (Roadmap / Profile / Security) on
+  // outside click.
+  useEffect(() => {
+    if (!mobileAccountOpen) return;
+
+    const handleClick = (event: MouseEvent) => {
+      if (
+        mobileAccountRef.current &&
+        !mobileAccountRef.current.contains(event.target as Node)
+      ) {
+        setMobileAccountOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [mobileAccountOpen]);
+
+  useEffect(() => {
+    if (mobileSearchOpen) {
+      mobileSearchInputRef.current?.focus();
+    }
+  }, [mobileSearchOpen]);
+
   // Lock body scroll while the mobile drawer is open.
   useEffect(() => {
     document.body.style.overflow = mobileOpen ? "hidden" : "";
@@ -81,17 +144,31 @@ export default function SiteNavbar() {
     setMobileCategoriesOpen(false);
   };
 
+  const openMobileDrawer = () => {
+    setMobileSearchOpen(false);
+    setMobileAccountOpen(false);
+    setMobileOpen(true);
+  };
+
   const goToCategory = (categoryId: string) => {
     router.push(`/vendors?categoryId=${categoryId}`);
     setCategoriesOpen(false);
     closeMobile();
   };
 
+  // Jump to a search target (Vendors or Services) with the current query.
+  const goToSearch = (href: string) => {
+    const query = search.trim();
+    router.push(query ? `${href}?search=${encodeURIComponent(query)}` : href);
+    setShowSearchTargets(false);
+    setMobileSearchOpen(false);
+    closeMobile();
+  };
+
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const query = search.trim();
-    router.push(query ? `/vendors?search=${encodeURIComponent(query)}` : "/vendors");
-    closeMobile();
+    // Enter with no target chosen defaults to Vendors.
+    goToSearch(searchTargets[0].href);
   };
 
   return (
@@ -113,7 +190,7 @@ export default function SiteNavbar() {
 
         {/* DESKTOP NAV */}
         <nav className="hidden items-center gap-1 lg:flex">
-          {navLinks.map((link) => (
+          {primaryLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
@@ -127,7 +204,8 @@ export default function SiteNavbar() {
             </Link>
           ))}
 
-          {/* CATEGORIES (mega-menu) */}
+          {/* CATEGORIES (mega-menu) — replaces the old standalone "Services"
+              link with the broader grouping. */}
           <div className="relative" ref={categoriesRef}>
             <button
               type="button"
@@ -181,23 +259,70 @@ export default function SiteNavbar() {
               </div>
             )}
           </div>
+
+          {secondaryLinks.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className={`rounded-full px-4 py-2 text-sm font-medium transition ${
+                isActive(link.href)
+                  ? "bg-[#30251f] text-white"
+                  : "text-[#5f544d] hover:bg-[#f0e9e0] hover:text-[#30251f]"
+              }`}
+            >
+              {link.label}
+            </Link>
+          ))}
         </nav>
 
         <div className="hidden items-center gap-2 lg:flex">
-          {/* SEARCH */}
-          <form onSubmit={handleSearchSubmit} className="relative">
-            <Search
-              size={16}
-              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#a89c92]"
-            />
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              type="text"
-              placeholder="Search…"
-              className="w-40 rounded-full border border-[#e4dbd0] bg-white py-2 pl-9 pr-3 text-sm text-[#30251f] outline-none transition focus:w-56 focus:border-[#b99a62]"
-            />
-          </form>
+          {/* SEARCH — pick Vendors or Services, same pattern as the admin
+              dashboard's quick search. */}
+          <div className="relative" ref={searchRef}>
+            <form onSubmit={handleSearchSubmit} className="relative">
+              <Search
+                size={16}
+                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#a89c92]"
+              />
+              <input
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setShowSearchTargets(true);
+                }}
+                onFocus={() => setShowSearchTargets(true)}
+                type="text"
+                placeholder="Search…"
+                className="w-40 rounded-full border border-[#e4dbd0] bg-white py-2 pl-9 pr-3 text-sm text-[#30251f] outline-none transition focus:w-64 focus:border-[#b99a62]"
+              />
+            </form>
+
+            {showSearchTargets && (
+              <div className="absolute right-0 top-full z-30 mt-2 w-64 overflow-hidden rounded-xl border border-[#eee7e1] bg-white p-1.5 shadow-[0_18px_40px_rgba(48,37,31,0.14)]">
+                {searchTargets.map((target) => {
+                  const Icon = target.icon;
+                  return (
+                    <button
+                      key={target.href}
+                      type="button"
+                      onClick={() => goToSearch(target.href)}
+                      className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm text-[#5f544d] transition hover:bg-[#faf7f4] hover:text-[#30251f]"
+                    >
+                      <Icon size={15} className="text-[#a47e43]" />
+                      {search.trim() ? (
+                        <span>
+                          Search <span className="font-semibold">{target.label}</span>{" "}
+                          for &ldquo;{search.trim()}&rdquo;
+                        </span>
+                      ) : (
+                        <span>Browse {target.label}</span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
 
           {isAuthenticated && isUser && (
             <>
@@ -319,16 +444,146 @@ export default function SiteNavbar() {
           )}
         </div>
 
-        {/* MOBILE MENU BUTTON */}
-        <button
-          type="button"
-          aria-label="Toggle menu"
-          onClick={() => setMobileOpen(true)}
-          className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#e4dbd0] text-[#30251f] lg:hidden"
-        >
-          <Menu size={20} />
-        </button>
+        {/* MOBILE QUICK ACTIONS — search, favorites and the account menu
+            (Roadmap / Profile / Security) sit right next to the hamburger
+            toggle, so none of them require opening the drawer first. */}
+        <div className="flex items-center gap-1.5 lg:hidden">
+          <button
+            type="button"
+            onClick={() => {
+              setMobileAccountOpen(false);
+              setMobileSearchOpen((v) => !v);
+            }}
+            aria-label="Search"
+            aria-expanded={mobileSearchOpen}
+            className={`flex h-9 w-9 items-center justify-center rounded-xl border border-[#e4dbd0] transition ${
+              mobileSearchOpen
+                ? "bg-[#f0e9e0] text-[#30251f]"
+                : "text-[#5f544d] hover:border-[#b99a62]"
+            }`}
+          >
+            {mobileSearchOpen ? <X size={18} /> : <Search size={18} />}
+          </button>
+
+          {isAuthenticated && isUser && (
+            <>
+              <Link
+                href="/favorites"
+                aria-label="Favorites"
+                className={`flex h-9 w-9 items-center justify-center rounded-xl border border-[#e4dbd0] text-[#5f544d] transition hover:border-[#b99a62] hover:text-[#a47e43] ${
+                  isActive("/favorites") ? "border-[#b99a62] text-[#a47e43]" : ""
+                }`}
+              >
+                <Heart size={17} />
+              </Link>
+
+              {/* Account quick-menu: tapping the user icon drops down
+                  Wedding Roadmap, My Profile and Security (change
+                  password) — no need to open the hamburger drawer. */}
+              <div className="relative" ref={mobileAccountRef}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileSearchOpen(false);
+                    setMobileAccountOpen((v) => !v);
+                  }}
+                  aria-label="Account menu"
+                  aria-expanded={mobileAccountOpen}
+                  className={`flex h-9 w-9 items-center justify-center rounded-xl border border-[#e4dbd0] transition ${
+                    mobileAccountOpen
+                      ? "bg-[#f0e9e0] text-[#30251f]"
+                      : "text-[#5f544d] hover:border-[#b99a62]"
+                  }`}
+                >
+                  <UserIcon size={17} />
+                </button>
+
+                {mobileAccountOpen && (
+                  <div className="absolute right-0 z-30 mt-2 w-52 overflow-hidden rounded-2xl border border-[#eee7e1] bg-white py-2 shadow-[0_18px_40px_rgba(48,37,31,0.14)]">
+                    <Link
+                      href="/roadmap"
+                      onClick={() => setMobileAccountOpen(false)}
+                      className="flex items-center gap-2 px-4 py-2.5 text-sm text-[#5f544d] hover:bg-[#faf7f4] hover:text-[#30251f]"
+                    >
+                      <Map size={16} />
+                      Wedding Roadmap
+                    </Link>
+                    <Link
+                      href="/profile"
+                      onClick={() => setMobileAccountOpen(false)}
+                      className="flex items-center gap-2 px-4 py-2.5 text-sm text-[#5f544d] hover:bg-[#faf7f4] hover:text-[#30251f]"
+                    >
+                      <User size={16} />
+                      My Profile
+                    </Link>
+                    <Link
+                      href="/change-password"
+                      onClick={() => setMobileAccountOpen(false)}
+                      className="flex items-center gap-2 px-4 py-2.5 text-sm text-[#5f544d] hover:bg-[#faf7f4] hover:text-[#30251f]"
+                    >
+                      <KeyRound size={16} />
+                      Security
+                    </Link>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+
+          {/* MOBILE MENU BUTTON */}
+          <button
+            type="button"
+            aria-label="Toggle menu"
+            onClick={openMobileDrawer}
+            className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#e4dbd0] text-[#30251f]"
+          >
+            <Menu size={18} />
+          </button>
+        </div>
       </div>
+
+      {/* MOBILE SEARCH PANEL */}
+      {mobileSearchOpen && (
+        <div className="absolute inset-x-0 top-full z-30 border-b border-[#eee7e1] bg-white p-3 shadow-lg lg:hidden">
+          <form onSubmit={handleSearchSubmit} className="relative">
+            <Search
+              size={16}
+              className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[#a89c92]"
+            />
+            <input
+              ref={mobileSearchInputRef}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              type="text"
+              placeholder="Search vendors, services…"
+              className="h-11 w-full rounded-full border border-[#e4dbd0] bg-[#faf7f4] pl-10 pr-4 text-sm text-[#30251f] outline-none transition focus:border-[#b99a62] focus:bg-white"
+            />
+          </form>
+
+          <div className="mt-2 space-y-1">
+            {searchTargets.map((target) => {
+              const Icon = target.icon;
+              return (
+                <button
+                  key={target.href}
+                  type="button"
+                  onClick={() => goToSearch(target.href)}
+                  className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm text-[#5f544d] transition hover:bg-[#faf7f4] hover:text-[#30251f]"
+                >
+                  <Icon size={15} className="text-[#a47e43]" />
+                  {search.trim() ? (
+                    <span>
+                      Search <span className="font-semibold">{target.label}</span>
+                    </span>
+                  ) : (
+                    <span>Browse {target.label}</span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </header>
 
     {/* MOBILE SIDE DRAWER (rendered outside <header> on purpose: the header
@@ -382,27 +637,10 @@ export default function SiteNavbar() {
             </button>
           </div>
 
-          {/* search */}
-          <form onSubmit={handleSearchSubmit} className="border-b border-[#eee7e1] px-4 py-3">
-            <div className="relative">
-              <Search
-                size={16}
-                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#a89c92]"
-              />
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                type="text"
-                placeholder="Search vendors…"
-                className="w-full rounded-full border border-[#e4dbd0] bg-white py-2.5 pl-9 pr-3 text-sm text-[#30251f] outline-none focus:border-[#b99a62]"
-              />
-            </div>
-          </form>
-
           {/* scrollable content */}
           <div className="flex-1 overflow-y-auto px-2 py-3">
             <nav className="flex flex-col gap-1">
-              {navLinks.map((link) => (
+              {primaryLinks.map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}
@@ -416,8 +654,6 @@ export default function SiteNavbar() {
                   {link.label}
                 </Link>
               ))}
-
-              <div className="my-1 border-t border-[#eee7e1]" />
 
               {/* CATEGORIES accordion */}
               <button
@@ -458,49 +694,33 @@ export default function SiteNavbar() {
                 </div>
               )}
 
-              <div className="my-1 border-t border-[#eee7e1]" />
-
-              {isAuthenticated && isUser && (
-                <>
-                  <Link
-                    href="/favorites"
-                    onClick={closeMobile}
-                    className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium text-[#5f544d] hover:bg-[#f0e9e0]"
-                  >
-                    <Heart size={16} />
-                    Favorites
-                  </Link>
-                  <Link
-                    href="/roadmap"
-                    onClick={closeMobile}
-                    className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium text-[#5f544d] hover:bg-[#f0e9e0]"
-                  >
-                    <Map size={16} />
-                    Wedding Roadmap
-                  </Link>
-                </>
-              )}
+              {secondaryLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={closeMobile}
+                  className={`rounded-xl px-4 py-2.5 text-sm font-medium ${
+                    isActive(link.href)
+                      ? "bg-[#30251f] text-white"
+                      : "text-[#5f544d] hover:bg-[#f0e9e0]"
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              ))}
 
               {(isAdmin || isVendor) && (
-                <Link
-                  href={getHomePath(role)}
-                  onClick={closeMobile}
-                  className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium text-[#5f544d] hover:bg-[#f0e9e0]"
-                >
-                  <LayoutDashboard size={16} />
-                  {isAdmin ? "Admin Dashboard" : "Vendor Dashboard"}
-                </Link>
-              )}
-
-              {isUser && (
-                <Link
-                  href="/profile"
-                  onClick={closeMobile}
-                  className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium text-[#5f544d] hover:bg-[#f0e9e0]"
-                >
-                  <User size={16} />
-                  My Profile
-                </Link>
+                <>
+                  <div className="my-1 border-t border-[#eee7e1]" />
+                  <Link
+                    href={getHomePath(role)}
+                    onClick={closeMobile}
+                    className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium text-[#5f544d] hover:bg-[#f0e9e0]"
+                  >
+                    <LayoutDashboard size={16} />
+                    {isAdmin ? "Admin Dashboard" : "Vendor Dashboard"}
+                  </Link>
+                </>
               )}
             </nav>
           </div>

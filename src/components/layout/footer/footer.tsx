@@ -6,29 +6,23 @@ import { FaFacebookF, FaInstagram, FaTiktok, } from "react-icons/fa";
 import Image from "next/image";
 
 const footerLinks = {
-    explore: [
-        { label: "Services", href: "/services" },
+    discover: [
         { label: "Vendors", href: "/vendors" },
-        { label: "Categories", href: "/categories" },
-        { label: "Search", href: "/search" },
+        { label: "Services", href: "/services" },
+        { label: "Browse by Category", href: "/vendors" },
+        { label: "Compare", href: "/compare" },
+    ],
+
+    forCouples: [
+        { label: "Favorites", href: "/favorites" },
+        { label: "Wedding Roadmap", href: "/roadmap" },
+        { label: "My Profile", href: "/profile" },
     ],
 
     company: [
         { label: "About Us", href: "/about" },
         { label: "Contact Us", href: "/contact" },
-        { label: "Our Journey", href: "/journey" },
-    ],
-
-    support: [
-        { label: "Help Center", href: "/help" },
-        { label: "Privacy Policy", href: "/privacy" },
-        { label: "Terms & Conditions", href: "/terms" },
-    ],
-
-    information: [
-        { label: "test", href: "/help" },
-        { label: "test", href: "/privacy" },
-        { label: "test", href: "/terms" },
+        { label: "Help Center", href: "/support" },
     ],
 };
 
@@ -129,28 +123,23 @@ export default function Footer() {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-x-8 gap-y-10 sm:grid-cols-4 sm:gap-x-10 lg:pt-8 ">
-                        {/* Explore */}
+                    <div className="grid grid-cols-2 gap-x-8 gap-y-10 sm:grid-cols-3 sm:gap-x-10 lg:pt-8 ">
+                        {/* Discover */}
                         <FooterColumn
-                            title="Explore"
-                            links={footerLinks.explore}
+                            title="Discover"
+                            links={footerLinks.discover}
+                        />
+
+                        {/* For Couples */}
+                        <FooterColumn
+                            title="For Couples"
+                            links={footerLinks.forCouples}
                         />
 
                         {/* Company */}
                         <FooterColumn
                             title="Company"
                             links={footerLinks.company}
-                        />
-
-                        {/* Support */}
-                        <FooterColumn
-                            title="Support"
-                            links={footerLinks.support}
-                        />
-                         {/* Support */}
-                        <FooterColumn
-                            title="information"
-                            links={footerLinks.information}
                         />
                     </div>
                 </div>
@@ -216,7 +205,7 @@ function FooterColumn({
 
             <ul className="space-y-3.5">
                 {links.map((link) => (
-                    <li key={link.href}>
+                    <li key={link.label}>
                         <Link
                             href={link.href}
                             className="group inline-flex items-center gap-1.5 text-[13px] text-white/45 transition-colors duration-300 hover:text-white sm:text-sm"

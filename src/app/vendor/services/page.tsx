@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useState, useMemo, useCallback } from "react";
 import {
   AlertCircle,
@@ -88,8 +89,12 @@ export default function VendorServicesPage() {
     resubmit,
   } = useVendorServices();
 
+  const searchParams = useSearchParams();
+
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("All");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(
+    () => searchParams.get("q") ?? ""
+  );
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   // ✅ إحصائيات سريعة
