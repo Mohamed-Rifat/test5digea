@@ -441,13 +441,13 @@ export default function VendorProfilePage() {
         ========================================================== */}
         <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
           <div>
-            <p className="mb-1 text-xs font-semibold uppercase tracking-[0.2em] text-[#9b8171]">
+            <p className="mb-1 text-sm font-semibold uppercase tracking-[0.2em] text-[#9b8171]">
               Vendor Dashboard
             </p>
-
-            <h1 className="text-2xl font-semibold tracking-tight text-[#30251f]">
-              Company Profile
-            </h1>
+ 
+            <h2 className="text-2xl font-semibold tracking-tight text-[#30251f] sm:text-3xl">
+             {form.businessName || "Your Business"}
+            </h2>
           </div>
 
           <div className="flex items-center gap-3">
@@ -459,9 +459,8 @@ export default function VendorProfilePage() {
                 className="inline-flex h-11 items-center gap-2 rounded-xl border border-[#e3d9d1] bg-white px-4 text-sm font-medium text-[#514740] transition hover:bg-[#f7f2ef] disabled:opacity-60"
               >
                 <RotateCcw
-                  className={`h-4 w-4 ${
-                    isResubmitting ? "animate-spin" : ""
-                  }`}
+                  className={`h-4 w-4 ${isResubmitting ? "animate-spin" : ""
+                    }`}
                 />
                 Resubmit
               </button>
@@ -725,11 +724,10 @@ export default function VendorProfilePage() {
                         <button
                           type="button"
                           onClick={() => toggleDayOff(key)}
-                          className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-medium transition ${
-                            isOff
+                          className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-medium transition ${isOff
                               ? "bg-rose-50 text-rose-600 hover:bg-rose-100"
                               : "bg-[#f7f2ef] text-[#514740] hover:bg-[#eee7e2]"
-                          }`}
+                            }`}
                         >
                           {isOff ? (
                             <>
@@ -1045,29 +1043,25 @@ export default function VendorProfilePage() {
                     return (
                       <div
                         key={day}
-                        className={`flex items-center justify-between rounded-2xl px-4 py-4 ${
-                          isOff
+                        className={`flex items-center justify-between rounded-2xl px-4 py-4 ${isOff
                             ? "bg-rose-50/50 border border-dashed border-rose-200"
                             : "bg-[#fcfaf8]"
-                        }`}
+                          }`}
                       >
                         <div className="flex items-center gap-3">
-                          <div className={`flex h-9 w-9 items-center justify-center rounded-xl bg-white shadow-sm ${
-                            isOff ? "text-rose-400" : "text-[#806a5b]"
-                          }`}>
+                          <div className={`flex h-9 w-9 items-center justify-center rounded-xl bg-white shadow-sm ${isOff ? "text-rose-400" : "text-[#806a5b]"
+                            }`}>
                             <Clock3 className="h-4 w-4" />
                           </div>
 
-                          <span className={`text-sm font-semibold capitalize ${
-                            isOff ? "text-rose-500" : "text-[#40352f]"
-                          }`}>
+                          <span className={`text-sm font-semibold capitalize ${isOff ? "text-rose-500" : "text-[#40352f]"
+                            }`}>
                             {dayLabel}
                           </span>
                         </div>
 
-                        <span className={`text-xs font-medium ${
-                          isOff ? "text-rose-500" : "text-[#756b65]"
-                        }`}>
+                        <span className={`text-xs font-medium ${isOff ? "text-rose-500" : "text-[#756b65]"
+                          }`}>
                           {isOff ? "Day Off" : hours}
                         </span>
                       </div>
@@ -1141,13 +1135,12 @@ function Field({
         onChange={(e) => onChange(e.target.value)}
         onBlur={onBlur}
         placeholder={placeholder}
-        className={`h-12 w-full rounded-2xl border px-4 text-sm text-[#30251f] outline-none transition placeholder:text-[#aaa09a] focus:ring-4 ${
-          hasError
+        className={`h-12 w-full rounded-2xl border px-4 text-sm text-[#30251f] outline-none transition placeholder:text-[#aaa09a] focus:ring-4 ${hasError
             ? "border-red-300 bg-red-50/50 focus:border-red-400 focus:ring-red-500/10"
             : isValid
-            ? "border-emerald-300 bg-emerald-50/50 focus:border-emerald-400 focus:ring-emerald-500/10"
-            : "border-[#e3d9d1] bg-[#fcfaf8] focus:border-[#8c7363] focus:ring-[#8c7363]/5 focus:bg-white"
-        }`}
+              ? "border-emerald-300 bg-emerald-50/50 focus:border-emerald-400 focus:ring-emerald-500/10"
+              : "border-[#e3d9d1] bg-[#fcfaf8] focus:border-[#8c7363] focus:ring-[#8c7363]/5 focus:bg-white"
+          }`}
       />
 
       {hasError && (

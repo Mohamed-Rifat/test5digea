@@ -198,7 +198,7 @@ function exportReviewsToExcel(reviews: Review[], vendorName?: string) {
     const rows: any[][] = [
       [`📋 ${serviceName} - Reviews Report`],
       [""],
-      ["#", "Customer", "Rating", "Status", "Visibility", "Comment", "Date"],
+      ["NO", "Customer", "Rating", "Status", "Visibility", "Comment", "Date"],
     ];
 
     serviceReviews.forEach((review, index) => {
@@ -227,7 +227,7 @@ function exportReviewsToExcel(reviews: Review[], vendorName?: string) {
   const allReviewsData: any[][] = [
     ['📋 ALL REVIEWS - Complete List'],
     [''],
-    ['#', 'Customer', 'Service', 'Rating', 'Status', 'Visibility', 'Comment', 'Date'],
+    ['No', 'Customer', 'Service', 'Rating', 'Status', 'Visibility', 'Comment', 'Date'],
   ];
 
   reviews.forEach((review, index) => {
@@ -362,7 +362,7 @@ const ReviewCard = memo(function ReviewCard({
 
   return (
     <article
-      className={`group relative rounded-2xl border-2 bg-white p-4 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md sm:p-6 ${getCardBorderClass()}`}
+      className={`group relative border-1 bg-white p-4 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md sm:p-6 ${getCardBorderClass()}`}
       style={{ animationDelay: `${index * 50}ms` }}
     >
       {/* ✅ شريط علوي ملون حسب الحالة */}
@@ -1027,15 +1027,8 @@ export default function VendorReviewsPage() {
         <header className="mb-4 sm:mb-6 lg:mb-8">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
             <div>
-              <p className="mb-1.5 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#9b8171] sm:mb-2 sm:text-xs">
-                <Sparkles size={11} className="sm:h-3.25 sm:w-3.25" />
-                Vendor Dashboard
-              </p>
 
               <div className="flex items-center gap-2 sm:gap-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#f5eee9] sm:h-10 sm:w-10">
-                  <MessageSquareText size={16} className="text-[#a47e43] sm:h-5 sm:w-5" strokeWidth={1.8} />
-                </div>
                 <h1 className="text-2xl font-semibold tracking-tight text-[#30251f] sm:text-3xl lg:text-4xl">
                   Reviews
                 </h1>
@@ -1052,14 +1045,12 @@ export default function VendorReviewsPage() {
                 disabled={isRefreshing}
                 className="inline-flex items-center gap-1.5 rounded-xl border border-[#e3d9d1] bg-white px-2.5 py-1.5 text-[10px] font-medium text-[#665950] transition-all hover:border-[#cfc1b7] hover:bg-[#faf8f6] disabled:opacity-50 sm:gap-2 sm:px-3.5 sm:py-2 sm:text-sm"
               >
-                <RefreshCw size={13} className={isRefreshing ? "animate-spin" : "sm:h-4 sm:w-4"} />
-                <span className="hidden xs:inline">{isRefreshing ? "Refreshing..." : "Refresh"}</span>
-                <span className="xs:hidden">{isRefreshing ? "..." : "⟳"}</span>
+                <RefreshCw size={13} className={isRefreshing ? "animate-spin" : "sm:h-5 sm:w-5"} />
               </button>
 
               <div>
                 <Button
-                  onClick={handleExportClick}
+                  onClick={handleExportAll}
                   disabled={reviews.length === 0}
                   startIcon={<FileSpreadsheet size={16} className="sm:h-4.5 sm:w-4.5" />}
                   variant="contained"
@@ -1076,47 +1067,8 @@ export default function VendorReviewsPage() {
                     "&:disabled": { opacity: 0.5 },
                   }}
                 >
-                  <span className="hidden xs:inline">Export</span>
-                  <span className="xs:hidden">📊</span>
+                  <span className="">Export</span>
                 </Button>
-                <Menu
-                  anchorEl={exportMenuAnchor}
-                  open={Boolean(exportMenuAnchor)}
-                  onClose={handleExportClose}
-                  slotProps={{
-                    paper: {
-                      sx: {
-                        borderRadius: "12px",
-                        marginTop: "6px",
-                        boxShadow: "0 14px 35px rgba(48,37,31,0.12)",
-                        border: "1px solid #e8dfd8",
-                        minWidth: "200px",
-                      },
-                    },
-                  }}
-                >
-                  <MenuItem onClick={handleExportAll} sx={{ py: 1.5, px: 2 }}>
-                    <ListItemIcon>
-                      <FileSpreadsheet size={18} className="text-[#a47e43]" />
-                    </ListItemIcon>
-                    <ListItemText
-                      primary="Export All"
-                      secondary={`${reviews.length} reviews`}
-                      slotProps={{ secondary: { sx: { fontSize: "11px", color: "#9b8f86" } } }}
-                    />
-                  </MenuItem>
-
-                  <MenuItem onClick={handleExportFiltered} sx={{ py: 1.5, px: 2 }}>
-                    <ListItemIcon>
-                      <FileSpreadsheet size={18} className="text-[#a47e43]" />
-                    </ListItemIcon>
-                    <ListItemText
-                      primary="Export Filtered"
-                      secondary={`${filteredReviews.length} reviews`}
-                      slotProps={{ secondary: { sx: { fontSize: "11px", color: "#9b8f86" } } }}
-                    />
-                  </MenuItem>
-                </Menu>
               </div>
             </div>
           </div>

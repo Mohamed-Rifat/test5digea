@@ -169,15 +169,8 @@ export default function VendorServicesPage() {
         <header className="mb-4 sm:mb-6 lg:mb-8">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
             <div className="flex-1">
-              <p className="mb-1.5 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#9b8171] sm:mb-2 sm:text-xs">
-                <Sparkles size={11} className="sm:h-3.25 sm:w-3.25" />
-                Vendor Dashboard
-              </p>
 
               <div className="flex items-center gap-2 sm:gap-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#f5eee9] sm:h-10 sm:w-10">
-                  <BriefcaseBusiness size={16} className="text-[#a47e43] sm:h-5 sm:w-5" strokeWidth={1.8} />
-                </div>
                 <h1 className="text-2xl font-semibold tracking-tight text-[#30251f] sm:text-3xl lg:text-4xl">
                   My Services
                 </h1>
@@ -196,18 +189,14 @@ export default function VendorServicesPage() {
                 disabled={isRefreshing || loading}
                 className="inline-flex items-center gap-1.5 rounded-xl border border-[#e3d9d1] bg-white px-2.5 py-1.5 text-[10px] font-medium text-[#665950] transition-all hover:border-[#cfc1b7] hover:bg-[#faf8f6] disabled:opacity-50 sm:gap-2 sm:px-3.5 sm:py-2 sm:text-sm"
               >
-                <RefreshCw size={13} className={isRefreshing ? "animate-spin" : "sm:h-4 sm:w-4"} />
-                <span className="hidden xs:inline">{isRefreshing ? "Refreshing..." : "Refresh"}</span>
-                <span className="xs:hidden">{isRefreshing ? "..." : "⟳"}</span>
+                <RefreshCw size={13} className={isRefreshing ? "animate-spin" : "sm:h-5 sm:w-5"} />
               </button>
 
               <Link
                 href="/vendor/services/new"
                 className="inline-flex items-center gap-1.5 rounded-xl bg-[#30251f] px-3 py-1.5 text-[10px] font-semibold text-white transition hover:bg-[#463831] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
               >
-                <Plus size={13} className="sm:h-4 sm:w-4" />
-                <span className="hidden xs:inline">Add Service</span>
-                <span className="xs:hidden">+</span>
+                <Plus size={13} className="sm:h-5 sm:w-5" /><span>Add Services</span>
               </Link>
 
               {/* Badge with count */}

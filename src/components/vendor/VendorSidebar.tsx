@@ -27,6 +27,7 @@ import {
   Calendar,
   Clock,
   AlertCircle,
+  Crown,
 } from "lucide-react";
 
 import {
@@ -55,7 +56,7 @@ const navigationItems = [
     href: "/vendor",
     icon: LayoutDashboard,
   },
-     {
+  {
     label: "Company Profile",
     href: "/vendor/profile",
     icon: Building2,
@@ -65,7 +66,7 @@ const navigationItems = [
     href: "/vendor/categories",
     icon: Tags,
   },
-    {
+  {
     label: "My Services",
     href: "/vendor/services",
     icon: BriefcaseBusiness,
@@ -79,6 +80,16 @@ const navigationItems = [
     label: "Security",
     href: "/vendor/security",
     icon: Shield,
+  },
+  {
+    label: "User Mode",
+    href: "/",
+    icon: Users,
+  },
+  {
+    label: "Subscriptions",
+    href: "/vendor/subscriptions",
+    icon: Crown,
   },
 ];
 
@@ -143,8 +154,8 @@ export default function VendorSidebar({
     },
   };
 
-  const status = vendor?.status 
-    ? statusConfig[vendor.status as keyof typeof statusConfig] 
+  const status = vendor?.status
+    ? statusConfig[vendor.status as keyof typeof statusConfig]
     : statusConfig.Pending;
 
   const loading = vendorLoading || servicesLoading || reviewsLoading;
@@ -175,18 +186,18 @@ export default function VendorSidebar({
         ================================================= */}
 
         <div className="flex h-18 items-center justify-between border-b border-[#eee7e1] px-5">
-          <Link href="/" className="flex shrink-0 items-center gap-2">
-          <Image
-            src="/Logo.png"
-            alt="5Digea"
-            width={36}
-            height={36}
-            className="rounded-full"
-          />
-          <span className="font-serif text-lg font-medium text-[#30251f]">
-            5Digea
-          </span>
-        </Link>
+          <Link href="/vendor" className="flex shrink-0 items-center gap-2">
+            <Image
+              src="/Logo.png"
+              alt="5Digea"
+              width={36}
+              height={36}
+              className="rounded-full"
+            />
+            <span className="font-serif text-lg font-medium text-[#30251f]">
+              5Digea
+            </span>
+          </Link>
 
           <button
             type="button"
@@ -217,7 +228,7 @@ export default function VendorSidebar({
               ) : (
                 <Building2 size={22} className="text-[#8d7b70]" />
               )}
-              
+
             </div>
 
             {/* Info */}
@@ -232,12 +243,11 @@ export default function VendorSidebar({
                   <p className="truncate text-sm font-semibold text-[#30251f]">
                     {vendor?.businessName || "Vendor Account"}
                   </p>
-                  
+
                   <div className="mt-1 flex items-center gap-2">
                     <span className={`inline-flex h-1.5 w-1.5 rounded-full ${status.dotColor} animate-pulse`} />
-                    <span className={`text-[10px] font-medium ${
-                      vendor?.status === "Approved" ? "text-emerald-700" : "text-amber-700"
-                    }`}>
+                    <span className={`text-[10px] font-medium ${vendor?.status === "Approved" ? "text-emerald-700" : "text-amber-700"
+                      }`}>
                       {status?.label || "Loading"}
                     </span>
                   </div>
@@ -377,10 +387,10 @@ export default function VendorSidebar({
             disabled={isLoggingOut}
             className="group flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium text-[#756860] transition-all hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
           >
-            <LogOut 
-              size={18} 
-              strokeWidth={1.8} 
-              className="transition-colors group-hover:text-red-500" 
+            <LogOut
+              size={18}
+              strokeWidth={1.8}
+              className="transition-colors group-hover:text-red-500"
             />
             <span>{isLoggingOut ? "Logging out..." : "Logout"}</span>
             {isLoggingOut && (

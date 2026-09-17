@@ -172,7 +172,7 @@ export default function NewVendorServicePage() {
 
   return (
     <main className="min-h-screen bg-[#faf8f6]">
-      <div className="mx-auto max-w-4xl px-3 py-4 sm:px-4 sm:py-6 lg:px-6 lg:py-8 xl:px-8 xl:py-10">
+      <div className="mx-auto lg:max-w-full px-3 py-4 sm:px-4 sm:py-6 lg:px-6 lg:py-8 xl:px-8 xl:py-10">
         {/* =================================================
             Header
         ================================================= */}
@@ -187,14 +187,7 @@ export default function NewVendorServicePage() {
           </Link>
 
           <div className="flex items-center gap-2 sm:gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#f5eee9] sm:h-10 sm:w-10">
-              <BriefcaseBusiness size={16} className="text-[#a47e43] sm:h-5 sm:w-5" strokeWidth={1.8} />
-            </div>
             <div>
-              <p className="mb-0.5 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#9b8171] sm:mb-1 sm:text-xs">
-                <Sparkles size={11} className="sm:h-3.25 sm:w-3.25" />
-                Vendor Dashboard
-              </p>
               <h1 className="text-2xl font-semibold tracking-tight text-[#30251f] sm:text-3xl lg:text-4xl">
                 Add a New Service
               </h1>
@@ -530,7 +523,7 @@ export default function NewVendorServicePage() {
             <span className="leading-5">
               <span className="font-medium text-[#40352f]">Need help?</span>{' '}
               All services are reviewed by our team before going live. Make sure your description is clear and accurate.
-              <a href="/support" className="ml-1 font-medium text-[#a47e43] hover:underline">
+              <a href="/vendor/support" className="ml-1 font-medium text-[#a47e43] hover:underline">
                 Contact support
               </a>
             </span>
