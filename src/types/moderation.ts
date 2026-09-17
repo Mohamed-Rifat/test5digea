@@ -2,6 +2,7 @@ export enum ModerationEntityType {
   Vendor = 1,
   Service = 2,
   Review = 3,
+  ServiceImage = 4,
 }
 
 export enum ModerationStatus {
@@ -18,6 +19,11 @@ export interface ModerationQueueItem {
   vendorBusinessName: string;
   submittedAt: string;
   status: ModerationStatus;
+  // Only populated for entityType === ServiceImage: the service the image
+  // belongs to, and the image itself so the queue can render a thumbnail
+  // and act on it directly (approve/reject) without navigating away.
+  serviceId?: string;
+  imageUrl?: string;
 }
 
 export interface GetModerationQueueParams {
@@ -30,6 +36,11 @@ export interface GetModerationQueueParams {
 
 export interface ModerationDashboardSummary {
   totalUsers: number;
+  totalVendors: number;
+  activeVendors: number;
+  pendingVendorRequests: number;
+  totalServices: number;
+  pendingServiceRequests: number;
   pendingReviews: number;
   recentRequests: ModerationQueueItem[];
 }

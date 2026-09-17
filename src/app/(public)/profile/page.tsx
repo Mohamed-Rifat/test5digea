@@ -31,7 +31,7 @@ const ROLE_LABEL: Record<string, string> = {
 function SignedOutState() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-[#faf8f6] px-4 py-20">
-      <div className="w-full max-w-md overflow-hidden rounded-[32px] border border-[#eee5df] bg-white shadow-[0_20px_60px_rgba(48,37,31,0.08)]">
+      <div className="w-full max-w-md overflow-hidden rounded-4xl border border-[#eee5df] bg-white shadow-[0_20px_60px_rgba(48,37,31,0.08)]">
         <div className="h-2 bg-[#30251f]" />
 
         <div className="p-8 text-center sm:p-10">
@@ -86,7 +86,7 @@ function StatCard({
   description: string;
 }) {
   return (
-    <div className="rounded-[24px] border border-[#eee5df] bg-white p-5 shadow-[0_8px_30px_rgba(48,37,31,0.035)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_14px_35px_rgba(48,37,31,0.07)]">
+    <div className="rounded-3xl border border-[#eee5df] bg-white p-5 shadow-[0_8px_30px_rgba(48,37,31,0.035)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_14px_35px_rgba(48,37,31,0.07)]">
       <div className="flex items-start justify-between gap-4">
         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[15px] bg-[#faf5ee] text-[#a47e43]">
           {icon}
@@ -134,7 +134,7 @@ function ActionCard({
 
       <div className="relative">
         <div className="flex items-start justify-between">
-          <div className="flex h-12 w-12 items-center justify-center rounded-[16px] bg-[#faf5ee] text-[#a47e43] transition duration-300 group-hover:bg-[#30251f] group-hover:text-white">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#faf5ee] text-[#a47e43] transition duration-300 group-hover:bg-[#30251f] group-hover:text-white">
             {icon}
           </div>
 
@@ -207,26 +207,22 @@ export default function ProfilePage() {
             </p>
           </div>
 
-          <div className="hidden items-center gap-2 text-xs text-[#9b8d85] sm:flex">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#b99a62]" />
-            Account overview
-          </div>
         </div>
 
         {/* =========================================
             PROFILE HERO
         ========================================= */}
-        <section className="relative overflow-hidden rounded-[32px] border border-[#e9dfd8] bg-white shadow-[0_15px_55px_rgba(48,37,31,0.07)]">
+        <section className="relative overflow-hidden rounded-4xl border border-[#e9dfd8] bg-white shadow-[0_15px_55px_rgba(48,37,31,0.07)]">
           {/* Decorative background */}
           <div className="pointer-events-none absolute -right-24 -top-32 h-80 w-80 rounded-full bg-[#faf5ee]" />
-          <div className="pointer-events-none absolute -bottom-32 -left-24 h-64 w-64 rounded-full border-[40px] border-[#faf8f6]" />
+          <div className="pointer-events-none absolute -bottom-32 -left-24 h-64 w-64 rounded-full border-40 border-[#faf8f6]" />
 
           <div className="relative p-6 sm:p-8 lg:p-10">
             <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
               {/* User identity */}
               <div className="flex min-w-0 items-center gap-5">
                 <div className="relative shrink-0">
-                  <div className="flex h-[82px] w-[82px] items-center justify-center rounded-[27px] bg-[#30251f] font-serif text-3xl font-light text-white shadow-lg sm:h-24 sm:w-24 sm:text-4xl">
+                  <div className="flex h-20.5 w-20.5 items-center justify-center rounded-full bg-[#30251f] font-serif text-3xl font-light text-white shadow-lg sm:h-24 sm:w-24 sm:text-4xl">
                     {initial}
                   </div>
 
@@ -252,7 +248,7 @@ export default function ProfilePage() {
 
                     <span className="hidden h-1 w-1 rounded-full bg-[#d7cbc3] sm:block" />
 
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-[#faf5ee] px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.1em] text-[#a47e43]">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-[#faf5ee] px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-[#a47e43]">
                       <ShieldCheck size={12} />
                       {roleLabel}
                     </span>
@@ -316,7 +312,7 @@ export default function ProfilePage() {
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {/* Wedding progress */}
-            <div className="rounded-[24px] border border-[#eee5df] bg-white p-5 shadow-[0_8px_30px_rgba(48,37,31,0.035)] lg:col-span-2">
+            <div className="rounded-3xl border border-[#eee5df] bg-white p-5 shadow-[0_8px_30px_rgba(48,37,31,0.035)] lg:col-span-2">
               <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-start gap-4">
                   <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[15px] bg-[#faf5ee] text-[#a47e43]">
@@ -456,9 +452,9 @@ export default function ProfilePage() {
 
             <Link
               href="/roadmap"
-              className="group flex min-h-[210px] flex-col justify-between rounded-[26px] border border-dashed border-[#d9ccc2] bg-[#faf8f6] p-6 transition-all duration-300 hover:border-[#b99a62] hover:bg-[#faf5ee]"
+              className="group flex min-h-52.5 flex-col justify-between rounded-[26px] border border-dashed border-[#d9ccc2] bg-[#faf8f6] p-6 transition-all duration-300 hover:border-[#b99a62] hover:bg-[#faf5ee]"
             >
-              <div className="flex h-12 w-12 items-center justify-center rounded-[16px] bg-white text-[#a47e43] shadow-sm">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-[#a47e43] shadow-sm">
                 <Sparkles size={20} />
               </div>
 

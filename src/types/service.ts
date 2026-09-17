@@ -51,6 +51,10 @@ export interface RejectServiceRequest {
   reason: string;
 }
 
+export interface RejectServiceImageRequest {
+  reason: string;
+}
+
 export interface CompareServicesRequest {
   serviceIds: string[];
 }

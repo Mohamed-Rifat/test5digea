@@ -29,6 +29,7 @@ import { useCategories } from "@/features/categories/hooks/useCategories";
 // Primary links rendered before the Categories dropdown.
 const primaryLinks = [
   { label: "Home", href: "/" },
+  { label: "Services", href: "/services" },
   { label: "Vendors", href: "/vendors" },
 ];
 
@@ -38,10 +39,8 @@ const secondaryLinks = [
   { label: "Contact", href: "/contact" },
 ];
 
-// Where the navbar search can jump to. "Services" no longer has its own
-// nav link (Categories covers that ground), but it's still a real page,
-// so search can send people there directly — same pattern as the admin
-// dashboard's quick search.
+// Where the navbar search can jump to (Vendors or Services) — same pattern
+// as the admin dashboard's quick search.
 const searchTargets = [
   { label: "Vendors", href: "/vendors", icon: Store },
   { label: "Services", href: "/services", icon: BriefcaseBusiness },
@@ -184,7 +183,7 @@ export default function SiteNavbar() {
             className="rounded-full"
           />
           <span className="font-serif text-lg font-medium text-[#30251f]">
-            5digea
+            5Digea
           </span>
         </Link>
 
@@ -204,8 +203,8 @@ export default function SiteNavbar() {
             </Link>
           ))}
 
-          {/* CATEGORIES (mega-menu) — replaces the old standalone "Services"
-              link with the broader grouping. */}
+          {/* CATEGORIES (mega-menu) — browse by category, separate from
+              the standalone "Services" link above. */}
           <div className="relative" ref={categoriesRef}>
             <button
               type="button"

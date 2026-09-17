@@ -1,18 +1,23 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertCircle,
+  Camera,
   CheckCircle2,
   Clock3,
   Edit3,
   Globe2,
+  Images as ImagesIcon,
+  Loader2,
   Mail,
   MapPin,
   Phone,
+  Plus,
   RotateCcw,
   Save,
   Settings2,
+  Trash2,
   X,
   CalendarOff,
   Calendar,
@@ -78,6 +83,9 @@ export default function VendorProfilePage() {
     actionError,
     update,
     resubmit,
+    uploadProfileImage,
+    uploadGalleryImages,
+    deleteGalleryImage,
   } = useVendor();
 
   const [form, setForm] = useState<UpdateVendorRequest>(emptyForm);
@@ -86,6 +94,7 @@ export default function VendorProfilePage() {
   const [formError, setFormError] = useState("");
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
   const [touchedFields, setTouchedFields] = useState<Record<string, boolean>>({});
+  const profileImageInputRef = useRef<HTMLInputElement>(null);
 
   // ==============================================================
   // EFFECTS
@@ -363,6 +372,45 @@ export default function VendorProfilePage() {
     await resubmit();
   }, [resubmit]);
 
+  const handleProfileImageSelected = useCallback(
+    async (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      event.target.value = "";
+      if (!file) return;
+
+      await uploadProfileImage(file);
+    },
+    [uploadProfileImage]
+  );
+
+  const handleGalleryImagesSelected = useCallback(
+    async (event: React.ChangeEvent<HTMLInputElement>) => {
+      const files = Array.from(event.target.files || []);
+      event.target.value = "";
+      if (files.length === 0) return;
+
+      await uploadGalleryImages(files);
+    },
+    [uploadGalleryImages]
+  );
+
+  const handleDeleteGalleryImage = useCallback(
+    async (imageId: string) => {
+      await deleteGalleryImage(imageId);
+    },
+    [deleteGalleryImage]
+  );
+
+  const isUploadingProfileImage = actionLoading === "profile-image";
+  const isUploadingGalleryImages = actionLoading === "gallery-upload";
+  const galleryImages = useMemo(
+    () =>
+      (vendor?.galleryImages || [])
+        .slice()
+        .sort((a, b) => a.displayOrder - b.displayOrder),
+    [vendor?.galleryImages]
+  );
+
   // ==============================================================
   // RENDER: LOADING
   // ==============================================================
@@ -452,6 +500,16 @@ export default function VendorProfilePage() {
               <p className="font-semibold">Profile needs attention</p>
               <p className="mt-1">{vendor.rejectionReason}</p>
             </div>
+          </div>
+        )}
+
+        {/* =========================================================
+            IMAGE ACTION ERROR (shown outside the edit form)
+        ========================================================== */}
+        {!isEditing && actionError && (
+          <div className="mb-6 flex items-center gap-3 rounded-2xl border border-red-100 bg-red-50 p-4 text-sm text-red-700">
+            <AlertCircle className="h-5 w-5 shrink-0" />
+            {actionError}
           </div>
         )}
 
@@ -758,8 +816,45 @@ export default function VendorProfilePage() {
               <div className="relative px-6 pb-7 sm:px-8">
                 <div className="-mt-12 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
                   <div className="flex items-end gap-5">
-                    <div className="flex h-24 w-24 items-center justify-center rounded-3xl border-4 border-white bg-[#30251f] text-3xl font-semibold text-white shadow-lg">
-                      {form.businessName?.charAt(0)?.toUpperCase() || "V"}
+                    <div className="relative h-24 w-24 shrink-0">
+                      <div className="h-24 w-24 overflow-hidden rounded-full border-4 border-white bg-[#30251f] shadow-lg">
+                        {vendor?.profileImageUrl ? (
+                          <img
+                            src={vendor.profileImageUrl}
+                            alt={form.businessName || "Vendor"}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center text-3xl font-semibold text-white">
+                            {form.businessName?.charAt(0)?.toUpperCase() || "V"}
+                          </div>
+                        )}
+                      </div>
+
+                      <input
+                        ref={profileImageInputRef}
+                        type="file"
+                        accept="image/*"
+                        disabled={isUploadingProfileImage}
+                        onChange={handleProfileImageSelected}
+                        className="hidden"
+                      />
+
+                      {/* Always-visible edit badge — not hidden behind
+                          hover, so it's discoverable on touch devices too. */}
+                      <button
+                        type="button"
+                        onClick={() => profileImageInputRef.current?.click()}
+                        disabled={isUploadingProfileImage}
+                        aria-label="Change profile photo"
+                        className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-[#30251f] text-white shadow-md transition hover:bg-[#463831] disabled:cursor-not-allowed disabled:opacity-70"
+                      >
+                        {isUploadingProfileImage ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Camera className="h-3.5 w-3.5" />
+                        )}
+                      </button>
                     </div>
 
                     <div className="pb-1">

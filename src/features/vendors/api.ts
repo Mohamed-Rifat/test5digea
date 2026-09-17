@@ -2,6 +2,7 @@ import api from "@/lib/axios";
 
 import type {
   Vendor,
+  VendorGalleryImage,
   CreateVendorRequest,
   CreateVendorResponse,
   UpdateVendorRequest,
@@ -74,6 +75,57 @@ export const updateVendorCategories = async (
   data: UpdateVendorCategoriesRequest
 ): Promise<void> => {
   await api.put(`/api/Vendors/${id}/categories`, data);
+};
+
+// ================================
+// Vendor images (owner)
+// ================================
+
+export const uploadVendorProfileImage = async (
+  id: string,
+  file: File
+): Promise<void> => {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  // Same reasoning as uploadServiceImages: clear the shared instance's
+  // default JSON Content-Type so axios leaves the FormData/File untouched
+  // and lets the browser set the correct multipart boundary itself.
+  await api.post(`/api/Vendors/${id}/profile-image`, formData, {
+    headers: {
+      "Content-Type": undefined,
+    },
+  });
+};
+
+export const uploadVendorGalleryImages = async (
+  id: string,
+  files: File[]
+): Promise<VendorGalleryImage[]> => {
+  const formData = new FormData();
+
+  files.forEach((file) => {
+    formData.append("images", file);
+  });
+
+  const response = await api.post<VendorGalleryImage[]>(
+    `/api/Vendors/${id}/gallery`,
+    formData,
+    {
+      headers: {
+        "Content-Type": undefined,
+      },
+    }
+  );
+
+  return response.data;
+};
+
+export const deleteVendorGalleryImage = async (
+  id: string,
+  imageId: string
+): Promise<void> => {
+  await api.delete(`/api/Vendors/${id}/gallery/${imageId}`);
 };
 
 // ================================

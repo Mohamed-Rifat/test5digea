@@ -8,6 +8,8 @@ import {
   updateService,
   updateServicePrices,
   resubmitService,
+  uploadServiceImages,
+  deleteServiceImage,
 } from "@/features/services/api";
 import { getApiErrorMessage } from "@/lib/error";
 
@@ -34,6 +36,8 @@ interface UseVendorServicesReturn {
     data: UpdateServicePricesRequest
   ) => Promise<boolean>;
   resubmit: (id: string) => Promise<boolean>;
+  uploadImages: (id: string, files: File[]) => Promise<boolean>;
+  deleteImage: (id: string, imageId: string) => Promise<boolean>;
 }
 
 export const useVendorServices = (): UseVendorServicesReturn => {
@@ -155,6 +159,50 @@ export const useVendorServices = (): UseVendorServicesReturn => {
     [fetchServices]
   );
 
+  const uploadImages = useCallback(
+    async (id: string, files: File[]): Promise<boolean> => {
+      try {
+        setActionLoading(`images-${id}`);
+        setActionError(null);
+
+        await uploadServiceImages(id, files);
+        await fetchServices();
+
+        return true;
+      } catch (error) {
+        console.error("Failed to upload service images:", error);
+        setActionError(getApiErrorMessage(error, "Failed to upload images."));
+
+        return false;
+      } finally {
+        setActionLoading(null);
+      }
+    },
+    [fetchServices]
+  );
+
+  const deleteImage = useCallback(
+    async (id: string, imageId: string): Promise<boolean> => {
+      try {
+        setActionLoading(`delete-image-${imageId}`);
+        setActionError(null);
+
+        await deleteServiceImage(id, imageId);
+        await fetchServices();
+
+        return true;
+      } catch (error) {
+        console.error("Failed to delete service image:", error);
+        setActionError(getApiErrorMessage(error, "Failed to delete image."));
+
+        return false;
+      } finally {
+        setActionLoading(null);
+      }
+    },
+    [fetchServices]
+  );
+
   return {
     services,
     loading,
@@ -166,5 +214,7 @@ export const useVendorServices = (): UseVendorServicesReturn => {
     update,
     updatePrices,
     resubmit,
+    uploadImages,
+    deleteImage,
   };
 };

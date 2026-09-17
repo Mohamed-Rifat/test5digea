@@ -143,7 +143,7 @@ export default function NotificationBell({
         onClick={handleOpen}
         aria-label="Notifications"
         aria-expanded={open}
-        className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-[#eee5df] text-[#756860] transition hover:bg-[#faf7f4] hover:text-[#30251f] sm:h-10 sm:w-10"
+        className="relative flex h-9 w-9 items-center justify-center rounded-full border border-[#eee5df] text-[#756860] transition hover:bg-[#faf7f4] hover:text-[#30251f] sm:h-10 sm:w-10"
       >
         <Bell size={17} strokeWidth={1.8} />
 

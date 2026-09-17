@@ -33,7 +33,7 @@ export default function VendorCard({
     >
       <Link href={`/vendors/${vendor.id}`} className="flex min-h-0 flex-1 flex-col">
         <div className="relative h-36 w-full shrink-0 bg-linear-to-br sm:h-40 from-[#f0e9e0] to-[#e4d8c8]">
-          <div className="absolute -bottom-8 left-5 flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl border-4 border-white bg-[#f4eee9] shadow-sm">
+          <div className="absolute -bottom-8 left-5 flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-[#f4eee9] shadow-sm">
             {vendor.profileImageUrl ? (
               <img
                 src={vendor.profileImageUrl}

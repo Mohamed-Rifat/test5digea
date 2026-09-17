@@ -146,7 +146,7 @@ export default function AdminHeader({ onMenuClick }: AdminHeaderProps) {
           <button
             type="button"
             onClick={() => setMobileSearchOpen((prev) => !prev)}
-            className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#eee5df] text-[#665951] hover:bg-[#faf7f4] md:hidden"
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-[#eee5df] text-[#665951] hover:bg-[#faf7f4] md:hidden"
             aria-label="Search"
             aria-expanded={mobileSearchOpen}
           >
@@ -165,7 +165,7 @@ export default function AdminHeader({ onMenuClick }: AdminHeaderProps) {
               <p className="text-[11px] text-[#a09289]">Admin</p>
             </div>
 
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#30251f] text-sm font-semibold text-white">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#30251f] text-sm font-semibold text-white">
               {(user?.fullName || "A").charAt(0).toUpperCase()}
             </div>
           </div>

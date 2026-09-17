@@ -30,6 +30,8 @@ import {
   rejectService,
 } from "@/features/services/api";
 
+import ImageLightbox from "@/components/shared/ImageLightbox";
+
 import type { Service } from "@/types/service";
 
 /* =========================
@@ -167,6 +169,9 @@ export default function AdminServiceDetailsPage() {
 
   const [rejectReason, setRejectReason] =
     useState("");
+
+  const [lightboxIndex, setLightboxIndex] =
+    useState<number | null>(null);
 
   /* =========================
      Fetch Service
@@ -813,9 +818,11 @@ export default function AdminServiceDetailsPage() {
                         b.displayOrder
                     )
                     .map((image, index) => (
-                      <div
+                      <button
                         key={image.id}
-                        className="group relative aspect-[4/3] overflow-hidden rounded-xl bg-gray-100"
+                        type="button"
+                        onClick={() => setLightboxIndex(index)}
+                        className="group relative aspect-[4/3] overflow-hidden rounded-xl bg-gray-100 text-left"
                       >
                         <img
                           src={image.url}
@@ -830,7 +837,7 @@ export default function AdminServiceDetailsPage() {
                             Image {index + 1}
                           </span>
                         </div>
-                      </div>
+                      </button>
                     ))}
                 </div>
               ) : (
@@ -1221,6 +1228,19 @@ export default function AdminServiceDetailsPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Fullscreen image viewer */}
+      {service?.images && service.images.length > 0 && (
+        <ImageLightbox
+          images={[...service.images]
+            .sort((a, b) => a.displayOrder - b.displayOrder)
+            .map((image) => ({ id: image.id, url: image.url }))}
+          initialIndex={lightboxIndex ?? 0}
+          open={lightboxIndex !== null}
+          onClose={() => setLightboxIndex(null)}
+          title={service.name}
+        />
       )}
     </div>
   );

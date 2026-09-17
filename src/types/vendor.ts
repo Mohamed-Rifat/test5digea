@@ -1,3 +1,9 @@
+export interface VendorGalleryImage {
+  id: string;
+  url: string;
+  displayOrder: number;
+}
+
 export interface Vendor {
   id: string;
   userId: string;
@@ -7,6 +13,7 @@ export interface Vendor {
   bio: string;
 
   profileImageUrl: string;
+  galleryImages?: VendorGalleryImage[];
 
   location: string;
   latitude: number;

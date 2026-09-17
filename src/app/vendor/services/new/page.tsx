@@ -37,7 +37,7 @@ import type { CreateServicePriceRequest } from "@/types/service";
 export default function NewVendorServicePage() {
   const router = useRouter();
 
-  const { create, actionLoading, actionError } = useVendorServices();
+  const { create, uploadImages, actionLoading, actionError } = useVendorServices();
   const { categories, loading: categoriesLoading } = useCategories();
   const { vendor, loading: vendorLoading } = useVendor();
 
@@ -73,9 +73,33 @@ export default function NewVendorServicePage() {
   const [prices, setPrices] = useState<CreateServicePriceRequest[]>([
     { label: "", price: 0 },
   ]);
+  const [images, setImages] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [formError, setFormError] = useState("");
 
   const isSubmitting = actionLoading === "create";
+
+  const handleImagesSelected = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const files = Array.from(event.target.files ?? []);
+      if (files.length === 0) return;
+
+      setImages((prev) => [...prev, ...files]);
+      setImagePreviews((prev) => [
+        ...prev,
+        ...files.map((file) => URL.createObjectURL(file)),
+      ]);
+
+      // allow re-selecting the same file again later
+      event.target.value = "";
+    },
+    []
+  );
+
+  const removeImage = useCallback((index: number) => {
+    setImages((prev) => prev.filter((_, i) => i !== index));
+    setImagePreviews((prev) => prev.filter((_, i) => i !== index));
+  }, []);
 
   const addPriceRow = useCallback(() => {
     setPrices((prev) => [...prev, { label: "", price: 0 }]);
@@ -128,9 +152,19 @@ export default function NewVendorServicePage() {
     });
 
     if (id) {
+      if (images.length > 0) {
+        const uploaded = await uploadImages(id, images);
+        if (!uploaded) {
+          // Service was created, but images failed — let the vendor add
+          // them from the edit page instead of losing the service.
+          router.push(`/vendor/services/${id}`);
+          return;
+        }
+      }
+
       router.push("/vendor/services");
     }
-  }, [name, description, categoryId, prices, create, router]);
+  }, [name, description, categoryId, prices, images, create, uploadImages, router]);
 
   const handleCancel = useCallback(() => {
     router.push("/vendor/services");
@@ -397,6 +431,55 @@ export default function NewVendorServicePage() {
 
             <p className="mt-1.5 text-[10px] text-[#9b8f86] sm:mt-2 sm:text-xs">
               Add at least one price option. You can add multiple packages or tiers.
+            </p>
+          </div>
+
+          {/* =================================================
+              Images
+          ================================================= */}
+
+          <div className="mb-5 sm:mb-6">
+            <label className="mb-1.5 block text-xs font-medium text-[#40352f] sm:mb-2 sm:text-sm">
+              Service Images
+            </label>
+
+            <div className="flex flex-wrap gap-2.5 sm:gap-3">
+              {imagePreviews.map((src, index) => (
+                <div
+                  key={src}
+                  className="group relative h-20 w-20 overflow-hidden rounded-xl border border-[#e3d9d1] sm:h-24 sm:w-24"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={src}
+                    alt={`Selected image ${index + 1}`}
+                    className="h-full w-full object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeImage(index)}
+                    className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition group-hover:opacity-100"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </button>
+                </div>
+              ))}
+
+              <label className="flex h-20 w-20 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-[#d5c8be] bg-[#fcfaf8] text-[#9b8f86] transition hover:border-[#a47e43] hover:text-[#a47e43] sm:h-24 sm:w-24">
+                <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
+                <span className="text-[10px]">Add photo</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleImagesSelected}
+                  className="hidden"
+                />
+              </label>
+            </div>
+
+            <p className="mt-1.5 text-[10px] text-[#9b8f86] sm:mt-2 sm:text-xs">
+              Add a few photos of your work — services with images get noticed more.
             </p>
           </div>
 

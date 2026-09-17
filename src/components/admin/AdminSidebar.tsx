@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import Image from "next/image";
 import {
   LayoutDashboard,
   Tags,
@@ -71,8 +72,14 @@ export default function AdminSidebar({ mobileOpen, onClose }: AdminSidebarProps)
       >
         <div className="flex h-20.5 items-center justify-between border-b border-[#f0e9e4] px-6">
           <Link href="/admin" onClick={onClose} className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#30251f] text-white shadow-sm">
-              <Heart size={21} strokeWidth={1.8} />
+            <div className="flex items-center justify-center rounded-full">
+              <Image
+                          src="/Logo.png"
+                          alt="5Digea"
+                          width={48}
+                          height={48}
+                          className="rounded-full"
+                        />
             </div>
             <div>
               <h1 className="text-lg font-semibold tracking-wide text-[#30251f]">

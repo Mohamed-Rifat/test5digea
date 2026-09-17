@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
+import Image from "next/image";
 import {
   LayoutDashboard,
   BriefcaseBusiness,
@@ -174,19 +175,18 @@ export default function VendorSidebar({
         ================================================= */}
 
         <div className="flex h-18 items-center justify-between border-b border-[#eee7e1] px-5">
-          <Link
-            href="/vendor"
-            onClick={onClose}
-            className="flex items-center gap-2 group"
-          >
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#f5eee9] group-hover:scale-105 transition">
-              <Sparkles size={16} className="text-[#a47e43]" />
-            </div>
-            <span className="text-lg font-bold text-[#30251f]">
-              5digea
-              <span className="text-[#a47e43]">.</span>
-            </span>
-          </Link>
+          <Link href="/" className="flex shrink-0 items-center gap-2">
+          <Image
+            src="/Logo.png"
+            alt="5Digea"
+            width={36}
+            height={36}
+            className="rounded-full"
+          />
+          <span className="font-serif text-lg font-medium text-[#30251f]">
+            5Digea
+          </span>
+        </Link>
 
           <button
             type="button"
@@ -205,7 +205,7 @@ export default function VendorSidebar({
         <div className="border-b border-[#eee7e1] px-4 py-4">
           <div className="flex items-center gap-3">
             {/* Avatar */}
-            <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-linear-to-br from-[#f5eee9] to-[#e8dfd8]">
+            <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-linear-to-br from-[#f5eee9] to-[#e8dfd8]">
               {loading ? (
                 <div className="h-full w-full animate-pulse bg-[#e8dfd8]" />
               ) : vendor?.profileImageUrl ? (
@@ -218,8 +218,6 @@ export default function VendorSidebar({
                 <Building2 size={22} className="text-[#8d7b70]" />
               )}
               
-              {/* Online status dot */}
-              <span className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white ${status.dotColor}`} />
             </div>
 
             {/* Info */}
@@ -248,7 +246,6 @@ export default function VendorSidebar({
             </div>
           </div>
 
-          {/* ✅ Quick stats - بيانات حقيقية */}
           {!loading && vendor && (
             <div className="mt-3 grid grid-cols-3 gap-1.5">
               <div className="rounded-lg bg-[#faf7f4] px-2 py-1.5 text-center">

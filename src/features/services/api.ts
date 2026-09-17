@@ -2,10 +2,12 @@ import api from "@/lib/axios";
 
 import type {
   Service,
+  ServiceImage,
   CreateServiceRequest,
   UpdateServiceRequest,
   UpdateServicePricesRequest,
   RejectServiceRequest,
+  RejectServiceImageRequest,
   CompareServicesRequest,
   SearchServicesParams,
   SearchServicesResponse,
@@ -122,6 +124,53 @@ export const resubmitService = async (
 };
 
 /* =========================
+   Upload Service Images
+========================= */
+
+export const uploadServiceImages = async (
+  id: string,
+  files: File[]
+): Promise<ServiceImage[]> => {
+  const formData = new FormData();
+
+  files.forEach((file) => {
+    formData.append("images", file);
+  });
+
+  // The shared axios instance sets a default "Content-Type: application/json"
+  // header. If we leave that header in place, axios's default
+  // transformRequest sees the JSON content-type and "helpfully" converts the
+  // FormData into a JSON object via formDataToJSON() — which can't serialize
+  // File values, so the actual image data is silently dropped and the server
+  // receives an empty payload like {"images":[]}.
+  // Setting Content-Type to undefined here removes that default for this one
+  // request, so axios leaves the FormData untouched and the browser sets the
+  // correct "multipart/form-data; boundary=..." header itself.
+  const response = await api.post<ServiceImage[]>(
+    `/api/Services/${id}/images`,
+    formData,
+    {
+      headers: {
+        "Content-Type": undefined,
+      },
+    }
+  );
+
+  return response.data;
+};
+
+/* =========================
+   Delete Service Image
+========================= */
+
+export const deleteServiceImage = async (
+  id: string,
+  imageId: string
+): Promise<void> => {
+  await api.delete(`/api/Services/${id}/images/${imageId}`);
+};
+
+/* =========================
    Update Service Prices
 ========================= */
 
@@ -186,6 +235,30 @@ export const rejectService = async (
 ): Promise<void> => {
   await api.post(
     `/api/Services/${id}/reject`,
+    data
+  );
+};
+
+/* =========================
+   Admin - Approve Service Image
+========================= */
+
+export const approveServiceImage = async (
+  imageId: string
+): Promise<void> => {
+  await api.post(`/api/Services/images/${imageId}/approve`);
+};
+
+/* =========================
+   Admin - Reject Service Image
+========================= */
+
+export const rejectServiceImage = async (
+  imageId: string,
+  data: RejectServiceImageRequest
+): Promise<void> => {
+  await api.post(
+    `/api/Services/images/${imageId}/reject`,
     data
   );
 };

@@ -8,6 +8,8 @@ import {
   CheckCircle2,
   GitCompare,
   ImageOff,
+  Images as ImagesIcon,
+  Maximize2,
   Trash2,
 } from "lucide-react";
 
@@ -16,6 +18,7 @@ import { compareVendorList } from "@/features/vendors/api";
 import { useCompare } from "@/context/CompareContext";
 import { useToast } from "@/components/providers/ToastProvider";
 import { formatPrice } from "@/lib/format";
+import ImageLightbox from "@/components/shared/ImageLightbox";
 import type { Service } from "@/types/service";
 import type { Vendor } from "@/types/vendor";
 
@@ -38,6 +41,11 @@ export default function ComparePage() {
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [lightbox, setLightbox] = useState<{
+    images: { id: string; url: string }[];
+    index: number;
+    title: string;
+  } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -81,7 +89,34 @@ export default function ComparePage() {
             throw new Error("The comparison contains services from different categories.");
           }
 
-          if (!cancelled) setServices(result);
+          // The compare endpoint doesn't always return the full image set for
+          // each service, so backfill any missing gallery from the detail
+          // endpoint (which always includes images) rather than showing a
+          // blank gallery.
+          const needsImageHydration = result.some(
+            (item) => !item.images || item.images.length === 0
+          );
+
+          let hydratedResult = result;
+          if (needsImageHydration) {
+            try {
+              const details = await Promise.all(
+                result.map((item) => getService(item.id))
+              );
+              hydratedResult = result.map((item, i) => ({
+                ...item,
+                images:
+                  item.images && item.images.length > 0
+                    ? item.images
+                    : details[i]?.images || [],
+              }));
+            } catch {
+              // If hydration fails, fall back to whatever compareServices returned.
+              hydratedResult = result;
+            }
+          }
+
+          if (!cancelled) setServices(hydratedResult);
           return;
         }
 
@@ -121,6 +156,9 @@ export default function ComparePage() {
 
   const serviceImages = (service: Service) =>
     [...(service.images ?? [])].sort((a, b) => a.displayOrder - b.displayOrder);
+
+  const vendorImages = (vendor: Vendor) =>
+    [...(vendor.galleryImages ?? [])].sort((a, b) => a.displayOrder - b.displayOrder);
 
   const serviceRows = [
     { label: "Vendor", value: (item: Service) => item.vendorBusinessName || "—" },
@@ -215,7 +253,7 @@ export default function ComparePage() {
 
             <div className="compare-scroll mt-5 overflow-x-auto rounded-2xl border border-[#eee5df] bg-white shadow-[0_12px_45px_rgba(48,37,31,0.06)] sm:mt-6 sm:rounded-3xl">
               <div
-                className="grid min-w-[680px]"
+                className="grid min-w-170"
                 style={{ gridTemplateColumns: `150px repeat(${items.length}, minmax(180px, 1fr))` }}
               >
                 <div className="border-b border-r border-[#eee5df] bg-[#faf8f6] p-4 text-[10px] font-semibold uppercase tracking-[0.25em] text-[#a09289] sm:p-5">
@@ -225,15 +263,51 @@ export default function ComparePage() {
                 {items.map((item) => {
                   const service = item as Service;
                   const vendor = item as Vendor;
-                  const image = isServiceComparison ? serviceImages(service)[0]?.url : vendor.profileImageUrl;
+                  const images = isServiceComparison
+                    ? serviceImages(service)
+                    : vendorImages(vendor);
+                  // Vendors prefer their profile photo as the hero thumbnail, falling
+                  // back to the first gallery photo when no profile photo is set yet.
+                  const image = isServiceComparison
+                    ? images[0]?.url
+                    : vendor.profileImageUrl || images[0]?.url;
                   const title = isServiceComparison ? service.name : vendor.businessName;
                   const href = isServiceComparison ? `/services/${item.id}` : `/vendors/${item.id}`;
+                  const canZoom = images.length > 0;
 
                   return (
                     <div key={item.id} className="border-b border-[#eee5df] p-4 sm:p-5">
-                      <div className="mb-3 flex h-28 items-center justify-center overflow-hidden rounded-2xl bg-[#f4eee9]">
+                      <div
+                        className={`group relative mb-3 flex h-28 items-center justify-center overflow-hidden rounded-2xl bg-[#f4eee9] sm:h-32 ${
+                          canZoom ? "cursor-zoom-in" : ""
+                        }`}
+                        onClick={() => {
+                          if (canZoom) {
+                            setLightbox({ images, index: 0, title });
+                          }
+                        }}
+                      >
                         {image ? (
-                          <img src={image} alt={title} className="h-full w-full object-cover" />
+                          <>
+                            <img
+                              src={image}
+                              alt={title}
+                              className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                            />
+                            {canZoom && (
+                              <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/0 transition group-hover:bg-black/10">
+                                <Maximize2
+                                  size={16}
+                                  className="text-white opacity-0 drop-shadow transition group-hover:opacity-100"
+                                />
+                              </div>
+                            )}
+                            {images.length > 1 && (
+                              <span className="absolute bottom-1.5 right-1.5 rounded-full bg-black/55 px-1.5 py-0.5 text-[10px] font-medium text-white">
+                                +{images.length - 1}
+                              </span>
+                            )}
+                          </>
                         ) : (
                           <ImageOff size={26} className="text-[#c8bbb0]" />
                         )}
@@ -304,32 +378,78 @@ export default function ComparePage() {
                   </div>
                 )}
 
-                {isServiceComparison && (
-                  <div className="contents">
-                    <div className="border-r border-[#eee5df] bg-[#faf8f6] p-4 text-xs font-semibold text-[#665951] sm:p-5">Gallery</div>
-                    {services.map((service) => {
-                      const images = serviceImages(service);
-                      return (
-                        <div key={`gallery-${service.id}`} className="p-4 sm:p-5">
-                          {images.length ? (
-                            <div className="grid grid-cols-2 gap-2">
-                              {images.slice(0, 4).map((image) => (
-                                <img key={image.id} src={image.url} alt="" className="aspect-square w-full rounded-xl object-cover" />
-                              ))}
-                            </div>
-                          ) : (
-                            <div className="flex h-24 items-center justify-center rounded-xl bg-[#f7f2ee] text-xs text-[#9b8f86]">No images</div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
+                <div className="contents">
+                  <div className="border-r border-[#eee5df] bg-[#faf8f6] p-4 text-xs font-semibold text-[#665951] sm:p-5">Gallery</div>
+                  {items.map((item) => {
+                    const service = item as Service;
+                    const vendor = item as Vendor;
+                    const images = isServiceComparison
+                      ? serviceImages(service)
+                      : vendorImages(vendor);
+                    const title = isServiceComparison ? service.name : vendor.businessName;
+                    const visibleImages = images.slice(0, 4);
+                    const extraCount = images.length - visibleImages.length;
+
+                    return (
+                      <div key={`gallery-${item.id}`} className="p-4 sm:p-5">
+                        {images.length ? (
+                          <div className="grid grid-cols-2 gap-2">
+                            {visibleImages.map((image, i) => {
+                              const isLastVisible = i === visibleImages.length - 1;
+                              const showOverlay = isLastVisible && extraCount > 0;
+
+                              return (
+                                <button
+                                  key={image.id}
+                                  type="button"
+                                  onClick={() =>
+                                    setLightbox({ images, index: i, title })
+                                  }
+                                  className="group relative aspect-square w-full overflow-hidden rounded-xl bg-[#f4eee9] transition"
+                                >
+                                  <img
+                                    src={image.url}
+                                    alt=""
+                                    className="h-full w-full object-cover transition duration-300 group-hover:scale-110"
+                                  />
+                                  <div className="pointer-events-none absolute inset-0 bg-black/0 transition group-hover:bg-black/10" />
+                                  {showOverlay ? (
+                                    <div className="absolute inset-0 flex items-center justify-center bg-black/50 text-sm font-semibold text-white">
+                                      +{extraCount}
+                                    </div>
+                                  ) : (
+                                    <Maximize2
+                                      size={13}
+                                      className="pointer-events-none absolute right-1.5 top-1.5 text-white opacity-0 drop-shadow transition group-hover:opacity-100"
+                                    />
+                                  )}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <div className="flex h-24 flex-col items-center justify-center gap-1.5 rounded-xl bg-[#f7f2ee] text-xs text-[#9b8f86]">
+                            <ImagesIcon size={16} className="text-[#c8bbb0]" />
+                            No images
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           </>
         )}
       </div>
+
+      <ImageLightbox
+        images={lightbox?.images || []}
+        initialIndex={lightbox?.index || 0}
+        open={lightbox !== null}
+        onClose={() => setLightbox(null)}
+        title={lightbox?.title}
+      />
     </main>
   );
 }

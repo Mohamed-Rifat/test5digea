@@ -10,9 +10,12 @@ import {
   Store,
   Loader2,
   GitCompare,
+  Maximize2,
+  Images as ImagesIcon,
 } from "lucide-react";
 
 import FavoriteButton from "@/components/shared/FavoriteButton";
+import ImageLightbox from "@/components/shared/ImageLightbox";
 import ReviewsSection from "@/components/reviews/ReviewsSection";
 import { useFavorites } from "@/features/favorites/hooks/useFavorites";
 import { useCompare } from "@/context/CompareContext";
@@ -31,6 +34,7 @@ export default function ServiceDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeImage, setActiveImage] = useState(0);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
 
   const { isFavorited, toggleFavorite, actionLoading } = useFavorites();
   const { isSelected, toggleService } = useCompare();
@@ -114,13 +118,37 @@ export default function ServiceDetailPage() {
         <div className="grid gap-10 lg:grid-cols-[1.2fr_0.8fr]">
           {/* Left: gallery + description */}
           <div>
-            <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl border border-[#eee7e1] bg-[#f4eee9]">
+            <div
+              className={`group relative aspect-4/3 w-full overflow-hidden rounded-2xl border border-[#eee7e1] bg-[#f4eee9] ${
+                service.images && service.images.length > 0 ? "cursor-zoom-in" : ""
+              }`}
+              onClick={() => {
+                if (service.images && service.images.length > 0) setLightboxOpen(true);
+              }}
+            >
               {service.images && service.images.length > 0 ? (
-                <img
-                  src={service.images[activeImage]?.url}
-                  alt={service.name}
-                  className="h-full w-full object-cover"
-                />
+                <>
+                  <img
+                    src={service.images[activeImage]?.url}
+                    alt={service.name}
+                    className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
+                  />
+
+                  {/* Zoom hint overlay */}
+                  <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/0 transition group-hover:bg-black/10">
+                    <span className="flex items-center gap-2 rounded-full bg-black/60 px-3 py-1.5 text-xs font-medium text-white opacity-0 backdrop-blur transition group-hover:opacity-100">
+                      <Maximize2 size={13} />
+                      View full size
+                    </span>
+                  </div>
+
+                  {/* Image counter */}
+                  {service.images.length > 1 && (
+                    <span className="absolute bottom-4 right-4 rounded-full bg-black/55 px-2.5 py-1 text-[11px] font-medium text-white backdrop-blur">
+                      {activeImage + 1} / {service.images.length}
+                    </span>
+                  )}
+                </>
               ) : (
                 <div className="flex h-full w-full items-center justify-center text-[#c9bcae]">
                   <ImageOff size={40} />
@@ -145,14 +173,15 @@ export default function ServiceDetailPage() {
 
               <button
                 type="button"
-                onClick={() =>
+                onClick={(event) => {
+                  event.stopPropagation();
                   toggleService({
                     id: service.id,
                     categoryId: service.categoryId,
                     categoryName: service.categoryName,
                     name: service.name,
-                  })
-                }
+                  });
+                }}
                 className={`absolute left-4 top-4 inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold shadow-sm backdrop-blur ${
                   isSelected(service.id)
                     ? "bg-[#30251f] text-white"
@@ -165,16 +194,17 @@ export default function ServiceDetailPage() {
             </div>
 
             {service.images && service.images.length > 1 && (
-              <div className="mt-3 flex gap-3">
+              <div className="mt-3 flex gap-2.5 overflow-x-auto pb-1">
                 {service.images.map((img, index) => (
                   <button
                     key={img.id}
                     type="button"
                     onClick={() => setActiveImage(index)}
-                    className={`h-16 w-16 shrink-0 overflow-hidden rounded-xl border-2 transition ${
+                    onDoubleClick={() => setLightboxOpen(true)}
+                    className={`relative h-16 w-16 shrink-0 overflow-hidden rounded-xl border-2 transition sm:h-20 sm:w-20 ${
                       index === activeImage
                         ? "border-[#b99a62]"
-                        : "border-transparent"
+                        : "border-transparent opacity-80 hover:opacity-100"
                     }`}
                   >
                     <img
@@ -186,6 +216,26 @@ export default function ServiceDetailPage() {
                 ))}
               </div>
             )}
+
+            {service.images && service.images.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setLightboxOpen(true)}
+                className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-[#a47e43] hover:underline"
+              >
+                <ImagesIcon size={13} />
+                View all {service.images.length} photo
+                {service.images.length > 1 ? "s" : ""}
+              </button>
+            )}
+
+            <ImageLightbox
+              images={service.images || []}
+              initialIndex={activeImage}
+              open={lightboxOpen}
+              onClose={() => setLightboxOpen(false)}
+              title={service.name}
+            />
 
             <div className="mt-8">
               {service.categoryName && (

@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect, useRef } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import {
   Menu,
   ChevronDown,
@@ -44,11 +44,13 @@ export default function VendorHeader({ onMenuClick }: VendorHeaderProps) {
   const router = useRouter();
   const { logout } = useAuth();
   const { vendor, loading, refetch } = useVendor();
+
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [query, setQuery] = useState("");
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+
   const mobileSearchInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -57,21 +59,25 @@ export default function VendorHeader({ onMenuClick }: VendorHeaderProps) {
     }
   }, [mobileSearchOpen]);
 
-  // The vendor dashboard only manages the vendor's own services, so the
-  // quick search only ever has one place to go — unlike the admin
-  // dashboard's search, which lets you pick between vendors/services.
   const runSearch = (event: React.FormEvent) => {
     event.preventDefault();
+
     const trimmed = query.trim();
+
     router.push(
-      trimmed ? `/vendor/services?q=${encodeURIComponent(trimmed)}` : "/vendor/services"
+      trimmed
+        ? `/vendor/services?q=${encodeURIComponent(trimmed)}`
+        : "/vendor/services"
     );
+
     setMobileSearchOpen(false);
   };
 
-  // ✅ Real-time clock
   useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 60000);
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000);
+
     return () => clearInterval(timer);
   }, []);
 
@@ -85,19 +91,34 @@ export default function VendorHeader({ onMenuClick }: VendorHeaderProps) {
     setAnchorEl(null);
   };
 
+  /**
+   * Navigate to vendor pages
+   *
+   * Change the paths here whenever you create your pages.
+   */
+  const handleNavigation = (path: string) => {
+    handleClose();
+    router.push(path);
+  };
+
   const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
-    await refetch();
-    setIsRefreshing(false);
+
+    try {
+      await refetch();
+    } finally {
+      setIsRefreshing(false);
+    }
   }, [refetch]);
 
   const handleLogout = async () => {
     handleClose();
+
     await logout();
+
     router.replace("/login");
   };
 
-  // ✅ Vendor status config
   const statusConfig = {
     Approved: {
       label: "Active",
@@ -125,13 +146,12 @@ export default function VendorHeader({ onMenuClick }: VendorHeaderProps) {
     },
   };
 
-  const status = vendor?.status 
-    ? statusConfig[vendor.status as keyof typeof statusConfig] 
+  const status = vendor?.status
+    ? statusConfig[vendor.status as keyof typeof statusConfig]
     : statusConfig.Pending;
 
   const StatusIcon = status?.icon || Clock3;
 
-  // ✅ Format time
   const formattedTime = currentTime.toLocaleTimeString("en-US", {
     hour: "2-digit",
     minute: "2-digit",
@@ -150,49 +170,49 @@ export default function VendorHeader({ onMenuClick }: VendorHeaderProps) {
       ================================================= */}
 
       <div className="flex items-center gap-2 sm:gap-4">
-        {/* Menu Button - Mobile */}
+        {/* Menu Button */}
         <button
           type="button"
           onClick={onMenuClick}
           aria-label="Open sidebar"
-          className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#eee7e1] text-[#5f544d] transition hover:bg-[#faf7f4] hover:border-[#d5c8be] lg:hidden"
+          className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#eee7e1] text-[#5f544d] transition hover:border-[#d5c8be] hover:bg-[#faf7f4] lg:hidden"
         >
           <Menu size={18} />
         </button>
 
         {/* Brand */}
         <div className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#f5eee9] sm:h-9 sm:w-9">
-            <Sparkles size={15} className="text-[#a47e43] sm:h-4.5 sm:w-4.5" />
-          </div>
+          {/* <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#f5eee9] sm:h-9 sm:w-9">
+            <Sparkles
+              size={15}
+              className="text-[#a47e43] sm:h-4.5 sm:w-4.5"
+            />
+          </div> */}
 
           <div>
-            <p className="text-[9px] font-semibold uppercase tracking-[0.15em] text-[#a99d94] sm:text-[10px]">
-              Vendor Portal
-            </p>
-
             <div className="flex items-center gap-2">
               <h1 className="text-sm font-semibold text-[#30251f] sm:text-base">
                 Dashboard
               </h1>
 
-              {/* Status Dot - حقيقي */}
-              <Tooltip title={`Status: ${status?.label || "Unknown"}`} arrow>
-                <span className={`inline-flex h-1.5 w-1.5 rounded-full ${status?.dotColor || "bg-gray-400"} animate-pulse`} />
-              </Tooltip>
-
-              {/* Status Badge - حقيقي */}
-              <span className={`hidden items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-medium ${status?.className || ""} sm:inline-flex`}>
+              <span
+                className={`hidden items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-medium ${status?.className || ""} sm:inline-flex`}
+              >
                 <StatusIcon size={10} />
                 {status?.label}
               </span>
             </div>
+            <p className="text-[9px] font-semibold uppercase tracking-[0.15em] text-[#a99d94] sm:text-[10px]">
+              Vendor Portal
+            </p>
+
+
           </div>
         </div>
       </div>
 
       {/* =================================================
-          SEARCH - Services
+          SEARCH
       ================================================= */}
 
       <div className="relative hidden max-w-xs flex-1 md:block">
@@ -212,17 +232,25 @@ export default function VendorHeader({ onMenuClick }: VendorHeaderProps) {
       </div>
 
       {/* =================================================
-          CENTER - Current Time
+          CURRENT TIME
       ================================================= */}
 
       <div className="hidden items-center gap-3 rounded-full bg-[#faf7f4] px-4 py-1.5 text-xs text-[#756b65] lg:flex">
-        <span className="font-medium text-[#30251f]">{formattedTime}</span>
+        <span className="font-medium text-[#30251f]">
+          {formattedTime}
+        </span>
+
         <span className="h-1 w-1 rounded-full bg-[#d5c8be]" />
+
         <span>{formattedDate}</span>
+
         {vendor?.businessName && (
           <>
             <span className="h-1 w-1 rounded-full bg-[#d5c8be]" />
-            <span className="text-[#a47e43] font-medium">{vendor.businessName}</span>
+
+            <span className="font-medium text-[#a47e43]">
+              {vendor.businessName}
+            </span>
           </>
         )}
       </div>
@@ -232,26 +260,30 @@ export default function VendorHeader({ onMenuClick }: VendorHeaderProps) {
       ================================================= */}
 
       <div className="flex items-center gap-1 sm:gap-2">
-        {/* Mobile search toggle */}
+        {/* Mobile Search */}
         <button
           type="button"
           onClick={() => setMobileSearchOpen((prev) => !prev)}
-          className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#eee7e1] text-[#756860] transition hover:bg-[#faf7f4] hover:text-[#30251f] md:hidden"
+          className="flex h-9 w-9 items-center justify-center rounded-full border border-[#eee7e1] text-[#756860] transition hover:bg-[#faf7f4] hover:text-[#30251f] md:hidden"
           aria-label="Search your services"
           aria-expanded={mobileSearchOpen}
         >
           {mobileSearchOpen ? <X size={18} /> : <Search size={18} />}
         </button>
 
-        {/* Refresh Button */}
+        {/* Refresh */}
         <Tooltip title="Refresh data" arrow>
           <button
             type="button"
             onClick={handleRefresh}
             disabled={isRefreshing}
-            className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#eee7e1] text-[#756860] transition hover:bg-[#faf7f4] hover:text-[#30251f] disabled:opacity-50 sm:h-10 sm:w-10"
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-[#eee7e1] text-[#756860] transition hover:bg-[#faf7f4] hover:text-[#30251f] disabled:opacity-50 sm:h-10 sm:w-10"
           >
-            <RefreshCw size={16} className={isRefreshing ? "animate-spin" : ""} strokeWidth={1.8} />
+            <RefreshCw
+              size={16}
+              strokeWidth={1.8}
+              className={isRefreshing ? "animate-spin" : ""}
+            />
           </button>
         </Tooltip>
 
@@ -266,12 +298,16 @@ export default function VendorHeader({ onMenuClick }: VendorHeaderProps) {
           <button
             type="button"
             onClick={handleClick}
-            className="flex items-center gap-2 rounded-xl px-1.5 py-1 transition hover:bg-[#faf7f4] sm:gap-2.5 sm:px-2 sm:py-1.5"
+            className="group flex items-center gap-2 rounded-xl px-1.5 py-1 transition hover:bg-[#faf7f4] sm:gap-2.5 sm:px-2 sm:py-1.5"
           >
             {/* Avatar */}
-            <div className="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl bg-[#f4eee9] ring-2 ring-transparent transition group-hover:ring-[#a47e43]/20 sm:h-10 sm:w-10">
+            <div className="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-[#f4eee9] ring-2 ring-transparent transition group-hover:ring-[#a47e43]/20 sm:h-10 sm:w-10">
               {loading ? (
-                <CircularProgress size={20} thickness={3} sx={{ color: "#a47e43" }} />
+                <CircularProgress
+                  size={20}
+                  thickness={3}
+                  sx={{ color: "#a47e43" }}
+                />
               ) : vendor?.profileImageUrl ? (
                 <img
                   src={vendor.profileImageUrl}
@@ -279,18 +315,21 @@ export default function VendorHeader({ onMenuClick }: VendorHeaderProps) {
                   className="h-full w-full object-cover"
                 />
               ) : (
-                <Building2 size={17} className="text-[#8d7b70] sm:h-4.5 sm:w-4.5" />
+                <Building2
+                  size={17}
+                  className="text-[#8d7b70] sm:h-4.5 sm:w-4.5"
+                />
               )}
-
-              {/* Online status indicator */}
-              <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-white" />
             </div>
 
             {/* User Info */}
             <div className="hidden min-w-0 max-w-37.5 sm:block">
               <p className="truncate text-sm font-semibold text-[#30251f]">
-                {loading ? "Loading..." : vendor?.businessName || "Vendor"}
+                {loading
+                  ? "Loading..."
+                  : vendor?.businessName || "Vendor"}
               </p>
+
               <div className="flex items-center gap-1.5">
                 <span className="inline-flex h-1 w-1 rounded-full bg-emerald-500" />
                 <p className="text-[10px] text-[#9a8d84]">Online</p>
@@ -304,30 +343,40 @@ export default function VendorHeader({ onMenuClick }: VendorHeaderProps) {
             />
           </button>
 
-          {/* Dropdown Menu */}
+          {/* =================================================
+              DROPDOWN MENU
+          ================================================= */}
+
           <MuiMenu
             anchorEl={anchorEl}
             open={open}
             onClose={handleClose}
-            transformOrigin={{ horizontal: "right", vertical: "top" }}
-            anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
+            transformOrigin={{
+              horizontal: "right",
+              vertical: "top",
+            }}
+            anchorOrigin={{
+              horizontal: "right",
+              vertical: "bottom",
+            }}
             slotProps={{
               paper: {
                 sx: {
                   mt: 1.5,
                   borderRadius: "16px",
                   minWidth: 240,
-                  boxShadow: "0 20px 60px rgba(48,37,31,0.15)",
+                  boxShadow:
+                    "0 20px 60px rgba(48,37,31,0.15)",
                   border: "1px solid #eee7e1",
                   overflow: "hidden",
                 },
               },
             }}
           >
-            {/* User Info Header */}
-            <div className="px-4 py-3 bg-[#faf7f4]">
+            {/* User Info */}
+            <div className="bg-[#faf7f4] px-4 py-3">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#f4eee9]">
+                <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-[#f4eee9]">
                   {vendor?.profileImageUrl ? (
                     <img
                       src={vendor.profileImageUrl}
@@ -335,14 +384,19 @@ export default function VendorHeader({ onMenuClick }: VendorHeaderProps) {
                       className="h-full w-full rounded-xl object-cover"
                     />
                   ) : (
-                    <Building2 size={18} className="text-[#8d7b70]" />
+                    <Building2
+                      size={18}
+                      className="text-[#8d7b70]"
+                    />
                   )}
                 </div>
-                <div>
-                  <p className="text-sm font-semibold text-[#30251f]">
+
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-[#30251f]">
                     {vendor?.businessName || "Vendor"}
                   </p>
-                  <p className="text-xs text-[#9a8d84]">
+
+                  <p className="truncate text-xs text-[#9a8d84]">
                     {vendor?.contactEmail || "No email"}
                   </p>
                 </div>
@@ -351,57 +405,99 @@ export default function VendorHeader({ onMenuClick }: VendorHeaderProps) {
 
             <Divider />
 
-            <MenuItem onClick={handleClose} sx={{ py: 1.5, px: 2 }}>
+            {/* Profile */}
+            <MenuItem
+              onClick={() => handleNavigation("/vendor/profile")}
+              sx={{ py: 1.5, px: 2 }}
+            >
               <ListItemIcon>
                 <User size={18} className="text-[#756b65]" />
               </ListItemIcon>
+
               <ListItemText>
-                <span className="text-sm font-medium text-[#30251f]">Profile</span>
+                <span className="text-sm font-medium text-[#30251f]">
+                  Profile
+                </span>
               </ListItemText>
             </MenuItem>
 
-            <MenuItem onClick={handleClose} sx={{ py: 1.5, px: 2 }}>
+            {/* Settings */}
+            <MenuItem
+              onClick={() => handleNavigation("/vendor/profile")}
+              sx={{ py: 1.5, px: 2 }}
+            >
               <ListItemIcon>
                 <Settings size={18} className="text-[#756b65]" />
               </ListItemIcon>
+
               <ListItemText>
-                <span className="text-sm font-medium text-[#30251f]">Settings</span>
+                <span className="text-sm font-medium text-[#30251f]">
+                  Settings
+                </span>
               </ListItemText>
             </MenuItem>
 
-            <MenuItem onClick={handleClose} sx={{ py: 1.5, px: 2 }}>
+            {/* Subscription */}
+            <MenuItem
+              onClick={() =>
+                handleNavigation("/vendor/subscription")
+              }
+              sx={{ py: 1.5, px: 2 }}
+            >
               <ListItemIcon>
                 <Award size={18} className="text-[#756b65]" />
               </ListItemIcon>
+
               <ListItemText>
-                <span className="text-sm font-medium text-[#30251f]">Subscription</span>
+                <span className="text-sm font-medium text-[#30251f]">
+                  Subscription
+                </span>
               </ListItemText>
             </MenuItem>
 
-            <MenuItem onClick={handleClose} sx={{ py: 1.5, px: 2 }}>
+            {/* Security */}
+            <MenuItem
+              onClick={() =>
+                handleNavigation("/vendor/security")
+              }
+              sx={{ py: 1.5, px: 2 }}
+            >
               <ListItemIcon>
                 <Shield size={18} className="text-[#756b65]" />
               </ListItemIcon>
+
               <ListItemText>
-                <span className="text-sm font-medium text-[#30251f]">Security</span>
+                <span className="text-sm font-medium text-[#30251f]">
+                  Security
+                </span>
               </ListItemText>
             </MenuItem>
 
-            <MenuItem onClick={handleClose} sx={{ py: 1.5, px: 2 }}>
+            {/* Help Center */}
+            <MenuItem
+              onClick={() =>
+                handleNavigation("/vendor/support")
+              }
+              sx={{ py: 1.5, px: 2 }}
+            >
               <ListItemIcon>
                 <HelpCircle size={18} className="text-[#756b65]" />
               </ListItemIcon>
+
               <ListItemText>
-                <span className="text-sm font-medium text-[#30251f]">Help Center</span>
+                <span className="text-sm font-medium text-[#30251f]">
+                  Help Center
+                </span>
               </ListItemText>
             </MenuItem>
 
             <Divider />
 
-            <MenuItem 
-              onClick={handleLogout} 
-              sx={{ 
-                py: 1.5, 
+            {/* Logout */}
+            <MenuItem
+              onClick={handleLogout}
+              sx={{
+                py: 1.5,
                 px: 2,
                 color: "#ef4444",
                 "&:hover": {
@@ -410,17 +506,26 @@ export default function VendorHeader({ onMenuClick }: VendorHeaderProps) {
               }}
             >
               <ListItemIcon>
-                <LogOut size={18} className="text-red-500" />
+                <LogOut
+                  size={18}
+                  className="text-red-500"
+                />
               </ListItemIcon>
+
               <ListItemText>
-                <span className="text-sm font-medium text-red-600">Logout</span>
+                <span className="text-sm font-medium text-red-600">
+                  Logout
+                </span>
               </ListItemText>
             </MenuItem>
           </MuiMenu>
         </div>
       </div>
 
-      {/* Mobile search panel */}
+      {/* =================================================
+          MOBILE SEARCH PANEL
+      ================================================= */}
+
       {mobileSearchOpen && (
         <div className="absolute inset-x-0 top-full z-30 border-b border-[#eee7e1] bg-white p-3 shadow-lg md:hidden">
           <form onSubmit={runSearch} className="relative">
@@ -428,6 +533,7 @@ export default function VendorHeader({ onMenuClick }: VendorHeaderProps) {
               size={16}
               className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[#a89c92]"
             />
+
             <input
               ref={mobileSearchInputRef}
               type="text"

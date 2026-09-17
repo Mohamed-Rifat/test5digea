@@ -389,6 +389,8 @@ export default function EditVendorServicePage({ params }: PageProps) {
     update,
     updatePrices,
     resubmit,
+    uploadImages,
+    deleteImage,
   } = useVendorServices();
 
   const { categories, loading: categoriesLoading } = useCategories();
@@ -425,6 +427,21 @@ export default function EditVendorServicePage({ params }: PageProps) {
   const isSavingDetails = actionLoading === `update-${id}`;
   const isSavingPrices = actionLoading === `prices-${id}`;
   const isResubmitting = actionLoading === `resubmit-${id}`;
+  const isUploadingImages = actionLoading === `images-${id}`;
+
+  const handleImagesSelected = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const files = Array.from(event.target.files ?? []);
+    event.target.value = "";
+    if (files.length === 0) return;
+
+    await uploadImages(id, files);
+  };
+
+  const handleDeleteImage = async (imageId: string) => {
+    await deleteImage(id, imageId);
+  };
 
   // =======================================================
   // Categories
@@ -951,6 +968,77 @@ export default function EditVendorServicePage({ params }: PageProps) {
                 )}
               </div>
             </form>
+
+            {/* Images */}
+            <div className="rounded-3xl border border-[#e8dfd8] bg-white p-4 shadow-sm sm:p-6 lg:p-8">
+              <div className="mb-5 flex items-center gap-2 sm:mb-6 sm:gap-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#f5eee9] sm:h-9 sm:w-9">
+                  <FileText size={14} className="text-[#a47e43] sm:h-4.5 sm:w-4.5" />
+                </div>
+                <div>
+                  <h2 className="text-sm font-semibold text-[#30251f] sm:text-base">
+                    Service Images
+                  </h2>
+                  <p className="text-[10px] text-[#9b8f86] sm:text-xs">
+                    Photos customers see on your service listing
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-2.5 sm:gap-3">
+                {service.images
+                  ?.slice()
+                  .sort((a, b) => a.displayOrder - b.displayOrder)
+                  .map((image) => (
+                    <div
+                      key={image.id}
+                      className="group relative h-20 w-20 overflow-hidden rounded-xl border border-[#e3d9d1] sm:h-24 sm:w-24"
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={image.url}
+                        alt={service.name}
+                        className="h-full w-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteImage(image.id)}
+                        disabled={actionLoading === `delete-image-${image.id}`}
+                        className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition group-hover:opacity-100 disabled:opacity-100"
+                      >
+                        {actionLoading === `delete-image-${image.id}` ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-3 w-3" />
+                        )}
+                      </button>
+                    </div>
+                  ))}
+
+                <label className="flex h-20 w-20 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-[#d5c8be] bg-[#fcfaf8] text-[#9b8f86] transition hover:border-[#a47e43] hover:text-[#a47e43] sm:h-24 sm:w-24">
+                  {isUploadingImages ? (
+                    <Loader2 className="h-4 w-4 animate-spin sm:h-5 sm:w-5" />
+                  ) : (
+                    <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
+                  )}
+                  <span className="text-[10px]">Add photo</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    disabled={isUploadingImages}
+                    onChange={handleImagesSelected}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+
+              {(!service.images || service.images.length === 0) && (
+                <p className="mt-3 text-[10px] text-[#9b8f86] sm:text-xs">
+                  No images yet — add a few photos of your work to help customers choose you.
+                </p>
+              )}
+            </div>
           </div>
 
           {/* RIGHT: Available Categories (عرض فقط) */}

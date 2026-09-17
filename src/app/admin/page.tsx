@@ -1,16 +1,30 @@
-
 "use client";
 
+import {
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Legend,
+  Line,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import {
   ArrowUpRight,
   BarChart3,
   BriefcaseBusiness,
   CalendarDays,
   ChevronRight,
-  CircleCheck,
   ClipboardList,
   Clock3,
-  Loader2,
+  ImageIcon,
   MapPin,
   MessageSquare,
   ShieldCheck,
@@ -35,6 +49,7 @@ import {
   ModerationStatus,
 } from "@/types/moderation";
 import type { ModerationQueueItem } from "@/types/moderation";
+import type { Service } from "@/types/service";
 import type { Vendor } from "@/types/vendor";
 
 // Where a recent request should send the admin — the dashboard summary
@@ -47,6 +62,8 @@ function requestHref(item: ModerationQueueItem): string {
       return `/admin/vendors/${item.entityId}`;
     case ModerationEntityType.Service:
       return `/admin/services/${item.entityId}`;
+    case ModerationEntityType.ServiceImage:
+      return `/admin/services/${item.serviceId ?? item.entityId}`;
     case ModerationEntityType.Review:
     default:
       return "/admin/reviews";
@@ -55,25 +72,36 @@ function requestHref(item: ModerationQueueItem): string {
 
 const requestEntityMeta: Record<
   ModerationEntityType,
-  { label: string; icon: typeof Store; className: string }
+  {
+    label: string;
+    icon: typeof Store;
+    className: string;
+  }
 > = {
   [ModerationEntityType.Vendor]: {
     label: "Vendor",
     icon: Store,
     className: "bg-[#f0e9e0] text-[#a47e43]",
   },
+
   [ModerationEntityType.Service]: {
     label: "Service",
     icon: BriefcaseBusiness,
     className: "bg-[#eef2f7] text-[#4d6b8f]",
   },
+
   [ModerationEntityType.Review]: {
     label: "Review",
     icon: Star,
     className: "bg-[#f7f0e8] text-[#b99a62]",
   },
-};
 
+  [ModerationEntityType.ServiceImage]: {
+    label: "Image",
+    icon: ImageIcon,
+    className: "bg-[#eaf2ee] text-[#4d8f6b]",
+  },
+};
 const requestStatusStyles: Record<ModerationStatus, string> = {
   [ModerationStatus.Pending]: "bg-amber-50 text-amber-700",
   [ModerationStatus.Approved]: "bg-emerald-50 text-emerald-700",
@@ -87,6 +115,21 @@ const requestStatusLabels: Record<ModerationStatus, string> = {
 };
 
 /* ========================================================= */
+/* CHART PALETTE                                              */
+/* ========================================================= */
+
+const CHART_COLORS = {
+  approved: "#718b77",
+  pending: "#d7a85d",
+  rejected: "#b97878",
+  inactive: "#d7d0cb",
+  dark: "#30251f",
+  accent: "#806d61",
+  accentLight: "#c9b8ab",
+  grid: "#f0e9e4",
+};
+
+/* ========================================================= */
 /* HELPERS */
 /* ========================================================= */
 
@@ -97,10 +140,7 @@ const normalizeStatus = (status?: string) => {
 const isApproved = (status?: string) => {
   const normalized = normalizeStatus(status);
 
-  return (
-    normalized.includes("approve") ||
-    normalized === "active"
-  );
+  return normalized.includes("approve") || normalized === "active";
 };
 
 const isPending = (status?: string) => {
@@ -114,10 +154,7 @@ const isRejected = (status?: string) => {
 const isInactive = (status?: string) => {
   const normalized = normalizeStatus(status);
 
-  return (
-    normalized.includes("inactive") ||
-    normalized.includes("deactiv")
-  );
+  return normalized.includes("inactive") || normalized.includes("deactiv");
 };
 
 const formatNumber = (value: number) => {
@@ -127,6 +164,116 @@ const formatNumber = (value: number) => {
 const formatRating = (value: number) => {
   return Number.isFinite(value) ? value.toFixed(1) : "0.0";
 };
+
+// Builds the last `count` month buckets (oldest -> newest), each keyed by
+// "YYYY-M" so records can be grouped by the month they were created in.
+function getLastMonthBuckets(count: number) {
+  const buckets: { key: string; label: string }[] = [];
+  const now = new Date();
+
+  for (let i = count - 1; i >= 0; i--) {
+    const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+
+    buckets.push({
+      key: `${date.getFullYear()}-${date.getMonth()}`,
+      label: date.toLocaleDateString("en-US", { month: "short" }),
+    });
+  }
+
+  return buckets;
+}
+
+function monthKeyOf(dateString?: string) {
+  if (!dateString) return null;
+
+  const date = new Date(dateString);
+
+  if (Number.isNaN(date.getTime())) return null;
+
+  return `${date.getFullYear()}-${date.getMonth()}`;
+}
+
+function buildGrowthSeries(
+  vendors: Vendor[],
+  services: Service[],
+  months = 6
+) {
+  const buckets = getLastMonthBuckets(months);
+
+  return buckets.map((bucket) => ({
+    month: bucket.label,
+    vendors: vendors.filter(
+      (vendor) => monthKeyOf(vendor.createdAt) === bucket.key
+    ).length,
+    services: services.filter(
+      (service) => monthKeyOf(service.createdAt) === bucket.key
+    ).length,
+  }));
+}
+
+function buildRatingDistribution(vendors: Vendor[]) {
+  const buckets = [5, 4, 3, 2, 1].map((stars) => ({
+    stars: `${stars} ★`,
+    count: 0,
+  }));
+
+  vendors.forEach((vendor) => {
+    const rating = Number(vendor.averageRating) || 0;
+
+    if (rating <= 0) return;
+
+    const rounded = Math.min(5, Math.max(1, Math.round(rating)));
+    const bucket = buckets.find((b) => b.stars === `${rounded} ★`);
+
+    if (bucket) bucket.count += 1;
+  });
+
+  return buckets;
+}
+
+/* ========================================================= */
+/* CUSTOM TOOLTIP */
+/* ========================================================= */
+
+function ChartTooltip({
+  active,
+  payload,
+  label,
+}: {
+  active?: boolean;
+  payload?: { name: string; value: number; color: string }[];
+  label?: string;
+}) {
+  if (!active || !payload || payload.length === 0) return null;
+
+  return (
+    <div className="rounded-xl border border-[#ebe3dd] bg-white px-3 py-2 shadow-lg">
+      {label && (
+        <p className="mb-1 text-[10px] font-semibold text-[#8a7d75]">
+          {label}
+        </p>
+      )}
+
+      {payload.map((entry) => (
+        <div
+          key={entry.name}
+          className="flex items-center gap-2 text-[11px]"
+        >
+          <span
+            className="h-2 w-2 rounded-full"
+            style={{ backgroundColor: entry.color }}
+          />
+
+          <span className="text-[#665951]">{entry.name}:</span>
+
+          <span className="font-semibold text-[#30251f]">
+            {entry.value}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 /* ========================================================= */
 /* PAGE */
@@ -158,19 +305,13 @@ export default function AdminPage() {
   } = useModerationDashboard();
 
   const loading =
-    categoriesLoading ||
-    servicesLoading ||
-    vendorsLoading ||
-    dashboardLoading;
+    categoriesLoading || servicesLoading || vendorsLoading || dashboardLoading;
 
   const error =
-    categoriesError ||
-    servicesError ||
-    vendorsError ||
-    dashboardError;
+    categoriesError || servicesError || vendorsError || dashboardError;
 
- const recentRequests: ModerationQueueItem[] =
-  dashboardSummary?.recentRequests ?? [];
+  const recentRequests: ModerationQueueItem[] =
+    dashboardSummary?.recentRequests ?? [];
 
   /* ========================================================= */
   /* CATEGORY STATS */
@@ -178,44 +319,21 @@ export default function AdminPage() {
 
   const totalCategories = categories.length;
 
-  const activeCategories = categories.filter(
-    (category) => category.isActive
-  ).length;
-
-  const inactiveCategories = categories.filter(
-    (category) => !category.isActive
-  ).length;
-
   const totalServices = services.length;
 
   const categoryStats = useMemo(() => {
     return categories
       .map((category) => {
         const serviceCount = services.filter(
-          (service) =>
-            service.categoryId === category.id
+          (service) => service.categoryId === category.id
         ).length;
 
-        return {
-          ...category,
-          serviceCount,
-        };
+        return { ...category, serviceCount };
       })
-      .sort(
-        (a, b) =>
-          b.serviceCount - a.serviceCount
-      );
+      .sort((a, b) => b.serviceCount - a.serviceCount);
   }, [categories, services]);
 
-  const topCategories =
-    categoryStats.slice(0, 5);
-
-  const maxServiceCount = Math.max(
-    ...categoryStats.map(
-      (category) => category.serviceCount
-    ),
-    1
-  );
+  const topCategories = categoryStats.slice(0, 6);
 
   /* ========================================================= */
   /* VENDOR STATS */
@@ -224,36 +342,34 @@ export default function AdminPage() {
   const vendorStats = useMemo(() => {
     const total = vendors.length;
 
-    const approved = vendors.filter(
-      (vendor) => isApproved(vendor.status)
-    ).length;
-
-    const pending = vendors.filter(
-      (vendor) => isPending(vendor.status)
-    ).length;
-
-    const rejected = vendors.filter(
-      (vendor) => isRejected(vendor.status)
-    ).length;
-
-    const inactive = vendors.filter(
-      (vendor) => isInactive(vendor.status)
-    ).length;
+    const approved = vendors.filter((vendor) => isApproved(vendor.status)).length;
+    const pending = vendors.filter((vendor) => isPending(vendor.status)).length;
+    const rejected = vendors.filter((vendor) => isRejected(vendor.status)).length;
+    const inactive = vendors.filter((vendor) => isInactive(vendor.status)).length;
 
     const totalReviews = vendors.reduce(
-      (sum, vendor) =>
-        sum + (Number(vendor.reviewsCount) || 0),
+      (sum, vendor) => sum + (Number(vendor.reviewsCount) || 0),
       0
     );
 
     const ratingSum = vendors.reduce(
-      (sum, vendor) =>
-        sum + (Number(vendor.averageRating) || 0),
+      (sum, vendor) => sum + (Number(vendor.averageRating) || 0),
       0
     );
 
-    const averageRating =
-      total > 0 ? ratingSum / total : 0;
+    const averageRating = total > 0 ? ratingSum / total : 0;
+
+    const now = new Date();
+
+    const newThisMonth = vendors.filter((vendor) => {
+      const date = new Date(vendor.createdAt);
+
+      return (
+        !Number.isNaN(date.getTime()) &&
+        date.getFullYear() === now.getFullYear() &&
+        date.getMonth() === now.getMonth()
+      );
+    }).length;
 
     return {
       total,
@@ -263,8 +379,33 @@ export default function AdminPage() {
       inactive,
       totalReviews,
       averageRating,
+      newThisMonth,
     };
   }, [vendors]);
+
+  const vendorStatusChartData = useMemo(
+    () => [
+      { name: "Approved", value: vendorStats.approved, color: CHART_COLORS.approved },
+      { name: "Pending", value: vendorStats.pending, color: CHART_COLORS.pending },
+      { name: "Rejected", value: vendorStats.rejected, color: CHART_COLORS.rejected },
+      { name: "Inactive", value: vendorStats.inactive, color: CHART_COLORS.inactive },
+    ].filter((item) => item.value > 0),
+    [vendorStats]
+  );
+
+  /* ========================================================= */
+  /* GROWTH + RATING DISTRIBUTION */
+  /* ========================================================= */
+
+  const growthData = useMemo(
+    () => buildGrowthSeries(vendors, services, 6),
+    [vendors, services]
+  );
+
+  const ratingDistribution = useMemo(
+    () => buildRatingDistribution(vendors),
+    [vendors]
+  );
 
   /* ========================================================= */
   /* TOP VENDORS */
@@ -272,29 +413,15 @@ export default function AdminPage() {
 
   const topVendorsByRating = useMemo(() => {
     return [...vendors]
-      .filter(
-        (vendor) =>
-          Number(vendor.averageRating) > 0
-      )
-      .sort(
-        (a, b) =>
-          Number(b.averageRating) -
-          Number(a.averageRating)
-      )
+      .filter((vendor) => Number(vendor.averageRating) > 0)
+      .sort((a, b) => Number(b.averageRating) - Number(a.averageRating))
       .slice(0, 5);
   }, [vendors]);
 
   const mostReviewedVendors = useMemo(() => {
     return [...vendors]
-      .filter(
-        (vendor) =>
-          Number(vendor.reviewsCount) > 0
-      )
-      .sort(
-        (a, b) =>
-          Number(b.reviewsCount) -
-          Number(a.reviewsCount)
-      )
+      .filter((vendor) => Number(vendor.reviewsCount) > 0)
+      .sort((a, b) => Number(b.reviewsCount) - Number(a.reviewsCount))
       .slice(0, 5);
   }, [vendors]);
 
@@ -303,39 +430,19 @@ export default function AdminPage() {
   /* ========================================================= */
 
   const locationStats = useMemo(() => {
-    const locationMap =
-      new Map<string, number>();
+    const locationMap = new Map<string, number>();
 
     vendors.forEach((vendor) => {
-      const location =
-        vendor.location?.trim() ||
-        "Unknown";
+      const location = vendor.location?.trim() || "Unknown";
 
-      locationMap.set(
-        location,
-        (locationMap.get(location) || 0) + 1
-      );
+      locationMap.set(location, (locationMap.get(location) || 0) + 1);
     });
 
-    return Array.from(
-      locationMap.entries()
-    )
-      .map(([location, count]) => ({
-        location,
-        count,
-      }))
-      .sort(
-        (a, b) => b.count - a.count
-      )
-      .slice(0, 5);
+    return Array.from(locationMap.entries())
+      .map(([location, count]) => ({ location, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 6);
   }, [vendors]);
-
-  const maxLocationCount = Math.max(
-    ...locationStats.map(
-      (item) => item.count
-    ),
-    1
-  );
 
   /* ========================================================= */
   /* RECENT VENDORS */
@@ -345,15 +452,14 @@ export default function AdminPage() {
     return [...vendors]
       .sort(
         (a, b) =>
-          new Date(b.createdAt).getTime() -
-          new Date(a.createdAt).getTime()
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       )
       .slice(0, 5);
   }, [vendors]);
 
   /* ========================================================= */
   /* DASHBOARD STATS */
-/* ========================================================= */
+  /* ========================================================= */
 
   const stats = [
     {
@@ -400,9 +506,7 @@ export default function AdminPage() {
     },
     {
       title: "Average Rating",
-      value: formatRating(
-        vendorStats.averageRating
-      ),
+      value: formatRating(vendorStats.averageRating),
       description: "across all vendors",
       icon: Star,
       href: "/admin/vendors",
@@ -447,8 +551,8 @@ export default function AdminPage() {
           </h1>
 
           <p className="mt-2 max-w-2xl text-sm leading-6 text-[#8a7d75]">
-            A complete overview of your categories,
-            services, vendors and marketplace activity.
+            A complete overview of your categories, services, vendors and
+            marketplace activity.
           </p>
         </div>
 
@@ -466,9 +570,7 @@ export default function AdminPage() {
 
       {error && !loading && (
         <div className="mb-6 rounded-2xl border border-red-100 bg-red-50 px-4 py-3">
-          <p className="text-sm font-medium text-red-700">
-            {error}
-          </p>
+          <p className="text-sm font-medium text-red-700">{error}</p>
 
           <p className="mt-1 text-xs text-red-500">
             Some dashboard data could not be loaded.
@@ -495,10 +597,7 @@ export default function AdminPage() {
               <>
                 <div className="flex items-start justify-between">
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#f7f1ed] text-[#79675c] transition group-hover:bg-[#30251f] group-hover:text-white">
-                    <Icon
-                      size={19}
-                      strokeWidth={1.8}
-                    />
+                    <Icon size={19} strokeWidth={1.8} />
                   </div>
 
                   <div className="flex items-center gap-1 rounded-full bg-[#f8f4f1] px-2.5 py-1 text-[10px] font-semibold text-[#8a786d]">
@@ -508,14 +607,11 @@ export default function AdminPage() {
                 </div>
 
                 <div className="mt-4">
-                  <p className="text-xs text-[#91847c]">
-                    {stat.title}
-                  </p>
+                  <p className="text-xs text-[#91847c]">{stat.title}</p>
 
                   <div className="mt-1 flex items-end justify-between gap-2">
                     <p className="text-2xl font-semibold tracking-tight text-[#30251f]">
-                      {typeof stat.value ===
-                      "number"
+                      {typeof stat.value === "number"
                         ? formatNumber(stat.value)
                         : stat.value}
                     </p>
@@ -537,11 +633,7 @@ export default function AdminPage() {
             }
 
             return (
-              <Link
-                key={stat.title}
-                href={stat.href}
-                className={cardClassName}
-              >
+              <Link key={stat.title} href={stat.href} className={cardClassName}>
                 {cardContent}
               </Link>
             );
@@ -550,7 +642,7 @@ export default function AdminPage() {
       )}
 
       {/* ========================================================= */}
-      {/* VENDOR PERFORMANCE + STATUS */}
+      {/* VENDOR PERFORMANCE + STATUS DONUT */}
       {/* ========================================================= */}
 
       <section className="mt-5 overflow-hidden rounded-2xl border border-[#ebe3dd] bg-white shadow-[0_2px_12px_rgba(48,37,31,0.03)]">
@@ -585,11 +677,11 @@ export default function AdminPage() {
         ) : (
           <div className="grid lg:grid-cols-[1.4fr_0.8fr]">
             {/* ===================================================== */}
-            {/* VENDOR STATUS */}
+            {/* VENDOR STATUS DONUT (recharts) */}
             {/* ===================================================== */}
 
             <div className="border-b border-[#f0e9e4] p-5 lg:border-b-0 lg:border-r sm:p-6">
-              <div className="mb-6">
+              <div className="mb-4">
                 <p className="text-xs font-semibold text-[#40342d]">
                   Vendor Status
                 </p>
@@ -599,95 +691,75 @@ export default function AdminPage() {
                 </p>
               </div>
 
-              <div className="grid gap-6 sm:grid-cols-[180px_1fr] sm:items-center">
-                {/* Donut */}
+              <div className="grid gap-6 sm:grid-cols-[200px_1fr] sm:items-center">
+                <div className="relative mx-auto h-48 w-48">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={
+                          vendorStatusChartData.length > 0
+                            ? vendorStatusChartData
+                            : [{ name: "No data", value: 1, color: "#eee8e3" }]
+                        }
+                        dataKey="value"
+                        nameKey="name"
+                        innerRadius="68%"
+                        outerRadius="100%"
+                        paddingAngle={vendorStatusChartData.length > 1 ? 3 : 0}
+                        stroke="none"
+                      >
+                        {(vendorStatusChartData.length > 0
+                          ? vendorStatusChartData
+                          : [{ name: "No data", value: 1, color: "#eee8e3" }]
+                        ).map((entry) => (
+                          <Cell key={entry.name} fill={entry.color} />
+                        ))}
+                      </Pie>
 
-                <div className="mx-auto">
-                  <div
-                    className="relative flex h-40 w-40 items-center justify-center rounded-full"
-                    style={{
-                      background:
-                        vendorStats.total > 0
-                          ? `conic-gradient(
-                              #718b77 0deg ${
-                                (vendorStats.approved /
-                                  vendorStats.total) *
-                                360
-                              }deg,
-                              #d7a85d ${
-                                (vendorStats.approved /
-                                  vendorStats.total) *
-                                360
-                              }deg ${
-                                ((vendorStats.approved +
-                                  vendorStats.pending) /
-                                  vendorStats.total) *
-                                360
-                              }deg,
-                              #b97878 ${
-                                ((vendorStats.approved +
-                                  vendorStats.pending) /
-                                  vendorStats.total) *
-                                360
-                              }deg ${
-                                ((vendorStats.approved +
-                                  vendorStats.pending +
-                                  vendorStats.rejected) /
-                                  vendorStats.total) *
-                                360
-                              }deg,
-                              #d7d0cb ${
-                                ((vendorStats.approved +
-                                  vendorStats.pending +
-                                  vendorStats.rejected) /
-                                  vendorStats.total) *
-                                360
-                              }deg 360deg
-                            )`
-                          : "#eee8e3",
-                    }}
-                  >
-                    <div className="flex h-28 w-28 flex-col items-center justify-center rounded-full bg-white">
-                      <span className="text-2xl font-semibold text-[#30251f]">
-                        {vendorStats.total}
-                      </span>
+                      {vendorStatusChartData.length > 0 && (
+                        <Tooltip content={<ChartTooltip />} />
+                      )}
+                    </PieChart>
+                  </ResponsiveContainer>
 
-                      <span className="text-[10px] text-[#9b8e86]">
-                        Total Vendors
-                      </span>
-                    </div>
+                  <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+                    <span className="text-2xl font-semibold text-[#30251f]">
+                      {vendorStats.total}
+                    </span>
+
+                    <span className="text-[10px] text-[#9b8e86]">
+                      Total Vendors
+                    </span>
                   </div>
                 </div>
-
-                {/* Legend */}
 
                 <div className="space-y-3">
                   <VendorStatusRow
                     label="Approved"
                     value={vendorStats.approved}
                     total={vendorStats.total}
-                    dotClass="bg-[#718b77]"
+                    color={CHART_COLORS.approved}
                   />
 
                   <VendorStatusRow
                     label="Pending"
                     value={vendorStats.pending}
                     total={vendorStats.total}
-                    dotClass="bg-[#d7a85d]"
+                    color={CHART_COLORS.pending}
                   />
 
                   <VendorStatusRow
                     label="Rejected"
                     value={vendorStats.rejected}
                     total={vendorStats.total}
-                    dotClass="bg-[#b97878]"
+                    color={CHART_COLORS.rejected}
                   />
 
                   <VendorStatusRow
                     label="Inactive"
                     value={vendorStats.inactive}
                     total={vendorStats.total}
-                    dotClass="bg-[#d7d0cb]"
+                    color={CHART_COLORS.inactive}
                   />
                 </div>
               </div>
@@ -712,20 +784,9 @@ export default function AdminPage() {
                 <InsightCard
                   icon={Star}
                   title="Average Rating"
-                  value={formatRating(
-                    vendorStats.averageRating
-                  )}
+                  value={formatRating(vendorStats.averageRating)}
                   suffix="/ 5"
                   description="Across all vendors"
-                />
-
-                <InsightCard
-                  icon={MessageSquare}
-                  title="Total Reviews"
-                  value={formatNumber(
-                    vendorStats.totalReviews
-                  )}
-                  description="Customer feedback"
                 />
 
                 <InsightCard
@@ -734,9 +795,7 @@ export default function AdminPage() {
                   value={
                     vendorStats.total > 0
                       ? `${Math.round(
-                          (vendorStats.approved /
-                            vendorStats.total) *
-                            100
+                          (vendorStats.approved / vendorStats.total) * 100
                         )}%`
                       : "0%"
                   }
@@ -744,15 +803,119 @@ export default function AdminPage() {
                 />
 
                 <InsightCard
+                  icon={UserPlus}
+                  title="New This Month"
+                  value={formatNumber(vendorStats.newThisMonth)}
+                  description="Vendors joined"
+                />
+
+                <InsightCard
                   icon={Clock3}
                   title="Pending Review"
-                  value={formatNumber(
-                    vendorStats.pending
-                  )}
+                  value={formatNumber(vendorStats.pending)}
                   description="Needs admin attention"
                 />
               </div>
             </div>
+          </div>
+        )}
+      </section>
+
+      {/* ========================================================= */}
+      {/* MARKETPLACE GROWTH (NEW) */}
+      {/* ========================================================= */}
+
+      <section className="mt-5 overflow-hidden rounded-2xl border border-[#ebe3dd] bg-white shadow-[0_2px_12px_rgba(48,37,31,0.03)]">
+        <div className="flex flex-col justify-between gap-3 border-b border-[#f0e9e4] px-5 py-5 sm:flex-row sm:items-center sm:px-6">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#f6f0ec] text-[#806d61]">
+              <TrendingUp size={17} />
+            </div>
+
+            <div>
+              <h2 className="text-sm font-semibold text-[#30251f]">
+                Marketplace Growth
+              </h2>
+
+              <p className="mt-0.5 text-[11px] text-[#9b8e86]">
+                New vendors and services over the last 6 months
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-4 text-[10px] font-semibold">
+            <span className="flex items-center gap-1.5 text-[#665951]">
+              <span className="h-2 w-2 rounded-full bg-[#30251f]" />
+              Vendors
+            </span>
+
+            <span className="flex items-center gap-1.5 text-[#665951]">
+              <span className="h-2 w-2 rounded-full bg-[#c9a877]" />
+              Services
+            </span>
+          </div>
+        </div>
+
+        {loading ? (
+          <div className="h-72 animate-pulse bg-[#fcfaf8] p-6" />
+        ) : (
+          <div className="h-72 p-5 sm:p-6">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={growthData}>
+                <defs>
+                  <linearGradient id="vendorsGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#30251f" stopOpacity={0.25} />
+                    <stop offset="95%" stopColor="#30251f" stopOpacity={0} />
+                  </linearGradient>
+
+                  <linearGradient id="servicesGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#c9a877" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#c9a877" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke={CHART_COLORS.grid}
+                  vertical={false}
+                />
+
+                <XAxis
+                  dataKey="month"
+                  tick={{ fontSize: 11, fill: "#a39790" }}
+                  axisLine={{ stroke: CHART_COLORS.grid }}
+                  tickLine={false}
+                />
+
+                <YAxis
+                  allowDecimals={false}
+                  tick={{ fontSize: 11, fill: "#a39790" }}
+                  axisLine={false}
+                  tickLine={false}
+                  width={28}
+                />
+
+                <Tooltip content={<ChartTooltip />} />
+
+                <Area
+                  type="monotone"
+                  dataKey="vendors"
+                  name="New Vendors"
+                  stroke="#30251f"
+                  strokeWidth={2}
+                  fill="url(#vendorsGradient)"
+                />
+
+                <Area
+                  type="monotone"
+                  dataKey="services"
+                  name="New Services"
+                  stroke="#c9a877"
+                  strokeWidth={2}
+                  fill="url(#servicesGradient)"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
           </div>
         )}
       </section>
@@ -763,7 +926,7 @@ export default function AdminPage() {
 
       <div className="mt-5 grid gap-5 xl:grid-cols-[1.35fr_0.85fr]">
         {/* ======================================================= */}
-        {/* SERVICES BY CATEGORY */}
+        {/* SERVICES BY CATEGORY (recharts bar) */}
         {/* ======================================================= */}
 
         <section className="overflow-hidden rounded-2xl border border-[#ebe3dd] bg-white shadow-[0_2px_12px_rgba(48,37,31,0.03)]">
@@ -790,86 +953,53 @@ export default function AdminPage() {
           </div>
 
           {loading ? (
-            <div className="space-y-5 p-6">
-              {Array.from({ length: 5 }).map(
-                (_, index) => (
-                  <div
-                    key={index}
-                    className="animate-pulse"
-                  >
-                    <div className="mb-2 h-3 w-32 rounded bg-[#eee8e3]" />
-                    <div className="h-2 rounded-full bg-[#f1ece8]" />
-                  </div>
-                )
-              )}
+            <div className="h-80 animate-pulse bg-[#fcfaf8] p-6" />
+          ) : topCategories.length === 0 ? (
+            <div className="p-6">
+              <EmptyState icon={Tags} text="No category data available yet." />
             </div>
           ) : (
-            <div className="space-y-5 p-5 sm:p-6">
-              {topCategories.length === 0 ? (
-                <EmptyState
-                  icon={Tags}
-                  text="No category data available yet."
-                />
-              ) : (
-                topCategories.map(
-                  (category, index) => {
-                    const percentage =
-                      totalServices > 0
-                        ? Math.round(
-                            (category.serviceCount /
-                              totalServices) *
-                              100
-                          )
-                        : 0;
+            <div className="h-80 p-5 sm:p-6">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={topCategories}
+                  layout="vertical"
+                  margin={{ left: 8, right: 16 }}
+                >
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke={CHART_COLORS.grid}
+                    horizontal={false}
+                  />
 
-                    const width =
-                      category.serviceCount ===
-                      0
-                        ? 3
-                        : Math.max(
-                            (category.serviceCount /
-                              maxServiceCount) *
-                              100,
-                            4
-                          );
+                  <XAxis
+                    type="number"
+                    allowDecimals={false}
+                    tick={{ fontSize: 11, fill: "#a39790" }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
 
-                    return (
-                      <div key={category.id}>
-                        <div className="mb-1.5 flex items-center justify-between gap-3">
-                          <div className="flex min-w-0 items-center gap-2">
-                            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-[#f5eee9] text-[9px] font-semibold text-[#806d61]">
-                              {index + 1}
-                            </span>
+                  <YAxis
+                    type="category"
+                    dataKey="name"
+                    width={110}
+                    tick={{ fontSize: 11, fill: "#4b3e36" }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
 
-                            <span className="truncate text-[11px] font-semibold text-[#4b3e36]">
-                              {category.name}
-                            </span>
-                          </div>
+                  <Tooltip content={<ChartTooltip />} cursor={{ fill: "#fcfaf8" }} />
 
-                          <div className="flex shrink-0 items-center gap-2">
-                            <span className="text-[10px] text-[#a0938b]">
-                              {percentage}%
-                            </span>
-
-                            <span className="w-10 text-right text-[11px] font-semibold text-[#40342d]">
-                              {category.serviceCount}
-                            </span>
-                          </div>
-                        </div>
-
-                        <div className="h-2 overflow-hidden rounded-full bg-[#f3eee9]">
-                          <div
-                            className="h-full rounded-full bg-[#30251f] transition-all duration-700"
-                            style={{
-                              width: `${width}%`,
-                            }}
-                          />
-                        </div>
-                      </div>
-                    );
-                  }
-                )
-              )}
+                  <Bar
+                    dataKey="serviceCount"
+                    name="Services"
+                    fill={CHART_COLORS.dark}
+                    radius={[0, 6, 6, 0]}
+                    barSize={16}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
             </div>
           )}
         </section>
@@ -899,43 +1029,33 @@ export default function AdminPage() {
 
           {loading ? (
             <div className="space-y-4 p-6">
-              {Array.from({ length: 5 }).map(
-                (_, index) => (
-                  <div
-                    key={index}
-                    className="flex animate-pulse items-center gap-3"
-                  >
-                    <div className="h-9 w-9 rounded-lg bg-[#eee8e3]" />
+              {Array.from({ length: 5 }).map((_, index) => (
+                <div key={index} className="flex animate-pulse items-center gap-3">
+                  <div className="h-9 w-9 rounded-lg bg-[#eee8e3]" />
 
-                    <div className="flex-1">
-                      <div className="h-2.5 w-28 rounded bg-[#eee8e3]" />
-                      <div className="mt-2 h-2 w-20 rounded bg-[#f2ede9]" />
-                    </div>
-
-                    <div className="h-5 w-10 rounded-full bg-[#f1ece8]" />
+                  <div className="flex-1">
+                    <div className="h-2.5 w-28 rounded bg-[#eee8e3]" />
+                    <div className="mt-2 h-2 w-20 rounded bg-[#f2ede9]" />
                   </div>
-                )
-              )}
+
+                  <div className="h-5 w-10 rounded-full bg-[#f1ece8]" />
+                </div>
+              ))}
             </div>
           ) : topVendorsByRating.length === 0 ? (
             <div className="p-6">
-              <EmptyState
-                icon={Star}
-                text="No rated vendors yet."
-              />
+              <EmptyState icon={Star} text="No rated vendors yet." />
             </div>
           ) : (
             <div className="divide-y divide-[#f5efeb]">
-              {topVendorsByRating.map(
-                (vendor, index) => (
-                  <VendorListItem
-                    key={vendor.id}
-                    vendor={vendor}
-                    rank={index + 1}
-                    showRating
-                  />
-                )
-              )}
+              {topVendorsByRating.map((vendor, index) => (
+                <VendorListItem
+                  key={vendor.id}
+                  vendor={vendor}
+                  rank={index + 1}
+                  showRating
+                />
+              ))}
             </div>
           )}
 
@@ -952,12 +1072,77 @@ export default function AdminPage() {
       </div>
 
       {/* ========================================================= */}
-      {/* LOCATIONS + MOST REVIEWED */}
+      {/* RATING DISTRIBUTION + LOCATIONS (recharts) */}
       {/* ========================================================= */}
 
       <div className="mt-5 grid gap-5 lg:grid-cols-2">
         {/* ======================================================= */}
-        {/* VENDOR LOCATIONS */}
+        {/* RATING DISTRIBUTION (NEW) */}
+        {/* ======================================================= */}
+
+        <section className="overflow-hidden rounded-2xl border border-[#ebe3dd] bg-white shadow-[0_2px_12px_rgba(48,37,31,0.03)]">
+          <div className="border-b border-[#f0e9e4] px-5 py-5 sm:px-6">
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#f6f0ec] text-[#806d61]">
+                <Star size={17} />
+              </div>
+
+              <div>
+                <h2 className="text-sm font-semibold text-[#30251f]">
+                  Rating Distribution
+                </h2>
+
+                <p className="mt-0.5 text-[11px] text-[#9b8e86]">
+                  How vendor ratings are spread out
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {loading ? (
+            <div className="h-64 animate-pulse bg-[#fcfaf8] p-6" />
+          ) : (
+            <div className="h-64 p-5 sm:p-6">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={ratingDistribution}>
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke={CHART_COLORS.grid}
+                    vertical={false}
+                  />
+
+                  <XAxis
+                    dataKey="stars"
+                    tick={{ fontSize: 11, fill: "#a39790" }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+
+                  <YAxis
+                    allowDecimals={false}
+                    tick={{ fontSize: 11, fill: "#a39790" }}
+                    axisLine={false}
+                    tickLine={false}
+                    width={28}
+                  />
+
+                  <Tooltip content={<ChartTooltip />} cursor={{ fill: "#fcfaf8" }} />
+
+                  <Bar
+                    dataKey="count"
+                    name="Vendors"
+                    fill="#d7a85d"
+                    radius={[6, 6, 0, 0]}
+                    barSize={28}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </section>
+
+        {/* ======================================================= */}
+        {/* VENDOR LOCATIONS (recharts) */}
         {/* ======================================================= */}
 
         <section className="overflow-hidden rounded-2xl border border-[#ebe3dd] bg-white shadow-[0_2px_12px_rgba(48,37,31,0.03)]">
@@ -979,74 +1164,64 @@ export default function AdminPage() {
             </div>
           </div>
 
-          <div className="space-y-5 p-5 sm:p-6">
-            {locationStats.length === 0 ? (
-              <EmptyState
-                icon={MapPin}
-                text="No location data available."
-              />
-            ) : (
-              locationStats.map((item) => {
-                const percentage =
-                  vendorStats.total > 0
-                    ? Math.round(
-                        (item.count /
-                          vendorStats.total) *
-                          100
-                      )
-                    : 0;
+          {loading ? (
+            <div className="h-64 animate-pulse bg-[#fcfaf8] p-6" />
+          ) : locationStats.length === 0 ? (
+            <div className="p-6">
+              <EmptyState icon={MapPin} text="No location data available." />
+            </div>
+          ) : (
+            <div className="h-64 p-5 sm:p-6">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={locationStats}
+                  layout="vertical"
+                  margin={{ left: 8, right: 16 }}
+                >
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke={CHART_COLORS.grid}
+                    horizontal={false}
+                  />
 
-                const width = Math.max(
-                  (item.count /
-                    maxLocationCount) *
-                    100,
-                  4
-                );
+                  <XAxis
+                    type="number"
+                    allowDecimals={false}
+                    tick={{ fontSize: 11, fill: "#a39790" }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
 
-                return (
-                  <div key={item.location}>
-                    <div className="mb-1.5 flex items-center justify-between gap-3">
-                      <div className="flex min-w-0 items-center gap-2">
-                        <MapPin
-                          size={13}
-                          className="shrink-0 text-[#9b8e86]"
-                        />
+                  <YAxis
+                    type="category"
+                    dataKey="location"
+                    width={90}
+                    tick={{ fontSize: 11, fill: "#4b3e36" }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
 
-                        <span className="truncate text-[11px] font-semibold text-[#4b3e36]">
-                          {item.location}
-                        </span>
-                      </div>
+                  <Tooltip content={<ChartTooltip />} cursor={{ fill: "#fcfaf8" }} />
 
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] text-[#a0938b]">
-                          {percentage}%
-                        </span>
-
-                        <span className="text-[11px] font-semibold text-[#40342d]">
-                          {item.count}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="h-2 overflow-hidden rounded-full bg-[#f3eee9]">
-                      <div
-                        className="h-full rounded-full bg-[#8c786b] transition-all duration-700"
-                        style={{
-                          width: `${width}%`,
-                        }}
-                      />
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
+                  <Bar
+                    dataKey="count"
+                    name="Vendors"
+                    fill="#8c786b"
+                    radius={[0, 6, 6, 0]}
+                    barSize={16}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
         </section>
+      </div>
 
-        {/* ======================================================= */}
-        {/* MOST REVIEWED */}
-        {/* ======================================================= */}
+      {/* ========================================================= */}
+      {/* MOST REVIEWED + RECENT REQUESTS */}
+      {/* ========================================================= */}
 
+      <div className="mt-5 grid gap-5 lg:grid-cols-2">
         <section className="overflow-hidden rounded-2xl border border-[#ebe3dd] bg-white shadow-[0_2px_12px_rgba(48,37,31,0.03)]">
           <div className="border-b border-[#f0e9e4] px-5 py-5 sm:px-6">
             <div className="flex items-center gap-2.5">
@@ -1068,122 +1243,112 @@ export default function AdminPage() {
 
           {mostReviewedVendors.length === 0 ? (
             <div className="p-6">
-              <EmptyState
-                icon={MessageSquare}
-                text="No reviews available yet."
-              />
+              <EmptyState icon={MessageSquare} text="No reviews available yet." />
             </div>
           ) : (
             <div className="divide-y divide-[#f5efeb]">
-              {mostReviewedVendors.map(
-                (vendor, index) => (
-                  <VendorListItem
-                    key={vendor.id}
-                    vendor={vendor}
-                    rank={index + 1}
-                    showReviews
-                  />
-                )
-              )}
+              {mostReviewedVendors.map((vendor, index) => (
+                <VendorListItem
+                  key={vendor.id}
+                  vendor={vendor}
+                  rank={index + 1}
+                  showReviews
+                />
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section className="overflow-hidden rounded-2xl border border-[#ebe3dd] bg-white shadow-[0_2px_12px_rgba(48,37,31,0.03)]">
+          <div className="flex flex-col justify-between gap-4 border-b border-[#f0e9e4] px-5 py-5 sm:flex-row sm:items-center sm:px-6">
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#f6f0ec] text-[#806d61]">
+                <ClipboardList size={17} />
+              </div>
+
+              <div>
+                <h2 className="text-sm font-semibold text-[#30251f]">
+                  Recent Requests
+                </h2>
+
+                <p className="mt-0.5 text-[11px] text-[#9b8e86]">
+                  Latest vendor, service and review submissions
+                </p>
+              </div>
+            </div>
+
+            <Link
+              href="/admin/moderation"
+              className="flex items-center gap-1.5 self-start rounded-lg border border-[#e9e0da] px-3 py-2 text-xs font-semibold text-[#806d61] transition hover:bg-[#faf7f4] hover:text-[#30251f] sm:self-auto"
+            >
+              View Queue
+              <ArrowUpRight size={14} />
+            </Link>
+          </div>
+
+          {recentRequests.length === 0 ? (
+            <div className="p-8">
+              <EmptyState
+                icon={ClipboardList}
+                text="Nothing waiting on a decision right now."
+              />
+            </div>
+          ) : (
+            <div className="divide-y divide-[#f0e9e4]">
+              {recentRequests.slice(0, 5).map((item) => {
+                const meta = requestEntityMeta[item.entityType] ?? {
+                  label: "Item",
+                  icon: ClipboardList,
+                  className: "bg-[#f0e9e0] text-[#a47e43]",
+                };
+
+                const Icon = meta.icon;
+
+                return (
+                  <Link
+                    key={`${item.entityType}-${item.entityId}`}
+                    href={requestHref(item)}
+                    className="flex items-center justify-between gap-4 px-5 py-3.5 transition hover:bg-[#fcfaf8] sm:px-6"
+                  >
+                    <div className="flex min-w-0 items-center gap-3">
+                      <span
+                        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${meta.className}`}
+                      >
+                        <Icon size={15} />
+                      </span>
+
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="truncate text-xs font-semibold text-[#30251f]">
+                            {item.title}
+                          </p>
+
+                          <span className="shrink-0 rounded-full bg-[#f4eee9] px-2 py-0.5 text-[9px] font-medium text-[#766d67]">
+                            {meta.label}
+                          </span>
+                        </div>
+
+                        <p className="mt-0.5 truncate text-[10px] text-[#9b8e86]">
+                          {item.vendorBusinessName} · {formatDate(item.submittedAt)}
+                        </p>
+                      </div>
+                    </div>
+
+                    <span
+                      className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-semibold ${
+                        requestStatusStyles[item.status] ??
+                        "bg-[#f4eee9] text-[#766d67]"
+                      }`}
+                    >
+                      {requestStatusLabels[item.status] ?? "Unknown"}
+                    </span>
+                  </Link>
+                );
+              })}
             </div>
           )}
         </section>
       </div>
-
-      {/* ========================================================= */}
-      {/* RECENT MODERATION REQUESTS */}
-      {/* ========================================================= */}
-
-      <section className="mt-5 overflow-hidden rounded-2xl border border-[#ebe3dd] bg-white shadow-[0_2px_12px_rgba(48,37,31,0.03)]">
-        <div className="flex flex-col justify-between gap-4 border-b border-[#f0e9e4] px-5 py-5 sm:flex-row sm:items-center sm:px-6">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#f6f0ec] text-[#806d61]">
-              <ClipboardList size={17} />
-            </div>
-
-            <div>
-              <h2 className="text-sm font-semibold text-[#30251f]">
-                Recent Requests
-              </h2>
-
-              <p className="mt-0.5 text-[11px] text-[#9b8e86]">
-                Latest vendor, service and review submissions
-              </p>
-            </div>
-          </div>
-
-          <Link
-            href="/admin/moderation"
-            className="flex items-center gap-1.5 self-start rounded-lg border border-[#e9e0da] px-3 py-2 text-xs font-semibold text-[#806d61] transition hover:bg-[#faf7f4] hover:text-[#30251f] sm:self-auto"
-          >
-            View Moderation Queue
-            <ArrowUpRight size={14} />
-          </Link>
-        </div>
-
-        {recentRequests.length === 0 ? (
-          <div className="p-8">
-            <EmptyState
-              icon={ClipboardList}
-              text="Nothing waiting on a decision right now."
-            />
-          </div>
-        ) : (
-          <div className="divide-y divide-[#f0e9e4]">
-            {recentRequests.slice(0, 5).map((item) => {
-              const meta = requestEntityMeta[item.entityType] ?? {
-                label: "Item",
-                icon: ClipboardList,
-                className: "bg-[#f0e9e0] text-[#a47e43]",
-              };
-
-              const Icon = meta.icon;
-
-              return (
-                <Link
-                  key={`${item.entityType}-${item.entityId}`}
-                  href={requestHref(item)}
-                  className="flex items-center justify-between gap-4 px-5 py-3.5 transition hover:bg-[#fcfaf8] sm:px-6"
-                >
-                  <div className="flex min-w-0 items-center gap-3">
-                    <span
-                      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${meta.className}`}
-                    >
-                      <Icon size={15} />
-                    </span>
-
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="truncate text-xs font-semibold text-[#30251f]">
-                          {item.title}
-                        </p>
-
-                        <span className="shrink-0 rounded-full bg-[#f4eee9] px-2 py-0.5 text-[9px] font-medium text-[#766d67]">
-                          {meta.label}
-                        </span>
-                      </div>
-
-                      <p className="mt-0.5 truncate text-[10px] text-[#9b8e86]">
-                        {item.vendorBusinessName} ·{" "}
-                        {formatDate(item.submittedAt)}
-                      </p>
-                    </div>
-                  </div>
-
-                  <span
-                    className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-semibold ${
-                      requestStatusStyles[item.status] ??
-                      "bg-[#f4eee9] text-[#766d67]"
-                    }`}
-                  >
-                    {requestStatusLabels[item.status] ?? "Unknown"}
-                  </span>
-                </Link>
-              );
-            })}
-          </div>
-        )}
-      </section>
 
       {/* ========================================================= */}
       {/* RECENT VENDORS */}
@@ -1218,10 +1383,7 @@ export default function AdminPage() {
 
         {recentVendors.length === 0 ? (
           <div className="p-8">
-            <EmptyState
-              icon={Users}
-              text="No vendors have been added yet."
-            />
+            <EmptyState icon={Users} text="No vendors have been added yet." />
           </div>
         ) : (
           <div className="grid gap-3 p-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
@@ -1239,16 +1401,11 @@ export default function AdminPage() {
                         className="h-full w-full object-cover"
                       />
                     ) : (
-                      <Store
-                        size={17}
-                        className="text-[#806d61]"
-                      />
+                      <Store size={17} className="text-[#806d61]" />
                     )}
                   </div>
 
-                  <StatusBadge
-                    status={vendor.status}
-                  />
+                  <StatusBadge status={vendor.status} />
                 </div>
 
                 <p className="mt-3 truncate text-xs font-semibold text-[#40342d]">
@@ -1258,29 +1415,19 @@ export default function AdminPage() {
                 <div className="mt-2 flex items-center gap-1.5 text-[10px] text-[#9b8e86]">
                   <MapPin size={11} />
                   <span className="truncate">
-                    {vendor.location ||
-                      "Location not provided"}
+                    {vendor.location || "Location not provided"}
                   </span>
                 </div>
 
                 <div className="mt-3 flex items-center justify-between">
                   <div className="flex items-center gap-1 text-[10px] text-[#8a786d]">
-                    <Star
-                      size={11}
-                      fill="currentColor"
-                    />
+                    <Star size={11} fill="currentColor" />
 
-                    {formatRating(
-                      Number(
-                        vendor.averageRating
-                      ) || 0
-                    )}
+                    {formatRating(Number(vendor.averageRating) || 0)}
                   </div>
 
                   <span className="text-[9px] text-[#b0a39b]">
-                    {formatDate(
-                      vendor.createdAt
-                    )}
+                    {formatDate(vendor.createdAt)}
                   </span>
                 </div>
               </div>
@@ -1295,9 +1442,7 @@ export default function AdminPage() {
 
       <section className="mt-5 rounded-2xl border border-[#ebe3dd] bg-white p-5 shadow-[0_2px_12px_rgba(48,37,31,0.03)] sm:p-6">
         <div className="mb-5">
-          <h2 className="text-sm font-semibold text-[#30251f]">
-            Quick Actions
-          </h2>
+          <h2 className="text-sm font-semibold text-[#30251f]">Quick Actions</h2>
 
           <p className="mt-1 text-xs text-[#9b8e86]">
             Frequently used admin shortcuts
@@ -1340,9 +1485,7 @@ export default function AdminPage() {
       {/* ========================================================= */}
 
       <div className="py-7 text-center">
-        <p className="text-[11px] text-[#aa9c93]">
-          5Digea Admin Panel • 2026
-        </p>
+        <p className="text-[11px] text-[#aa9c93]">5Digea Admin Panel • 2026</p>
       </div>
     </div>
   );
@@ -1356,24 +1499,22 @@ function VendorStatusRow({
   label,
   value,
   total,
-  dotClass,
+  color,
 }: {
   label: string;
   value: number;
   total: number;
-  dotClass: string;
+  color: string;
 }) {
-  const percentage =
-    total > 0
-      ? Math.round((value / total) * 100)
-      : 0;
+  const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
 
   return (
     <div>
       <div className="mb-1.5 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span
-            className={`h-2 w-2 rounded-full ${dotClass}`}
+            className="h-2 w-2 rounded-full"
+            style={{ backgroundColor: color }}
           />
 
           <span className="text-[10px] font-semibold text-[#665951]">
@@ -1382,9 +1523,7 @@ function VendorStatusRow({
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-[9px] text-[#a39790]">
-            {percentage}%
-          </span>
+          <span className="text-[9px] text-[#a39790]">{percentage}%</span>
 
           <span className="text-[11px] font-semibold text-[#40342d]">
             {value}
@@ -1394,10 +1533,8 @@ function VendorStatusRow({
 
       <div className="h-1.5 overflow-hidden rounded-full bg-[#f3eee9]">
         <div
-          className={`h-full rounded-full ${dotClass}`}
-          style={{
-            width: `${percentage}%`,
-          }}
+          className="h-full rounded-full"
+          style={{ width: `${percentage}%`, backgroundColor: color }}
         />
       </div>
     </div>
@@ -1428,26 +1565,16 @@ function InsightCard({
       </div>
 
       <div className="min-w-0 flex-1">
-        <p className="text-[10px] text-[#91847c]">
-          {title}
-        </p>
+        <p className="text-[10px] text-[#91847c]">{title}</p>
 
         <div className="mt-0.5 flex items-baseline gap-1">
-          <span className="text-lg font-semibold text-[#30251f]">
-            {value}
-          </span>
+          <span className="text-lg font-semibold text-[#30251f]">{value}</span>
 
-          {suffix && (
-            <span className="text-[9px] text-[#a39790]">
-              {suffix}
-            </span>
-          )}
+          {suffix && <span className="text-[9px] text-[#a39790]">{suffix}</span>}
         </div>
       </div>
 
-      <p className="hidden text-[9px] text-[#a39790] sm:block">
-        {description}
-      </p>
+      <p className="hidden text-[9px] text-[#a39790] sm:block">{description}</p>
     </div>
   );
 }
@@ -1481,10 +1608,7 @@ function VendorListItem({
             className="h-full w-full object-cover"
           />
         ) : (
-          <Store
-            size={15}
-            className="text-[#806d61]"
-          />
+          <Store size={15} className="text-[#806d61]" />
         )}
       </div>
 
@@ -1495,22 +1619,16 @@ function VendorListItem({
 
         <div className="mt-0.5 flex items-center gap-2">
           <span className="truncate text-[9px] text-[#a39790]">
-            {vendor.location ||
-              "Location not provided"}
+            {vendor.location || "Location not provided"}
           </span>
         </div>
       </div>
 
       {showRating && (
         <div className="flex shrink-0 items-center gap-1 rounded-full bg-[#fff8e9] px-2 py-1 text-[9px] font-semibold text-[#9a7b36]">
-          <Star
-            size={10}
-            fill="currentColor"
-          />
+          <Star size={10} fill="currentColor" />
 
-          {formatRating(
-            Number(vendor.averageRating) || 0
-          )}
+          {formatRating(Number(vendor.averageRating) || 0)}
         </div>
       )}
 
@@ -1518,9 +1636,7 @@ function VendorListItem({
         <div className="flex shrink-0 items-center gap-1 rounded-full bg-[#f7f1ed] px-2 py-1 text-[9px] font-semibold text-[#806d61]">
           <MessageSquare size={10} />
 
-          {formatNumber(
-            Number(vendor.reviewsCount) || 0
-          )}
+          {formatNumber(Number(vendor.reviewsCount) || 0)}
         </div>
       )}
     </div>
@@ -1531,38 +1647,23 @@ function VendorListItem({
 /* STATUS BADGE */
 /* ========================================================= */
 
-function StatusBadge({
-  status,
-}: {
-  status?: string;
-}) {
-  const normalized =
-    normalizeStatus(status);
+function StatusBadge({ status }: { status?: string }) {
+  const normalized = normalizeStatus(status);
 
-  let classes =
-    "border-gray-200 bg-gray-50 text-gray-600";
+  let classes = "border-gray-200 bg-gray-50 text-gray-600";
 
   if (normalized.includes("approve")) {
-    classes =
-      "border-emerald-200 bg-emerald-50 text-emerald-700";
+    classes = "border-emerald-200 bg-emerald-50 text-emerald-700";
   } else if (normalized.includes("pending")) {
-    classes =
-      "border-amber-200 bg-amber-50 text-amber-700";
+    classes = "border-amber-200 bg-amber-50 text-amber-700";
   } else if (normalized.includes("reject")) {
-    classes =
-      "border-red-200 bg-red-50 text-red-700";
-  } else if (
-    normalized.includes("inactive") ||
-    normalized.includes("deactiv")
-  ) {
-    classes =
-      "border-gray-200 bg-gray-100 text-gray-600";
+    classes = "border-red-200 bg-red-50 text-red-700";
+  } else if (normalized.includes("inactive") || normalized.includes("deactiv")) {
+    classes = "border-gray-200 bg-gray-100 text-gray-600";
   }
 
   return (
-    <span
-      className={`rounded-full border px-2 py-1 text-[8px] font-semibold ${classes}`}
-    >
+    <span className={`rounded-full border px-2 py-1 text-[8px] font-semibold ${classes}`}>
       {status || "Unknown"}
     </span>
   );
@@ -1593,13 +1694,9 @@ function QuickAction({
       </div>
 
       <div className="min-w-0 flex-1">
-        <p className="text-xs font-semibold text-[#40342d]">
-          {title}
-        </p>
+        <p className="text-xs font-semibold text-[#40342d]">{title}</p>
 
-        <p className="mt-1 text-[10px] leading-4 text-[#9b8e86]">
-          {description}
-        </p>
+        <p className="mt-1 text-[10px] leading-4 text-[#9b8e86]">{description}</p>
       </div>
 
       <ChevronRight
@@ -1614,22 +1711,14 @@ function QuickAction({
 /* EMPTY STATE */
 /* ========================================================= */
 
-function EmptyState({
-  icon: Icon,
-  text,
-}: {
-  icon: typeof Tags;
-  text: string;
-}) {
+function EmptyState({ icon: Icon, text }: { icon: typeof Tags; text: string }) {
   return (
     <div className="rounded-xl border border-dashed border-[#e6ddd7] bg-[#fcfaf8] px-4 py-8 text-center">
       <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-lg bg-[#f5eee9] text-[#9b8e86]">
         <Icon size={16} />
       </div>
 
-      <p className="mt-3 text-xs font-medium text-[#8f8178]">
-        {text}
-      </p>
+      <p className="mt-3 text-xs font-medium text-[#8f8178]">{text}</p>
     </div>
   );
 }
@@ -1643,17 +1732,9 @@ function formatDate(date?: string) {
 
   const parsedDate = new Date(date);
 
-  if (Number.isNaN(parsedDate.getTime())) {
-    return "—";
-  }
+  if (Number.isNaN(parsedDate.getTime())) return "—";
 
-  return parsedDate.toLocaleDateString(
-    "en-US",
-    {
-      month: "short",
-      day: "numeric",
-    }
-  );
+  return parsedDate.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
 /* ========================================================= */
@@ -1663,32 +1744,30 @@ function formatDate(date?: string) {
 function DashboardStatsSkeleton() {
   return (
     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-      {Array.from({ length: 8 }).map(
-        (_, index) => (
-          <div
-            key={index}
-            className="rounded-2xl border border-[#ebe3dd] bg-white p-4 shadow-[0_2px_12px_rgba(48,37,31,0.03)] sm:p-5"
-          >
-            <div className="animate-pulse">
-              <div className="flex items-start justify-between">
-                <div className="h-10 w-10 rounded-xl bg-[#eee8e3]" />
+      {Array.from({ length: 8 }).map((_, index) => (
+        <div
+          key={index}
+          className="rounded-2xl border border-[#ebe3dd] bg-white p-4 shadow-[0_2px_12px_rgba(48,37,31,0.03)] sm:p-5"
+        >
+          <div className="animate-pulse">
+            <div className="flex items-start justify-between">
+              <div className="h-10 w-10 rounded-xl bg-[#eee8e3]" />
 
-                <div className="h-5 w-12 rounded-full bg-[#f1ece8]" />
-              </div>
+              <div className="h-5 w-12 rounded-full bg-[#f1ece8]" />
+            </div>
 
-              <div className="mt-4">
-                <div className="h-3 w-24 rounded bg-[#eee8e3]" />
+            <div className="mt-4">
+              <div className="h-3 w-24 rounded bg-[#eee8e3]" />
 
-                <div className="mt-2 flex items-end justify-between">
-                  <div className="h-7 w-16 rounded bg-[#e9e2dd]" />
+              <div className="mt-2 flex items-end justify-between">
+                <div className="h-7 w-16 rounded bg-[#e9e2dd]" />
 
-                  <div className="h-2.5 w-20 rounded bg-[#f2ede9]" />
-                </div>
+                <div className="h-2.5 w-20 rounded bg-[#f2ede9]" />
               </div>
             </div>
           </div>
-        )
-      )}
+        </div>
+      ))}
     </div>
   );
 }
@@ -1707,14 +1786,12 @@ function VendorOverviewSkeleton() {
           <div className="mx-auto h-40 w-40 rounded-full bg-[#eee8e3]" />
 
           <div className="space-y-4">
-            {Array.from({ length: 4 }).map(
-              (_, index) => (
-                <div key={index}>
-                  <div className="mb-2 h-2.5 w-full rounded bg-[#f2ede9]" />
-                  <div className="h-1.5 rounded bg-[#f3eee9]" />
-                </div>
-              )
-            )}
+            {Array.from({ length: 4 }).map((_, index) => (
+              <div key={index}>
+                <div className="mb-2 h-2.5 w-full rounded bg-[#f2ede9]" />
+                <div className="h-1.5 rounded bg-[#f3eee9]" />
+              </div>
+            ))}
           </div>
         </div>
       </div>
@@ -1722,14 +1799,9 @@ function VendorOverviewSkeleton() {
       <div className="space-y-3 p-6">
         <div className="mb-5 h-3 w-28 rounded bg-[#eee8e3]" />
 
-        {Array.from({ length: 4 }).map(
-          (_, index) => (
-            <div
-              key={index}
-              className="h-16 rounded-xl bg-[#f4efeb]"
-            />
-          )
-        )}
+        {Array.from({ length: 4 }).map((_, index) => (
+          <div key={index} className="h-16 rounded-xl bg-[#f4efeb]" />
+        ))}
       </div>
     </div>
   );

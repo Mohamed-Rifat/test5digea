@@ -43,7 +43,7 @@ import type { Vendor } from "@/types/vendor";
 type SortMode = "recommended" | "rating" | "newest";
 
 const SERVICES_PAGE_SIZE = 6;
-const REVIEWS_PAGE_SIZE = 4;
+const REVIEWS_PAGE_SIZE = 5;
 
 type SocialLinks = {
   instagram?: string;
@@ -113,7 +113,7 @@ function PageSkeleton() {
         {/* Vendor header */}
         <div className="-mt-14 rounded-3xl border border-[#eee7e1] bg-white p-5 shadow-sm sm:-mt-16 sm:p-7">
           <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
-            <div className="h-24 w-24 shrink-0 animate-pulse rounded-3xl bg-[#f4eee9] sm:h-28 sm:w-28" />
+            <div className="h-24 w-24 shrink-0 animate-pulse rounded-full bg-[#f4eee9] sm:h-28 sm:w-28" />
 
             <div className="flex-1 space-y-3">
               <div className="h-7 w-2/3 animate-pulse rounded-lg bg-[#f4eee9]" />
@@ -283,9 +283,8 @@ export default function VendorDetailPage() {
   const [visibleServiceCount, setVisibleServiceCount] = useState(
     SERVICES_PAGE_SIZE
   );
-  const [visibleReviewCount, setVisibleReviewCount] = useState(
-    REVIEWS_PAGE_SIZE
-  );
+  // The vendor page intentionally shows only the latest five reviews.
+  // Full review history is available on the dedicated reviews page.
 
   // Reset pagination whenever the person changes filters, so they don't end
   // up looking at page 3 of a completely different, smaller result set.
@@ -694,10 +693,10 @@ export default function VendorDetailPage() {
 
           <Link
             href="/vendors"
-            className="inline-flex items-center gap-2 rounded-full border border-white/60 bg-white/85 px-3.5 py-2 text-xs font-semibold text-[#30251f] shadow-sm backdrop-blur transition-all duration-200 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b99a62]/50"
+            className="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-[#30251f]transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b99a62]/50"
           >
-            <ArrowLeft size={15} />
-            <span>Back</span>
+            <ArrowLeft size={15}/>
+            <span className="text-[#9A8F86] hover:text-[#6b3203]">Back</span>
           </Link>
 
           <div className="flex items-center gap-2">
@@ -747,13 +746,13 @@ export default function VendorDetailPage() {
             VENDOR IDENTITY
         =================================================== */}
 
-        <section className="relative -mt-14 rounded-3xl border border-[#ebe2da] bg-white p-5 shadow-[0_18px_50px_rgba(48,37,31,0.07)] sm:-mt-16 sm:p-7">
+        <section className="relative -mt-14 bg-transparent p-4 sm:-mt-16 sm:p-7">
 
-          <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
+          <div className="flex items-center gap-3 sm:items-start sm:gap-5">
 
             {/* Logo */}
-            <div className="relative h-24 w-24 shrink-0 sm:h-28 sm:w-28">
-              <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-3xl border-4 border-white bg-[#f4eee9] shadow-md ring-1 ring-[#e8ddd4]">
+            <div className="relative h-20 w-20 shrink-0 sm:h-28 sm:w-28">
+              <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-full border-4 border-white bg-[#f4eee9] shadow-md ring-1 ring-[#e8ddd4]">
 
                 {vendor.profileImageUrl ? (
                   <img
@@ -781,13 +780,13 @@ export default function VendorDetailPage() {
             </div>
 
             {/* Vendor information + social on the right */}
-            <div className="flex min-w-0 flex-1 flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex min-w-0 flex-1 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
 
               {/* Text block */}
               <div className="min-w-0 flex-1">
 
                 <div className="flex flex-wrap items-center gap-2">
-                  <h1 className="wrap-break-word font-serif text-2xl font-light leading-tight tracking-[-0.02em] text-[#30251f] sm:text-3xl">
+                  <h1 className="wrap-break-word font-serif text-xl font-light leading-tight tracking-[-0.02em] text-[#30251f] sm:text-3xl">
                     {vendor.businessName}
                   </h1>
                 </div>
@@ -798,16 +797,16 @@ export default function VendorDetailPage() {
                   </p>
                 )}
 
-                <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2">
+                <div className="mt-2 flex min-w-0 flex-col items-start gap-1.5 sm:mt-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-5 sm:gap-y-2">
                   <RatingStars
                     rating={vendor.averageRating}
                     reviewsCount={vendor.reviewsCount}
                   />
 
                   {vendor.location && (
-                    <span className="flex min-w-0 items-center gap-1.5 text-sm text-[#9b8f86]">
+                    <span className="flex min-w-0 max-w-full items-center gap-1.5 text-xs text-[#9b8f86] sm:text-sm">
                       <MapPin
-                        size={14}
+                        size={13}
                         className="shrink-0"
                       />
 
@@ -878,39 +877,11 @@ export default function VendorDetailPage() {
           <div className="min-w-0">
 
             {/* =================================================
-                ABOUT — FIRST
+                SERVICES — FIRST
             ================================================= */}
 
-            {vendor.bio && (
-              <section className="max-w-3xl">
 
-                <div className="mb-4">
-                  <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#a47e43]">
-                    About the partner
-                  </p>
-
-                  <h2 className="font-serif text-2xl font-light text-[#30251f] sm:text-3xl">
-                    About
-                  </h2>
-                </div>
-
-                <p className="whitespace-pre-line text-[15px] leading-8 text-[#5f544d]">
-                  {vendor.bio}
-                </p>
-              </section>
-            )}
-
-            {/* =================================================
-                SERVICES — SECOND
-            ================================================= */}
-
-            <section
-              className={`${
-                vendor.bio
-                  ? "mt-12 border-t border-[#e9e0d8] pt-9"
-                  : ""
-              }`}
-            >
+            <section>
               <div className="mb-5 flex items-end justify-between gap-4">
 
                 <div>
@@ -1016,25 +987,26 @@ export default function VendorDetailPage() {
 
               {/* Loading */}
               {servicesLoading && (
-                <div className="grid gap-5 sm:grid-cols-3">
-                  {Array.from({ length: 3 }).map(
-                    (_, index) => (
-                      <div
-                        key={index}
-                        className="overflow-hidden rounded-3xl border border-[#eee7e1] bg-white"
-                      >
-                        <div className="aspect-4/3 animate-pulse bg-[#f4eee9]" />
+                <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+                  {Array.from({ length: 3 }).map((_, index) => (
+                    <div
+                      key={index}
+                      className="overflow-hidden rounded-[30px] border border-[#eee7e1] bg-white shadow-[0_10px_35px_rgba(48,37,31,0.04)]"
+                    >
+                      <div className="aspect-[1.08/1] animate-pulse bg-[#f4eee9]" />
 
-                        <div className="space-y-3 p-4">
-                          <div className="h-4 w-3/4 animate-pulse rounded bg-[#f4eee9]" />
-
-                          <div className="h-3 w-full animate-pulse rounded bg-[#f4eee9]" />
-
-                          <div className="h-3 w-1/2 animate-pulse rounded bg-[#f4eee9]" />
+                      <div className="space-y-4 p-5">
+                        <div className="h-6 w-4/5 animate-pulse rounded-lg bg-[#f4eee9]" />
+                        <div className="h-3 w-full animate-pulse rounded bg-[#f4eee9]" />
+                        <div className="h-3 w-2/3 animate-pulse rounded bg-[#f4eee9]" />
+                        <div className="my-4 h-px bg-[#eee7e1]" />
+                        <div className="flex justify-between">
+                          <div className="h-8 w-24 animate-pulse rounded-lg bg-[#f4eee9]" />
+                          <div className="h-9 w-20 animate-pulse rounded-full bg-[#f4eee9]" />
                         </div>
                       </div>
-                    )
-                  )}
+                    </div>
+                  ))}
                 </div>
               )}
 
@@ -1081,123 +1053,119 @@ export default function VendorDetailPage() {
                 )}
 
               {/* =================================================
-                  SERVICE CARDS (grouped by category, filterable,
-                  sortable, expandable to the full catalog)
+                  PREMIUM SERVICE CARDS
               ================================================= */}
 
               {!servicesLoading &&
                 displayedServices.length > 0 && (
-                  <div className="grid gap-5 sm:grid-cols-3">
+                  <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+                    {displayedServices.map((service) => {
+                      const price = startingPrice(service.prices);
+                      const image = service.images?.[0]?.url;
+                      const serviceRating =
+                        service._avgRating > 0 ? service._avgRating : null;
 
-                    {displayedServices.map(
-                      (service) => {
-                        const price = startingPrice(
-                          service.prices
-                        );
-
-                        const image =
-                          service.images?.[0]?.url;
-
-                        const serviceRating =
-                          service._avgRating > 0
-                            ? service._avgRating
-                            : null;
-
-                        return (
-                          <Link
-                            key={service.id}
-                            href={`/services/${service.id}`}
-                            className="group flex min-w-0 flex-col overflow-hidden rounded-3xl border border-[#ebe2da] bg-white transition-all duration-300 hover:-translate-y-1 hover:border-[#dccab8] hover:shadow-[0_16px_38px_rgba(48,37,31,0.09)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b99a62]/50"
-                          >
-
-                            {/* Image */}
-                            <div className="relative aspect-4/3 overflow-hidden bg-[#f4eee9]">
-
-                              {image ? (
-                                <img
-                                  src={image}
-                                  alt={service.name}
-                                  loading="lazy"
-                                  decoding="async"
-                                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
-                                />
-                              ) : (
-                                <div className="flex h-full w-full items-center justify-center text-[#c9bcae]">
-                                  <ImageOff
-                                    size={24}
-                                  />
+                      return (
+                        <Link
+                          key={service.id}
+                          href={`/services/${service.id}`}
+                          className="group relative flex min-w-0 flex-col overflow-hidden rounded-[30px] border border-[#e9dfd6] bg-white shadow-[0_10px_35px_rgba(48,37,31,0.045)] transition-all duration-500 hover:-translate-y-1.5 hover:border-[#d8c4ae] hover:shadow-[0_24px_60px_rgba(48,37,31,0.12)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b99a62]/50"
+                        >
+                          {/* Image */}
+                          <div className="relative aspect-[1.08/1] overflow-hidden bg-[#f4eee9]">
+                            {image ? (
+                              <img
+                                src={image}
+                                alt={service.name}
+                                loading="lazy"
+                                decoding="async"
+                                className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.07]"
+                              />
+                            ) : (
+                              <div className="flex h-full w-full items-center justify-center">
+                                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/70 text-[#c9bcae] shadow-sm backdrop-blur">
+                                  <ImageOff size={23} />
                                 </div>
-                              )}
+                              </div>
+                            )}
 
-                              {/* Rating */}
-                              {!!serviceRating && (
-                                <span className="absolute left-3 top-3 flex items-center gap-1 rounded-full bg-white/90 px-2 py-1 text-[11px] font-semibold text-[#30251f] shadow-sm backdrop-blur">
-                                  <Star
-                                    size={11}
-                                    className="fill-[#a47e43] text-[#a47e43]"
-                                  />
+                            {/* Editorial image overlay */}
+                            <div className="absolute inset-0 bg-linear-to-t from-[#241b17]/55 via-transparent to-[#241b17]/5 opacity-80" />
 
-                                  {Number(
-                                    serviceRating
-                                  ).toFixed(1)}
-                                </span>
-                              )}
+                        
+
+                            {/* Rating */}
+                            {serviceRating !== null && (
+                              <span className="absolute right-4 top-4 flex items-center gap-1.5 rounded-full border border-white/50 bg-white/90 px-2.5 py-1.5 text-[11px] font-semibold text-[#30251f] shadow-lg backdrop-blur-md">
+                                <Star
+                                  size={11}
+                                  className="fill-[#a47e43] text-[#a47e43]"
+                                />
+                                {Number(serviceRating).toFixed(1)}
+                              </span>
+                            )}
+
+                            {/* Bottom image eyebrow */}
+                            <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between gap-3">
+                              <span className="text-[9px] font-semibold uppercase tracking-[0.18em] text-white/80">
+                                Wedding Service
+                              </span>
+
+                              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/90 text-[#30251f] shadow-lg backdrop-blur transition-all duration-300 group-hover:-rotate-6 group-hover:scale-105">
+                                <ArrowUpRight size={15} />
+                              </span>
                             </div>
+                          </div>
 
-                            {/* Card content */}
-                            <div className="flex flex-1 flex-col p-4">
+                          {/* Content */}
+                          <div className="flex flex-1 flex-col p-5 sm:p-5.5">
+                            <h3 className="line-clamp-2 min-h-[3.4rem] font-serif text-[20px] font-light leading-[1.7] text-[#30251f] transition-colors duration-300 group-hover:text-[#8f6d3d]">
+                              {service.name}
+                            </h3>
 
-                              <h3 className="truncate text-sm font-semibold text-[#30251f]">
-                                {service.name}
-                              </h3>
+                            {service.description ? (
+                              <p className="mt-2.5 line-clamp-2 text-[12px] leading-6 text-[#94877e]">
+                                {service.description}
+                              </p>
+                            ) : (
+                              <p className="mt-2.5 line-clamp-2 text-[12px] leading-6 text-[#b2a59c]">
+                                A carefully selected service for your special
+                                day.
+                              </p>
+                            )}
 
-                              {service.description && (
-                                <p className="mt-1.5 line-clamp-2 text-xs leading-5 text-[#968a82]">
-                                  {service.description}
+                            {/* Divider */}
+                            <div className="my-5 h-px bg-linear-to-r from-[#eadfd5] via-[#eee7e1] to-transparent" />
+
+                            {/* Footer */}
+                            <div className="mt-auto flex items-end justify-between gap-4">
+                              <div className="min-w-0">
+                                <p className="text-[9px] font-semibold uppercase tracking-[0.16em] text-[#a99a90]">
+                                  Starting from
                                 </p>
-                              )}
 
-                              <div className="mt-auto flex items-center justify-between gap-3 pt-4">
-
-                                <p className="truncate text-xs font-semibold text-[#a47e43]">
+                                <p className="mt-1 truncate text-[14px] font-semibold text-[#a47e43]">
                                   {price !== null
-                                    ? `From ${formatPrice(
-                                        price
-                                      )} EGP`
+                                    ? `${formatPrice(price)} EGP`
                                     : "Contact for pricing"}
                                 </p>
-
-                                <span className="flex shrink-0 items-center gap-1 text-[11px] font-semibold text-[#30251f] opacity-60 transition-all duration-200 group-hover:gap-1.5 group-hover:opacity-100">
-                                  View
-                                  <ArrowUpRight
-                                    size={12}
-                                  />
-                                </span>
                               </div>
+
+                              <span className="flex shrink-0 items-center gap-1.5 rounded-full border border-[#e7ddd4] px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#30251f] transition-all duration-300 group-hover:border-[#cbb08d] group-hover:bg-[#faf6f2]">
+                                Explore
+                                <ArrowUpRight
+                                  size={12}
+                                  className="transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
+                                />
+                              </span>
                             </div>
-                          </Link>
-                        );
-                      }
-                    )}
+                          </div>
+                        </Link>
+                      );
+                    })}
                   </div>
                 )}
 
-              {/* Show more / show all */}
-              {!servicesLoading && hasMoreServices && (
-                <div className="mt-6 flex justify-center">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setVisibleServiceCount(
-                        orderedServices.length
-                      )
-                    }
-                    className="rounded-full border border-[#e4dbd0] bg-white px-5 py-2.5 text-xs font-semibold text-[#30251f] transition-all duration-200 hover:border-[#b99a62] hover:bg-[#faf7f4]"
-                  >
-                    Show all {orderedServices.length} services
-                  </button>
-                </div>
-              )}
             </section>
 
             {/* =================================================
@@ -1208,12 +1176,6 @@ export default function VendorDetailPage() {
               vendor={vendor}
               reviews={vendorReviews}
               loading={reviewsLoading}
-              visibleCount={visibleReviewCount}
-              onShowMore={() =>
-                setVisibleReviewCount(
-                  (count) => count + REVIEWS_PAGE_SIZE
-                )
-              }
             />
 
             {/* =================================================
@@ -1240,6 +1202,9 @@ export default function VendorDetailPage() {
           ================================================= */}
 
           <aside className="hidden space-y-6 lg:sticky lg:top-6 lg:block lg:self-start">
+
+            {/* About */}
+            {vendor.bio && <AboutCard vendor={vendor} />}
 
             {/* Contact */}
             <div
@@ -1434,21 +1399,18 @@ function VendorReviewsSection({
   vendor,
   reviews,
   loading,
-  visibleCount,
-  onShowMore,
 }: {
   vendor: Vendor;
   reviews: Review[];
   loading: boolean;
-  visibleCount: number;
-  onShowMore: () => void;
 }) {
-  const visibleReviews = reviews.slice(0, visibleCount);
-  const hasMore = reviews.length > visibleReviews.length;
+  // The vendor profile is intentionally kept editorial and compact:
+  // only the five newest reviews are shown here.
+  const latestReviews = reviews.slice(0, REVIEWS_PAGE_SIZE);
+  const hasMoreReviews = reviews.length > REVIEWS_PAGE_SIZE;
 
   return (
     <section className="mt-12 border-t border-[#e9e0d8] pt-9">
-
       <div className="mb-5 flex items-end justify-between gap-4">
         <div>
           <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#a47e43]">
@@ -1464,12 +1426,24 @@ function VendorReviewsSection({
           </h2>
         </div>
 
-        {vendor.reviewsCount > 0 && (
-          <RatingStars
-            rating={vendor.averageRating}
-            reviewsCount={vendor.reviewsCount}
-          />
-        )}
+        <div className="flex shrink-0 items-center gap-3">
+          {vendor.reviewsCount > 0 && (
+            <RatingStars
+              rating={vendor.averageRating}
+              reviewsCount={vendor.reviewsCount}
+            />
+          )}
+
+          {hasMoreReviews && (
+            <Link
+              href={`/vendors/${vendor.id}/reviews`}
+              className="hidden items-center gap-1.5 rounded-full border border-[#e4dbd0] bg-white px-3.5 py-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#30251f] transition-all duration-200 hover:border-[#cbb08d] hover:bg-[#faf7f4] sm:inline-flex"
+            >
+              View all
+              <ArrowUpRight size={12} />
+            </Link>
+          )}
+        </div>
       </div>
 
       {loading && (
@@ -1477,7 +1451,7 @@ function VendorReviewsSection({
           {Array.from({ length: 3 }).map((_, index) => (
             <div
               key={index}
-              className="h-20 animate-pulse rounded-2xl border border-[#eee7e1] bg-white"
+              className="h-24 animate-pulse rounded-2xl border border-[#eee7e1] bg-white"
             />
           ))}
         </div>
@@ -1493,14 +1467,14 @@ function VendorReviewsSection({
       {!loading && reviews.length > 0 && (
         <>
           <div className="space-y-4">
-            {visibleReviews.map((review) => (
-              <div
+            {latestReviews.map((review) => (
+              <article
                 key={review.id}
-                className="rounded-2xl border border-[#eee7e1] bg-white p-5"
+                className="rounded-3xl border border-[#eee7e1] bg-white p-4 shadow-[0_8px_28px_rgba(48,37,31,0.035)] transition-all duration-300 hover:border-[#e1d3c6] hover:shadow-[0_14px_36px_rgba(48,37,31,0.06)] sm:p-5"
               >
                 <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#f0e9e0] text-[#a47e43]">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f3e9e2] text-[#a47e43]">
                       <User size={16} />
                     </div>
 
@@ -1509,38 +1483,76 @@ function VendorReviewsSection({
                         {review.userFullName || "Anonymous"}
                       </p>
 
-                      <p className="truncate text-xs text-[#9b8f86]">
+                      <p className="mt-0.5 truncate text-[11px] text-[#9b8f86]">
                         {review.serviceName} ·{" "}
                         {formatDate(review.createdAt)}
                       </p>
                     </div>
                   </div>
 
-                  <RatingStars rating={review.rating} size={13} />
+                  <div className="shrink-0">
+                    <RatingStars rating={review.rating} size={13} />
+                  </div>
                 </div>
 
                 {review.comment && (
-                  <p className="mt-3 whitespace-pre-line text-sm leading-6 text-[#5f544d]">
+                  <p className="mt-3 whitespace-pre-line text-sm leading-7 text-[#5f544d]">
                     {review.comment}
                   </p>
                 )}
-              </div>
+              </article>
             ))}
           </div>
 
-          {hasMore && (
-            <div className="mt-6 flex justify-center">
-              <button
-                type="button"
-                onClick={onShowMore}
-                className="rounded-full border border-[#e4dbd0] bg-white px-5 py-2.5 text-xs font-semibold text-[#30251f] transition-all duration-200 hover:border-[#b99a62] hover:bg-[#faf7f4]"
+          {hasMoreReviews && (
+            <div className="mt-6 flex justify-center sm:hidden">
+              <Link
+                href={`/vendors/${vendor.id}/reviews`}
+                className="inline-flex items-center gap-2 rounded-full border border-[#e4dbd0] bg-white px-5 py-2.5 text-xs font-semibold text-[#30251f] transition-all duration-200 hover:border-[#b99a62] hover:bg-[#faf7f4]"
               >
-                Show more reviews
-              </button>
+                View all reviews
+                <ArrowUpRight size={13} />
+              </Link>
             </div>
           )}
         </>
       )}
+    </section>
+  );
+}
+
+/* =========================================================
+   About Card
+========================================================= */
+
+function AboutCard({
+  vendor,
+}: {
+  vendor: Vendor;
+}) {
+  if (!vendor.bio) return null;
+
+  return (
+    <section className="rounded-xl border border-[#e3d7cd] bg-white p-6 shadow-[0_12px_32px_rgba(48,37,31,0.05)] ">
+      <div>
+        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#a47e43]">
+          Get to know them
+        </p>
+
+        <h2 className="mt-1.5 flex items-center gap-2 font-serif text-xl font-light text-[#30251f]">
+          <Building2
+            size={17}
+            className="text-[#a47e43]"
+          />
+          About
+        </h2>
+      </div>
+
+      <div className="mt-5 rounded-2xl p-4">
+        <p className="whitespace-pre-line text-sm leading-7 text-[#958980]">
+          {vendor.bio}
+        </p>
+      </div>
     </section>
   );
 }
