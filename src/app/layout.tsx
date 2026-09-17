@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 
 import AuthProvider from "@/components/providers/AuthProvider";
+import { LoadingProvider } from "@/components/providers/LoadingProvider";
 import { ToastProvider } from "@/components/providers/ToastProvider";
 
 import "./globals.css";
@@ -28,12 +29,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body 
+      <body
         className={`${geistSans.variable} ${geistMono.variable}`}
         suppressHydrationWarning
       >
         <AuthProvider>
-          <ToastProvider>{children}</ToastProvider>
+          <LoadingProvider>
+            <ToastProvider>{children}</ToastProvider>
+          </LoadingProvider>
         </AuthProvider>
       </body>
     </html>
