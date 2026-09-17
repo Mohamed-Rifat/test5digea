@@ -362,7 +362,7 @@ const ReviewCard = memo(function ReviewCard({
 
   return (
     <article
-      className={`group relative border-1 bg-white p-4 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md sm:p-6 ${getCardBorderClass()}`}
+      className={`group relative border bg-white p-4 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md sm:p-6 ${getCardBorderClass()}`}
       style={{ animationDelay: `${index * 50}ms` }}
     >
       {/* ✅ شريط علوي ملون حسب الحالة */}

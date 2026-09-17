@@ -227,7 +227,7 @@ export default function VendorSecurityPage() {
         autoComplete={autoComplete}
         disabled={loading}
         className="
-        h-[50px]
+        h-12.5
         w-full
         rounded-2xl
         border
@@ -370,7 +370,7 @@ export default function VendorSecurityPage() {
                   </div>
 
                   <span
-                    className={`min-w-[68px] text-right text-[11px] font-semibold ${strengthInfo.text}`}
+                    className={`min-w-17 xt-right text-[11px] font-semibold ${strengthInfo.text}`}
                   >
                     {strengthInfo.label}
                   </span>
@@ -547,7 +547,7 @@ export default function VendorSecurityPage() {
               </span>
             </div>
 
-            <p className="mt-2 pl-[27px] text-[11px] leading-5 text-[#938780]">
+            <p className="mt-2 pl-6.75t-[11px] leading-5 text-[#938780]">
               Changing your password will not sign you out from this
               device.
             </p>

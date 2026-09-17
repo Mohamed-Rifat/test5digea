@@ -13,7 +13,7 @@ import {
   User,
   HelpCircle,
   Shield,
-  Award,
+  Crown,
   CheckCircle2,
   XCircle,
   Clock3,
@@ -421,6 +421,24 @@ export default function VendorHeader({ onMenuClick }: VendorHeaderProps) {
               </ListItemText>
             </MenuItem>
 
+            {/* Subscription */}
+            <MenuItem
+              onClick={() =>
+                handleNavigation("/vendor/subscriptions")
+              }
+              sx={{ py: 1.5, px: 2 }}
+            >
+              <ListItemIcon>
+                <Crown size={18} className="text-[#756b65]" />
+              </ListItemIcon>
+
+              <ListItemText>
+                <span className="text-sm font-medium text-[#30251f]">
+                  Subscriptions
+                </span>
+              </ListItemText>
+            </MenuItem>
+
             {/* Settings */}
             <MenuItem
               onClick={() => handleNavigation("/vendor/profile")}
@@ -436,25 +454,6 @@ export default function VendorHeader({ onMenuClick }: VendorHeaderProps) {
                 </span>
               </ListItemText>
             </MenuItem>
-
-            {/* Subscription */}
-            <MenuItem
-              onClick={() =>
-                handleNavigation("/vendor/subscription")
-              }
-              sx={{ py: 1.5, px: 2 }}
-            >
-              <ListItemIcon>
-                <Award size={18} className="text-[#756b65]" />
-              </ListItemIcon>
-
-              <ListItemText>
-                <span className="text-sm font-medium text-[#30251f]">
-                  Subscription
-                </span>
-              </ListItemText>
-            </MenuItem>
-
             {/* Security */}
             <MenuItem
               onClick={() =>
