@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import AuthProvider from "@/components/providers/AuthProvider";
 import { LoadingProvider } from "@/components/providers/LoadingProvider";
 import { ToastProvider } from "@/components/providers/ToastProvider";
+import SessionExpiryProvider from "@/components/providers/SessionExpiryProvider";
 
 import "./globals.css";
 
@@ -35,7 +36,9 @@ export default function RootLayout({
       >
         <AuthProvider>
           <LoadingProvider>
-            <ToastProvider>{children}</ToastProvider>
+            <ToastProvider>
+              <SessionExpiryProvider>{children}</SessionExpiryProvider>
+            </ToastProvider>
           </LoadingProvider>
         </AuthProvider>
       </body>
