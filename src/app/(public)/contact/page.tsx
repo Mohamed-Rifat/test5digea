@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useLanguage } from "@/context/LanguageContext";
 import {
     ArrowLeft,
     ArrowRight,
@@ -13,6 +14,8 @@ import {
 } from "lucide-react";
 
 export default function ContactPage() {
+    const { t } = useLanguage();
+
     return (
         <main className="relative min-h-screen overflow-hidden bg-[#f8f5ef] px-4 py-4 text-[#30251f] sm:px-6 sm:py-6">
 
@@ -49,17 +52,17 @@ export default function ContactPage() {
                     <div className="mb-6 flex items-center justify-center gap-4">
                         <span className="h-px w-8 bg-[#b99a62]/50 sm:w-14" />
 
-                        <span className="text-[9px] font-medium uppercase tracking-[0.45em] text-[#9b8367] sm:text-[10px]">
-                            We&apos;d Love To Hear From You
+                        <span className="text-[9px] font-medium uppercase tracking-[0.45em] rtl:tracking-normal text-[#9b8367] sm:text-[10px]">
+                            {t("contact.eyebrow")}
                         </span>
 
                         <span className="h-px w-8 bg-[#b99a62]/50 sm:w-14" />
                     </div>
 
-                    <h1 className="font-serif text-4xl font-light leading-[1.05] tracking-tight text-[#30251f] sm:text-6xl lg:text-[5rem]">
-                        Let&apos;s Start a
-                        <span className="relative mx-2 inline-block italic text-[#a47e43] sm:mx-3">
-                            Conversation
+                    <h1 className="font-serif text-4xl font-light leading-[1.05] rtl:leading-[1.3] tracking-tight rtl:tracking-normal text-[#30251f] sm:text-6xl lg:text-[5rem]">
+                        {t("contact.titlePrefix")}
+                        <span className="relative mx-2 inline-block italic rtl:not-italic text-[#a47e43] sm:mx-3">
+                            {t("contact.titleHighlight")}
                             <svg
                                 viewBox="0 0 250 18"
                                 className="absolute -bottom-3 left-0 w-full"
@@ -77,9 +80,7 @@ export default function ContactPage() {
                     </h1>
 
                     <p className="mx-auto mt-7 max-w-xl text-sm leading-8 text-[#766d67] sm:text-base">
-                        Have a question, need some help, or simply want to
-                        learn more about 5digea? We&apos;re here and happy
-                        to help.
+                        {t("contact.intro")}
                     </p>
                 </section>
 
@@ -92,17 +93,16 @@ export default function ContactPage() {
                                     <Mail className="h-4 w-4 text-[#a47e43]" />
                                 </div>
 
-                                <p className="mt-5 text-[9px] font-medium uppercase tracking-[0.35em] text-[#9b8367]">
-                                    Email
+                                <p className="mt-5 text-[9px] font-medium uppercase tracking-[0.35em] rtl:tracking-normal text-[#9b8367]">
+                                    {t("contact.email.label")}
                                 </p>
 
-                                <h2 className="mt-2 font-serif text-xl font-light text-[#30251f]">
+                                <h2 className="mt-2 font-serif text-xl font-light text-[#30251f]" dir="ltr">
                                     hello@5digea.com
                                 </h2>
 
                                 <p className="mt-2 text-sm leading-6 text-[#766d67]">
-                                    Send us an email and our team will
-                                    get back to you.
+                                    {t("contact.email.text")}
                                 </p>
                             </div>
 
@@ -111,17 +111,16 @@ export default function ContactPage() {
                                     <Phone className="h-4 w-4 text-[#a47e43]" />
                                 </div>
 
-                                <p className="mt-5 text-[9px] font-medium uppercase tracking-[0.35em] text-[#9b8367]">
-                                    Phone
+                                <p className="mt-5 text-[9px] font-medium uppercase tracking-[0.35em] rtl:tracking-normal text-[#9b8367]">
+                                    {t("contact.phone.label")}
                                 </p>
 
-                                <h2 className="mt-2 font-serif text-xl font-light text-[#30251f]">
+                                <h2 className="mt-2 font-serif text-xl font-light text-[#30251f]" dir="ltr">
                                     +20 100 000 0000
                                 </h2>
 
                                 <p className="mt-2 text-sm leading-6 text-[#766d67]">
-                                    Prefer a conversation? We&apos;re
-                                    happy to hear from you.
+                                    {t("contact.phone.text")}
                                 </p>
                             </div>
 
@@ -130,28 +129,28 @@ export default function ContactPage() {
                                     <Clock3 className="h-4 w-4 text-[#a47e43]" />
                                 </div>
 
-                                <p className="mt-5 text-[9px] font-medium uppercase tracking-[0.35em] text-[#9b8367]">
-                                    Availability
+                                <p className="mt-5 text-[9px] font-medium uppercase tracking-[0.35em] rtl:tracking-normal text-[#9b8367]">
+                                    {t("contact.availability.label")}
                                 </p>
 
                                 <h2 className="mt-2 font-serif text-xl font-light text-[#30251f]">
-                                    Saturday — Thursday
+                                    {t("contact.availability.days")}
                                 </h2>
 
                                 <p className="mt-2 text-sm leading-6 text-[#766d67]">
-                                    10:00 AM — 6:00 PM
+                                    {t("contact.availability.hours")}
                                 </p>
                             </div>
                         </div>
 
                         <div className="rounded-xs border border-[#b99a62]/25 bg-white/45 p-6 shadow-[0_15px_50px_rgba(80,60,40,0.05)] backdrop-blur-sm sm:p-9">
                             <div className="mb-8">
-                                <p className="text-[9px] font-medium uppercase tracking-[0.35em] text-[#9b8367]">
-                                    Send a Message
+                                <p className="text-[9px] font-medium uppercase tracking-[0.35em] rtl:tracking-normal text-[#9b8367]">
+                                    {t("contact.form.eyebrow")}
                                 </p>
 
                                 <h2 className="mt-2 font-serif text-3xl font-light text-[#30251f]">
-                                    How can we help?
+                                    {t("contact.form.title")}
                                 </h2>
                             </div>
 
@@ -162,13 +161,13 @@ export default function ContactPage() {
                                             htmlFor="name"
                                             className="mb-2 block text-xs font-medium text-[#493b32]"
                                         >
-                                            Your Name
+                                            {t("contact.form.name")}
                                         </label>
 
                                         <input
                                             id="name"
                                             type="text"
-                                            placeholder="Mohamed Refaat"
+                                            placeholder={t("contact.form.namePlaceholder")}
                                             className="w-full rounded-2xl border border-[#b99a62]/20 bg-white/50 px-4 py-3.5 text-sm text-[#30251f] outline-none transition-all duration-300 placeholder:text-[#a69a91] focus:border-[#b99a62]/60 focus:bg-white/80 focus:ring-2 focus:ring-[#b99a62]/10"
                                         />
                                     </div>
@@ -178,14 +177,14 @@ export default function ContactPage() {
                                             htmlFor="email"
                                             className="mb-2 block text-xs font-medium text-[#493b32]"
                                         >
-                                            Email Address
+                                            {t("contact.form.email")}
                                         </label>
 
                                         <input
                                             id="email"
                                             type="email"
                                             placeholder="you@example.com"
-                                            className="w-full rounded-2xl border border-[#b99a62]/20 bg-white/50 px-4 py-3.5 text-sm text-[#30251f] outline-none transition-all duration-300 placeholder:text-[#a69a91] focus:border-[#b99a62]/60 focus:bg-white/80 focus:ring-2 focus:ring-[#b99a62]/10"
+                                            className="[unicode-bidi:plaintext] rtl:text-right w-full rounded-2xl border border-[#b99a62]/20 bg-white/50 px-4 py-3.5 text-sm text-[#30251f] outline-none transition-all duration-300 placeholder:text-[#a69a91] focus:border-[#b99a62]/60 focus:bg-white/80 focus:ring-2 focus:ring-[#b99a62]/10"
                                         />
                                     </div>
                                 </div>
@@ -195,13 +194,13 @@ export default function ContactPage() {
                                         htmlFor="subject"
                                         className="mb-2 block text-xs font-medium text-[#493b32]"
                                     >
-                                        Subject
+                                        {t("contact.form.subject")}
                                     </label>
 
                                     <input
                                         id="subject"
                                         type="text"
-                                        placeholder="How can we help?"
+                                        placeholder={t("contact.form.subjectPlaceholder")}
                                         className="w-full rounded-2xl border border-[#b99a62]/20 bg-white/50 px-4 py-3.5 text-sm text-[#30251f] outline-none transition-all duration-300 placeholder:text-[#a69a91] focus:border-[#b99a62]/60 focus:bg-white/80 focus:ring-2 focus:ring-[#b99a62]/10"
                                     />
                                 </div>
@@ -211,13 +210,13 @@ export default function ContactPage() {
                                         htmlFor="message"
                                         className="mb-2 block text-xs font-medium text-[#493b32]"
                                     >
-                                        Message
+                                        {t("contact.form.message")}
                                     </label>
 
                                     <textarea
                                         id="message"
                                         rows={6}
-                                        placeholder="Tell us a little about what you need..."
+                                        placeholder={t("contact.form.messagePlaceholder")}
                                         className="w-full resize-none rounded-2xl border border-[#b99a62]/20 bg-white/50 px-4 py-3.5 text-sm text-[#30251f] outline-none transition-all duration-300 placeholder:text-[#a69a91] focus:border-[#b99a62]/60 focus:bg-white/80 focus:ring-2 focus:ring-[#b99a62]/10"
                                     />
                                 </div>
@@ -228,9 +227,9 @@ export default function ContactPage() {
                                 >
                                     <MessageCircle className="h-4 w-4" />
 
-                                    Send Message
+                                    {t("contact.form.submit")}
 
-                                    <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+                                    <ArrowRight className="h-4 w-4 transition-transform duration-300 rtl:rotate-180 ltr:group-hover:translate-x-1 rtl:group-hover:-translate-x-1" />
                                 </button>
                             </form>
                         </div>
@@ -244,8 +243,8 @@ export default function ContactPage() {
                         <div className="flex items-center gap-2">
                             <MapPin className="h-3 w-3 text-[#b99a62]" />
 
-                            <span className="text-[8px] font-medium uppercase tracking-[0.4em] text-[#9b8367] sm:text-[9px]">
-                                Making Every Connection Meaningful
+                            <span className="text-[8px] font-medium uppercase tracking-[0.4em] rtl:tracking-normal text-[#9b8367] sm:text-[9px]">
+                                {t("contact.footerNote")}
                             </span>
 
                             <MapPin className="h-3 w-3 text-[#b99a62]" />

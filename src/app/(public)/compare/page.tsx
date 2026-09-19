@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
@@ -16,19 +16,51 @@ import {
 import { compareServices, getService } from "@/features/services/api";
 import { compareVendorList } from "@/features/vendors/api";
 import { useCompare } from "@/context/CompareContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { useToast } from "@/components/providers/ToastProvider";
 import { formatPrice } from "@/lib/format";
 import ImageLightbox from "@/components/shared/ImageLightbox";
+import type { TranslationKey } from "@/locales";
 import type { Service } from "@/types/service";
 import type { Vendor } from "@/types/vendor";
 
 const MAX_COMPARE = 4;
 
+type TranslationParams = Record<string, string | number>;
+
+/**
+ * Validation errors raised by this page carry a translation key instead of
+ * English text, so the message is rendered in the language that is active
+ * when it is shown (not the one that was active when it was thrown).
+ */
+class CompareError extends Error {
+  key: TranslationKey;
+  params?: TranslationParams;
+
+  constructor(key: TranslationKey, params?: TranslationParams) {
+    super(key);
+    this.key = key;
+    this.params = params;
+  }
+}
+
+type ErrorState =
+  | { key: TranslationKey; params?: TranslationParams }
+  | { message: string };
+
 export default function ComparePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
+  const { t } = useLanguage();
   const { selected, hydrated, removeService, clearAll } = useCompare();
+
+  // The load effect must not re-run (and refetch) when only the language
+  // changes, so it reads the latest `t` through a ref.
+  const tRef = useRef(t);
+  useEffect(() => {
+    tRef.current = t;
+  }, [t]);
 
   const type = searchParams.get("type") || "";
   const urlIds = useMemo(
@@ -40,7 +72,7 @@ export default function ComparePage() {
   const [services, setServices] = useState<Service[]>([]);
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [error, setError] = useState<ErrorState | null>(null);
   const [lightbox, setLightbox] = useState<{
     images: { id: string; url: string }[];
     index: number;
@@ -54,12 +86,12 @@ export default function ComparePage() {
       if (!hydrated) return;
 
       setLoading(true);
-      setError("");
+      setError(null);
 
       try {
         const ids = Array.from(new Set(urlIds));
-        if (ids.length < 2) throw new Error("Select at least two items to compare.");
-        if (ids.length > MAX_COMPARE) throw new Error(`You can compare up to ${MAX_COMPARE} items at once.`);
+        if (ids.length < 2) throw new CompareError("compare.errors.selectTwo");
+        if (ids.length > MAX_COMPARE) throw new CompareError("compare.errors.maxItems", { max: MAX_COMPARE });
 
         if (type === "service") {
           // Normal navigation comes from CompareContext, so no extra GETs are needed.
@@ -80,13 +112,13 @@ export default function ComparePage() {
 
           const firstCategoryId = categoryIds[0];
           if (!firstCategoryId || categoryIds.some((id) => id !== firstCategoryId)) {
-            throw new Error("You can only compare services from the same category.");
+            throw new CompareError("compare.errors.sameCategory");
           }
 
           const result = await compareServices({ serviceIds: ids });
           const returnedCategoryIds = result.map((item) => item.categoryId);
           if (returnedCategoryIds.some((id) => id !== firstCategoryId)) {
-            throw new Error("The comparison contains services from different categories.");
+            throw new CompareError("compare.errors.mixedCategories");
           }
 
           // The compare endpoint doesn't always return the full image set for
@@ -122,7 +154,7 @@ export default function ComparePage() {
 
         if (type === "vendor") {
           if (!categoryId) {
-            throw new Error("Select a category before comparing vendors.");
+            throw new CompareError("compare.errors.selectCategory");
           }
 
           const result = await compareVendorList({
@@ -133,12 +165,20 @@ export default function ComparePage() {
           return;
         }
 
-        throw new Error("Invalid comparison.");
+        throw new CompareError("compare.errors.invalid");
       } catch (err: unknown) {
         if (!cancelled) {
-          const message = err instanceof Error ? err.message : "Unable to compare items.";
-          setError(message);
-          toast(message, "error");
+          if (err instanceof CompareError) {
+            setError({ key: err.key, params: err.params });
+            toast(tRef.current(err.key, err.params), "error");
+          } else {
+            // Errors coming from the API keep the server's own message.
+            const message =
+              (err instanceof Error && err.message) ||
+              tRef.current("compare.errors.generic");
+            setError({ message });
+            toast(message, "error");
+          }
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -161,32 +201,38 @@ export default function ComparePage() {
     [...(vendor.galleryImages ?? [])].sort((a, b) => a.displayOrder - b.displayOrder);
 
   const serviceRows = [
-    { label: "Vendor", value: (item: Service) => item.vendorBusinessName || "—" },
-    { label: "Category", value: (item: Service) => item.categoryName || "—" },
-    { label: "Description", value: (item: Service) => item.description || "—" },
+    { label: t("compare.rows.vendor"), value: (item: Service) => item.vendorBusinessName || "—" },
+    { label: t("compare.rows.category"), value: (item: Service) => item.categoryName || "—" },
+    { label: t("compare.rows.description"), value: (item: Service) => item.description || "—" },
   ];
 
   const vendorRows = [
-    { label: "Rating", value: (item: Vendor) => `${Number(item.averageRating || 0).toFixed(1)} / 5` },
-    { label: "Reviews", value: (item: Vendor) => String(item.reviewsCount ?? 0) },
-    { label: "Category", value: (item: Vendor) => item.categories?.join(", ") || "—" },
-    { label: "Location", value: (item: Vendor) => item.location || "—" },
-    { label: "Description", value: (item: Vendor) => item.bio || "—" },
+    { label: t("compare.rows.rating"), value: (item: Vendor) => `${Number(item.averageRating || 0).toFixed(1)} / 5` },
+    { label: t("compare.rows.reviews"), value: (item: Vendor) => String(item.reviewsCount ?? 0) },
+    { label: t("compare.rows.category"), value: (item: Vendor) => item.categories?.join(", ") || "—" },
+    { label: t("compare.rows.location"), value: (item: Vendor) => item.location || "—" },
+    { label: t("compare.rows.description"), value: (item: Vendor) => item.bio || "—" },
   ];
 
   const rows = isServiceComparison ? serviceRows : vendorRows;
 
+  const errorText = error
+    ? "key" in error
+      ? t(error.key, error.params)
+      : error.message
+    : "";
+
   return (
     <main className="min-h-screen bg-[#faf8f6]">
-      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-10 lg:px-8">
+      <div className="mx-auto lg:max-w-10/12 px-4 py-6 sm:px-6 sm:py-10 lg:px-8">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <button
             type="button"
             onClick={() => router.back()}
             className="inline-flex items-center gap-2 text-sm font-medium text-[#756960] transition hover:text-[#30251f]"
           >
-            <ArrowLeft size={16} />
-            Back
+            <ArrowLeft size={16} className="rtl:rotate-180" />
+            {t("common.back")}
           </button>
 
           {isServiceComparison && selected.length > 0 && (
@@ -199,7 +245,7 @@ export default function ComparePage() {
               className="inline-flex items-center gap-2 rounded-full border border-[#e4dbd0] bg-white px-4 py-2 text-xs font-semibold text-[#665951] transition hover:border-[#b99a62]"
             >
               <Trash2 size={14} />
-              Clear all
+              {t("compare.clearAll")}
             </button>
           )}
         </div>
@@ -207,15 +253,17 @@ export default function ComparePage() {
         <header className="mt-6 sm:mt-7">
           <div className="flex items-center gap-2 text-[#a47e43]">
             <GitCompare size={16} />
-            <span className="text-[10px] font-semibold uppercase tracking-[0.35em]">
-              Decision tools
+            <span className="text-[10px] font-semibold uppercase tracking-[0.35em] rtl:tracking-normal">
+              {t("compare.eyebrow")}
             </span>
           </div>
           <h1 className="mt-2 font-serif text-3xl font-light text-[#30251f] sm:text-4xl">
-            Compare {isServiceComparison ? "Services" : "Vendors"}
+            {isServiceComparison
+              ? t("compare.titleServices")
+              : t("compare.titleVendors")}
           </h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-[#81746d]">
-            Compare your shortlisted options side by side and choose what fits your wedding best.
+            {t("compare.description")}
           </p>
         </header>
 
@@ -230,24 +278,24 @@ export default function ComparePage() {
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-50 text-red-500">
               <GitCompare size={20} />
             </div>
-            <p className="mx-auto mt-4 max-w-md text-sm leading-6 text-red-700">{error}</p>
+            <p className="mx-auto mt-4 max-w-md text-sm leading-6 text-red-700">{errorText}</p>
             <Link
               href={isServiceComparison ? "/services" : "/vendors"}
               className="mt-6 inline-flex rounded-full bg-[#30251f] px-6 py-3 text-sm font-medium text-white"
             >
-              Back to marketplace
+              {t("compare.backToMarketplace")}
             </Link>
           </div>
         ) : items.length < 2 ? (
           <div className="mt-8 rounded-3xl border border-[#eee5df] bg-white p-10 text-center">
-            <p className="text-sm text-[#756960]">Select at least two items to compare.</p>
+            <p className="text-sm text-[#756960]">{t("compare.errors.selectTwo")}</p>
           </div>
         ) : (
           <>
             {isServiceComparison && (
               <div className="mt-7 flex flex-wrap items-center gap-2 rounded-2xl border border-[#eadfce] bg-[#fcf7ef] px-4 py-3 text-xs text-[#806b54]">
                 <CheckCircle2 size={15} />
-                <span>All selected services belong to the same category.</span>
+                <span>{t("compare.sameCategoryNotice")}</span>
               </div>
             )}
 
@@ -256,8 +304,8 @@ export default function ComparePage() {
                 className="grid min-w-170"
                 style={{ gridTemplateColumns: `150px repeat(${items.length}, minmax(180px, 1fr))` }}
               >
-                <div className="border-b border-r border-[#eee5df] bg-[#faf8f6] p-4 text-[10px] font-semibold uppercase tracking-[0.25em] text-[#a09289] sm:p-5">
-                  Comparison
+                <div className="border-b border-e border-[#eee5df] bg-[#faf8f6] p-4 text-[10px] font-semibold uppercase tracking-[0.25em] rtl:tracking-normal text-[#a09289] sm:p-5">
+                  {t("compare.comparison")}
                 </div>
 
                 {items.map((item) => {
@@ -303,7 +351,7 @@ export default function ComparePage() {
                               </div>
                             )}
                             {images.length > 1 && (
-                              <span className="absolute bottom-1.5 right-1.5 rounded-full bg-black/55 px-1.5 py-0.5 text-[10px] font-medium text-white">
+                              <span className="absolute bottom-1.5 end-1.5 rounded-full bg-black/55 px-1.5 py-0.5 text-[10px] font-medium text-white">
                                 +{images.length - 1}
                               </span>
                             )}
@@ -329,7 +377,7 @@ export default function ComparePage() {
                                 router.replace("/services");
                               }
                             }}
-                            aria-label={`Remove ${title} from comparison`}
+                            aria-label={t("compare.removeItem", { title })}
                             className="shrink-0 rounded-full p-1.5 text-[#9b8f86] transition hover:bg-[#f7f0eb] hover:text-[#30251f]"
                           >
                             <Trash2 size={14} />
@@ -337,7 +385,7 @@ export default function ComparePage() {
                         )}
                       </div>
                       <Link href={href} className="mt-2 inline-flex text-xs font-semibold text-[#a47e43] hover:underline">
-                        View details →
+                        {t("compare.viewDetails")}
                       </Link>
                     </div>
                   );
@@ -345,7 +393,7 @@ export default function ComparePage() {
 
                 {rows.map((row) => (
                   <div key={row.label} className="contents">
-                    <div className="border-b border-r border-[#eee5df] bg-[#faf8f6] p-4 text-xs font-semibold text-[#665951] sm:p-5">
+                    <div className="border-b border-e border-[#eee5df] bg-[#faf8f6] p-4 text-xs font-semibold text-[#665951] sm:p-5">
                       {row.label}
                     </div>
                     {items.map((item) => (
@@ -358,7 +406,7 @@ export default function ComparePage() {
 
                 {isServiceComparison && (
                   <div className="contents">
-                    <div className="border-b border-r border-[#eee5df] bg-[#faf8f6] p-4 text-xs font-semibold text-[#665951] sm:p-5">Packages</div>
+                    <div className="border-b border-e border-[#eee5df] bg-[#faf8f6] p-4 text-xs font-semibold text-[#665951] sm:p-5">{t("compare.packages")}</div>
                     {services.map((service) => (
                       <div key={`packages-${service.id}`} className="border-b border-[#eee5df] p-4 sm:p-5">
                         {service.prices?.length ? (
@@ -366,12 +414,12 @@ export default function ComparePage() {
                             {service.prices.map((price) => (
                               <div key={price.id} className="flex items-center justify-between gap-3 rounded-xl bg-[#faf7f4] px-3 py-2">
                                 <span className="min-w-0 truncate text-xs text-[#5f544d]">{price.label}</span>
-                                <span className="shrink-0 text-xs font-semibold text-[#a47e43]">{formatPrice(price.price)} EGP</span>
+                                <span className="shrink-0 text-xs font-semibold text-[#a47e43]">{formatPrice(price.price)} {t("common.currency")}</span>
                               </div>
                             ))}
                           </div>
                         ) : (
-                          <span className="text-xs text-[#9b8f86]">Contact vendor</span>
+                          <span className="text-xs text-[#9b8f86]">{t("compare.contactVendor")}</span>
                         )}
                       </div>
                     ))}
@@ -379,7 +427,7 @@ export default function ComparePage() {
                 )}
 
                 <div className="contents">
-                  <div className="border-r border-[#eee5df] bg-[#faf8f6] p-4 text-xs font-semibold text-[#665951] sm:p-5">Gallery</div>
+                  <div className="border-e border-[#eee5df] bg-[#faf8f6] p-4 text-xs font-semibold text-[#665951] sm:p-5">{t("compare.gallery")}</div>
                   {items.map((item) => {
                     const service = item as Service;
                     const vendor = item as Vendor;
@@ -420,7 +468,7 @@ export default function ComparePage() {
                                   ) : (
                                     <Maximize2
                                       size={13}
-                                      className="pointer-events-none absolute right-1.5 top-1.5 text-white opacity-0 drop-shadow transition group-hover:opacity-100"
+                                      className="pointer-events-none absolute end-1.5 top-1.5 text-white opacity-0 drop-shadow transition group-hover:opacity-100"
                                     />
                                   )}
                                 </button>
@@ -430,7 +478,7 @@ export default function ComparePage() {
                         ) : (
                           <div className="flex h-24 flex-col items-center justify-center gap-1.5 rounded-xl bg-[#f7f2ee] text-xs text-[#9b8f86]">
                             <ImagesIcon size={16} className="text-[#c8bbb0]" />
-                            No images
+                            {t("compare.noImages")}
                           </div>
                         )}
                       </div>

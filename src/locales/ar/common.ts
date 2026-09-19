@@ -22,6 +22,11 @@ const common = {
   new: "جديد",
   addToCompare: "أضف للمقارنة",
   removeFromCompare: "شيل من المقارنة",
+  imageViewer: "عارض الصور",
+  previousImage: "الصورة السابقة",
+  nextImage: "الصورة التالية",
+  imageNumber: "صورة {number}",
+  titleImageNumber: "{title} — صورة {number}",
 };
 
 export default common;

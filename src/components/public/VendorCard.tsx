@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Building2, Check, GitCompare, MapPin, ArrowUpRight } from "lucide-react";
+import { Building2, MapPin, Check, GitCompare } from "lucide-react";
 
 import FavoriteButton from "@/components/shared/FavoriteButton";
 import RatingStars from "@/components/shared/RatingStars";
@@ -26,140 +26,98 @@ export default function VendorCard({
   selected,
   onSelect,
 }: VendorCardProps) {
-  const { t, dir } = useLanguage();
-  const isRtl = dir === "rtl";
+  const { t } = useLanguage();
 
   return (
-    <article
-      className={[
-        "group relative flex h-full flex-col overflow-hidden rounded-2xl border bg-white",
-        "transition-all duration-200",
-        selected
-          ? "border-[#30251f] ring-2 ring-[#30251f]/10"
-          : "border-neutral-200 hover:border-neutral-300 hover:shadow-md",
-      ].join(" ")}
+    <div
+      className={`group relative flex flex-col overflow-hidden rounded-2xl border bg-white transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(48,37,31,0.1)] ${
+        selected ? "border-[#30251f] ring-2 ring-[#30251f]/10" : "border-[#eee7e1]"
+      }`}
     >
-      {/* ============ Header ============ */}
-      <div className="flex items-start gap-3 p-5 pb-3">
-        {/* Avatar */}
-        <div className="relative shrink-0">
-          <div className="h-12 w-12 overflow-hidden rounded-xl border border-neutral-200 bg-neutral-50">
+      <Link href={`/vendors/${vendor.id}`} className="flex min-h-0 flex-1 flex-col">
+        <div className="relative h-36 w-full shrink-0 bg-linear-to-br sm:h-40 from-[#f0e9e0] to-[#e4d8c8]">
+          <div className="absolute -bottom-8 start-5 flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-[#f4eee9] shadow-sm">
             {vendor.profileImageUrl ? (
               <img
                 src={vendor.profileImageUrl}
-                alt=""
-                loading="lazy"
+                alt={vendor.businessName}
                 className="h-full w-full object-cover"
               />
             ) : (
-              <div className="flex h-full w-full items-center justify-center bg-linear-to-br from-neutral-100 to-neutral-200">
-                <Building2 size={20} strokeWidth={1.5} className="text-[#a47e43]" />
-              </div>
+              <Building2 size={24} className="text-[#a47e43]" />
             )}
           </div>
         </div>
 
-        {/* Identity + Actions */}
-        <div className="flex min-w-0 flex-1 items-start justify-between gap-2">
-          <div className="min-w-0 flex-1">
-            <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-[#30251f]">
-              {vendor.businessName}
-            </h3>
-            {vendor.slogan && (
-              <p className="mt-0.5 line-clamp-1 text-xs italic text-[#a47e43]">
-                {vendor.slogan}
-              </p>
-            )}
+        <div className="flex min-w-0 flex-1 flex-col p-4 pt-11 sm:p-5 sm:pt-11">
+          <h3 className="line-clamp-1 text-base font-semibold text-[#30251f]">
+            {vendor.businessName}
+          </h3>
+
+          {vendor.slogan && (
+            <p className="mt-1 line-clamp-1 text-xs italic text-[#a47e43]">
+              {vendor.slogan}
+            </p>
+          )}
+
+          <div className="mt-3">
+            <RatingStars rating={vendor.averageRating} reviewsCount={vendor.reviewsCount} />
           </div>
 
-          {/* Actions inline */}
-          <div className="flex shrink-0 items-center gap-1">
-            {onToggleFavorite && (
-              <FavoriteButton
-                targetType={FavoriteTargetType.Vendor}
-                targetId={vendor.id}
-                isFavorited={!!favorited}
-                loading={!!favoriteLoading}
-                onToggle={onToggleFavorite}
-                className="h-8 w-8"
-              />
-            )}
-            {onSelect && (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  onSelect(vendor.id);
-                }}
-                aria-pressed={selected}
-                aria-label={
-                  selected
-                    ? t("common.removeFromCompare")
-                    : t("common.addToCompare")
-                }
-                className={[
-                  "flex h-8 w-8 items-center justify-center rounded-lg border transition-colors",
-                  selected
-                    ? "border-[#30251f] bg-[#30251f] text-white"
-                    : "border-neutral-200 text-neutral-400 hover:border-[#b99a62] hover:text-[#a47e43]",
-                ].join(" ")}
-              >
-                {selected ? <Check size={14} /> : <GitCompare size={14} />}
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
+          {vendor.location && (
+            <p className="mt-3 flex items-center gap-1.5 text-xs text-[#9b8f86]">
+              <MapPin size={12} />
+              {vendor.location}
+            </p>
+          )}
 
-      {/* ============ Meta: rating + location ============ */}
-      <div className="flex min-h-5 items-center gap-2 px-5 pb-3 text-xs text-neutral-500">
-        <RatingStars
-          rating={vendor.averageRating}
-          reviewsCount={vendor.reviewsCount}
-          compact
-        />
-        {vendor.location && (
-          <>
-            <span className="text-neutral-300">·</span>
-            <span className="flex min-w-0 items-center gap-1">
-              <MapPin size={12} className="shrink-0 text-[#a47e43]" />
-              <span className="truncate">{vendor.location}</span>
-            </span>
-          </>
-        )}
-      </div>
-
-      {/* ============ Categories ============ */}
-      {vendor.categories?.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 px-5 pb-4">
-          {vendor.categories.slice(0, 3).map((c) => (
-            <span
-              key={c}
-              className="rounded-md bg-neutral-100 px-2 py-0.5 text-[11px] font-medium text-neutral-600"
-            >
-              {c}
-            </span>
-          ))}
-          {vendor.categories.length > 3 && (
-            <span className="rounded-md bg-neutral-50 px-2 py-0.5 text-[11px] text-neutral-400">
-              +{vendor.categories.length - 3}
-            </span>
+          {vendor.categories && vendor.categories.length > 0 && (
+            <div className="mt-4 flex flex-wrap gap-1.5 border-t border-[#f0e9e0] pt-4">
+              {vendor.categories.slice(0, 3).map((cat) => (
+                <span
+                  key={cat}
+                  className="rounded-full bg-[#f0e9e0] px-2.5 py-1 text-[11px] font-medium text-[#5f544d]"
+                >
+                  {cat}
+                </span>
+              ))}
+            </div>
           )}
         </div>
+      </Link>
+
+      {onToggleFavorite && (
+        <FavoriteButton
+          targetType={FavoriteTargetType.Vendor}
+          targetId={vendor.id}
+          isFavorited={!!favorited}
+          loading={!!favoriteLoading}
+          onToggle={onToggleFavorite}
+          className="absolute end-3 top-3 z-10 shadow-sm"
+        />
       )}
 
-      {/* ============ CTA ============ */}
-      <Link
-        href={`/vendors/${vendor.id}`}
-        aria-label={`${vendor.businessName} — ${
-          isRtl ? "عرض الملف" : "View profile"
-        }`}
-        className="mt-auto flex items-center justify-between border-t border-neutral-100 px-5 py-3 text-xs font-semibold text-neutral-600 transition-colors hover:bg-neutral-50 hover:text-[#30251f] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#30251f]/20"
-      >
-        <span>{isRtl ? "عرض الملف" : "View profile"}</span>
-        <ArrowUpRight size={14} className={isRtl ? "-scale-x-100" : ""} />
-      </Link>
-    </article>
+      {onSelect && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onSelect(vendor.id);
+          }}
+          aria-pressed={selected}
+          aria-label={
+            selected ? t("common.removeFromCompare") : t("common.addToCompare")
+          }
+          className={`absolute start-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full border shadow-sm transition ${
+            selected
+              ? "border-[#30251f] bg-[#30251f] text-white"
+              : "border-[#e4dbd0] bg-white/90 text-[#8d7b70] hover:border-[#b99a62] hover:text-[#a47e43]"
+          }`}
+        >
+          {selected ? <Check size={16} /> : <GitCompare size={16} />}
+        </button>
+      )}
+    </div>
   );
 }

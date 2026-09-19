@@ -1,4 +1,51 @@
-// Populated in Phase 3.
-const services = {};
+const services = {
+  list: {
+    eyebrow: "تصفح",
+    titlePrefix: "اكتشف",
+    titleHighlight: "خدمات الفرح المثالية",
+    description:
+      "قارن الباقات والأسعار من مقدمي خدمات موثوقين في كل التصنيفات، كله في مكان واحد.",
+    searchPlaceholder: "دوّر على خدمة، مثلًا: تصوير، ضيافة...",
+    filters: "الفلاتر",
+    search: "بحث",
+    category: "التصنيف",
+    allCategories: "كل التصنيفات",
+    minPrice: "أقل سعر",
+    maxPrice: "أعلى سعر",
+    anyPrice: "أي سعر",
+    sortBy: "ترتيب حسب",
+    sort: {
+      relevant: "الأكثر صلة",
+      priceLow: "السعر: من الأقل للأعلى",
+      priceHigh: "السعر: من الأعلى للأقل",
+    },
+    loadError: "مقدرناش نحمّل الخدمات دلوقتي. حاول تاني.",
+    empty: "مفيش خدمات مطابقة لبحثك لسه. جرّب فلاتر تانية.",
+    selectedOne: "تم اختيار {count} من خدمات {category}",
+    selectedMany: "تم اختيار {count} من خدمات {category}",
+    compareButton: "قارن ({count})",
+    found: "لقينا {count} خدمة",
+    pageOf: "صفحة {page} من {total}",
+  },
+  detail: {
+    notFound: "الخدمة دي مش موجودة.",
+    notFoundFallback: "الخدمة مش موجودة.",
+    backToServices: "الرجوع للخدمات",
+    viewFullSize: "عرض بالحجم الكامل",
+    compare: "قارن",
+    addedToCompare: "اتضافت للمقارنة",
+    viewAllPhotosOne: "شوف كل الصور ({count})",
+    viewAllPhotosMany: "شوف كل الصور ({count})",
+    pricing: "الأسعار",
+    contactForPricing: "تواصل مع مقدم الخدمة لمعرفة السعر.",
+    viewVendorProfile: "شوف صفحة مقدم الخدمة",
+    selectedInRoadmap: "مختارة في خطوات فرحك",
+    addedToRoadmap: "اتضافت لخطوات فرحك",
+    selectForRoadmap: "اختارها لخطوات فرحي",
+    startRoadmapPrefix: "ابدأ",
+    startRoadmapLink: "خطوات فرحك",
+    startRoadmapSuffix: "علشان تحجز مقدمي الخدمات حسب التصنيف.",
+  },
+};
 
 export default services;

@@ -211,7 +211,7 @@ function LanguageDropdown({
           role="menu"
           aria-label={label}
           onKeyDown={handleMenuKeyDown}
-          className="absolute inset-e-0 top-full z-30 mt-2 w-44 overflow-hidden rounded-xl border border-[#eee7e1] bg-white p-1.5 shadow-[0_18px_40px_rgba(48,37,31,0.14)]"
+          className="absolute end-0 top-full z-30 mt-2 w-44 overflow-hidden rounded-xl border border-[#eee7e1] bg-white p-1.5 shadow-[0_18px_40px_rgba(48,37,31,0.14)]"
         >
           {LANGUAGES.map((code, index) => {
             const active = code === language;

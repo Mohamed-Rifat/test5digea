@@ -14,9 +14,9 @@ export const startingPrice = (
   return Math.min(...prices.map((p) => p.price));
 };
 
-export const formatDate = (value: string): string => {
+export const formatDate = (value: string, locale = "en-US"): string => {
   try {
-    return new Intl.DateTimeFormat("en-US", {
+    return new Intl.DateTimeFormat(locale, {
       year: "numeric",
       month: "long",
       day: "numeric",

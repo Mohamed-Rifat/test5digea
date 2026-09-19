@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useLanguage } from "@/context/LanguageContext";
 import {
   Suspense,
   useCallback,
@@ -45,6 +46,7 @@ export default function VendorsPage() {
 
 function VendorsPageContent() {
   const searchParams = useSearchParams();
+  const { t } = useLanguage();
   const initialCategoryId = searchParams.get("categoryId") || "";
   const initialSearch = searchParams.get("search") || "";
 
@@ -63,7 +65,7 @@ function VendorsPageContent() {
 
   const [result, setResult] = useState<VendorSearchResponse | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(false);
 
   const filtersRef = useRef<HTMLDivElement>(null);
 
@@ -83,13 +85,13 @@ function VendorsPageContent() {
   const fetchResults = useCallback(async () => {
     try {
       setLoading(true);
-      setError(null);
+      setError(false);
 
       const data = await searchVendorList(params);
 
       setResult(data);
     } catch {
-      setError("We couldn't load vendors right now. Please try again.");
+      setError(true);
     } finally {
       setLoading(false);
     }
@@ -153,23 +155,24 @@ function VendorsPageContent() {
   };
 
   const toggleSelected = (vendorId: string) => {
-    setSelected((previous) => {
-      if (previous.includes(vendorId)) {
-        return previous.filter((id) => id !== vendorId);
-      }
+    if (selected.includes(vendorId)) {
+      setSelected((previous) => previous.filter((id) => id !== vendorId));
+      return;
+    }
 
-      if (!categoryId) {
-        toast("Select a category before comparing vendors.", "error");
-        return previous;
-      }
+    // Toasts must not be fired from inside a state updater (React warns
+    // "Cannot update a component while rendering a different component").
+    if (!categoryId) {
+      toast(t("compare.errors.selectCategory"), "error");
+      return;
+    }
 
-      if (previous.length >= MAX_COMPARE) {
-        toast(`You can compare up to ${MAX_COMPARE} vendors at once.`, "error");
-        return previous;
-      }
+    if (selected.length >= MAX_COMPARE) {
+      toast(t("vendors.list.maxCompare", { max: MAX_COMPARE }), "error");
+      return;
+    }
 
-      return [...previous, vendorId];
-    });
+    setSelected((previous) => [...previous, vendorId]);
   };
 
   const clearAllFilters = () => {
@@ -204,20 +207,19 @@ function VendorsPageContent() {
             <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#b99a62]/15">
               <Sparkles className="h-3 w-3 text-[#b99a62]" />
             </span>
-            <span className="text-[10px] font-semibold uppercase tracking-[0.35em] text-[#9b8367]">
-              Our Vendors
+            <span className="text-[10px] font-semibold uppercase tracking-[0.35em] rtl:tracking-normal text-[#9b8367]">
+              {t("vendors.list.eyebrow")}
             </span>
           </div>
 
           {/* Heading */}
-          <h1 className="max-w-3xl font-serif text-3xl font-light leading-tight text-[#30251f] sm:text-4xl lg:text-5xl">
-            Trusted Vendors for{" "}
-            <span className="italic text-[#a47e43]">Your Big Day</span>
+          <h1 className="max-w-3xl font-serif text-3xl font-light leading-tight rtl:leading-snug text-[#30251f] sm:text-4xl lg:text-5xl">
+            {t("vendors.list.titlePrefix")}{" "}
+            <span className="italic rtl:not-italic text-[#a47e43]">{t("vendors.list.titleHighlight")}</span>
           </h1>
 
           <p className="mt-3 max-w-2xl text-sm leading-7 text-[#766d67] sm:text-base">
-            Discover approved wedding professionals, compare ratings and
-            locations, and find the right fit for every part of your day.
+            {t("vendors.list.description")}
           </p>
 
           {/* Search Form + Filters Panel Wrapper */}
@@ -227,12 +229,12 @@ function VendorsPageContent() {
               className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center"
             >
               <div className="relative flex-1">
-                <Search className="pointer-events-none absolute left-5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9b8f86]" />
+                <Search className="pointer-events-none absolute start-5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9b8f86]" />
                 <input
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}
-                  placeholder="Search vendors by name..."
-                  className="w-full rounded-full border border-[#e4dbd0] bg-white py-3.5 pl-12 pr-4 text-sm text-[#30251f] shadow-sm outline-none transition placeholder:text-[#b0a69c] focus:border-[#b99a62] focus:ring-4 focus:ring-[#b99a62]/10"
+                  placeholder={t("vendors.list.searchPlaceholder")}
+                  className="w-full rounded-full border border-[#e4dbd0] bg-white py-3.5 ps-12 pe-4 text-sm text-[#30251f] shadow-sm outline-none transition placeholder:text-[#b0a69c] focus:border-[#b99a62] focus:ring-4 focus:ring-[#b99a62]/10"
                 />
               </div>
 
@@ -246,9 +248,9 @@ function VendorsPageContent() {
                 }`}
               >
                 <SlidersHorizontal size={16} />
-                Filters
+                {t("vendors.list.filters")}
                 {activeFiltersCount > 0 && (
-                  <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-[#a47e43] text-[10px] font-bold text-white">
+                  <span className="absolute -end-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-[#a47e43] text-[10px] font-bold text-white">
                     {activeFiltersCount}
                   </span>
                 )}
@@ -258,7 +260,7 @@ function VendorsPageContent() {
                 type="submit"
                 className="min-h-12 rounded-full bg-[#30251f] px-7 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#42332a] hover:shadow-md"
               >
-                Search
+                {t("vendors.list.search")}
               </button>
             </form>
 
@@ -273,10 +275,10 @@ function VendorsPageContent() {
                     </span>
                     <div>
                       <p className="text-sm font-semibold text-[#30251f]">
-                        Refine your search
+                        {t("vendors.list.refineTitle")}
                       </p>
                       <p className="text-[11px] text-[#9b8f86]">
-                        Narrow down vendors that fit your day
+                        {t("vendors.list.refineSubtitle")}
                       </p>
                     </div>
                   </div>
@@ -285,7 +287,7 @@ function VendorsPageContent() {
                     type="button"
                     onClick={() => setFiltersOpen(false)}
                     className="flex h-8 w-8 items-center justify-center rounded-full text-[#9b8f86] transition hover:bg-[#faf7f4] hover:text-[#30251f]"
-                    aria-label="Close filters"
+                    aria-label={t("vendors.list.closeFilters")}
                   >
                     <X size={16} />
                   </button>
@@ -298,8 +300,8 @@ function VendorsPageContent() {
                     <div className="mb-3 flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <Tag size={13} className="text-[#b99a62]" />
-                        <label className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#9b8367]">
-                          Category
+                        <label className="text-[11px] font-semibold uppercase tracking-[0.18em] rtl:tracking-normal text-[#9b8367]">
+                          {t("vendors.list.category")}
                         </label>
                       </div>
                       {categoryId && (
@@ -312,7 +314,7 @@ function VendorsPageContent() {
                           }}
                           className="text-[11px] font-medium text-[#a47e43] transition hover:text-[#8c6a3c]"
                         >
-                          Reset
+                          {t("vendors.list.reset")}
                         </button>
                       )}
                     </div>
@@ -325,13 +327,13 @@ function VendorsPageContent() {
                           setCategoryId("");
                           setSelected([]);
                         }}
-                        className={`group flex items-center justify-between rounded-xl border px-3.5 py-2.5 text-left text-xs font-medium transition ${
+                        className={`group flex items-center justify-between rounded-xl border px-3.5 py-2.5 text-start text-xs font-medium transition ${
                           !categoryId
                             ? "border-[#30251f] bg-[#30251f] text-white"
                             : "border-[#eee7e1] bg-white text-[#5f544d] hover:border-[#d9cbb8] hover:bg-[#faf7f4]"
                         }`}
                       >
-                        <span>All categories</span>
+                        <span>{t("vendors.list.allCategories")}</span>
                         {!categoryId && <Check size={12} />}
                       </button>
 
@@ -346,7 +348,7 @@ function VendorsPageContent() {
                               setCategoryId(c.id);
                               setSelected([]);
                             }}
-                            className={`group flex items-center justify-between rounded-xl border px-3.5 py-2.5 text-left text-xs font-medium transition ${
+                            className={`group flex items-center justify-between rounded-xl border px-3.5 py-2.5 text-start text-xs font-medium transition ${
                               active
                                 ? "border-[#a47e43] bg-[#f9f1e9] text-[#8c6a3c]"
                                 : "border-[#eee7e1] bg-white text-[#5f544d] hover:border-[#d9cbb8] hover:bg-[#faf7f4]"
@@ -368,20 +370,20 @@ function VendorsPageContent() {
                     <div>
                       <div className="mb-3 flex items-center gap-2">
                         <MapPin size={13} className="text-[#b99a62]" />
-                        <label className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#9b8367]">
-                          Location
+                        <label className="text-[11px] font-semibold uppercase tracking-[0.18em] rtl:tracking-normal text-[#9b8367]">
+                          {t("vendors.list.location")}
                         </label>
                       </div>
                       <div className="relative">
-                        <MapPin className="pointer-events-none absolute left-3.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#b0a69c]" />
+                        <MapPin className="pointer-events-none absolute start-3.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#b0a69c]" />
                         <input
                           value={location}
                           onChange={(e) => {
                             setPage(1);
                             setLocation(e.target.value);
                           }}
-                          placeholder="e.g. Cairo, Alexandria"
-                          className="w-full rounded-xl border border-[#eee7e1] bg-[#faf7f4] py-2.5 pl-10 pr-3 text-sm text-[#30251f] outline-none transition placeholder:text-[#b0a69c] focus:border-[#b99a62] focus:bg-white focus:ring-4 focus:ring-[#b99a62]/10"
+                          placeholder={t("vendors.list.locationPlaceholder")}
+                          className="w-full rounded-xl border border-[#eee7e1] bg-[#faf7f4] py-2.5 ps-10 pe-3 text-sm text-[#30251f] outline-none transition placeholder:text-[#b0a69c] focus:border-[#b99a62] focus:bg-white focus:ring-4 focus:ring-[#b99a62]/10"
                         />
                       </div>
                     </div>
@@ -390,13 +392,13 @@ function VendorsPageContent() {
                     <div>
                       <div className="mb-3 flex items-center gap-2">
                         <Star size={13} className="text-[#b99a62]" />
-                        <label className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#9b8367]">
-                          Minimum rating
+                        <label className="text-[11px] font-semibold uppercase tracking-[0.18em] rtl:tracking-normal text-[#9b8367]">
+                          {t("vendors.list.minimumRating")}
                         </label>
                       </div>
                       <div className="flex flex-wrap gap-2">
                         {[
-                          { value: "", label: "Any" },
+                          { value: "", label: t("vendors.list.anyRating") },
                           { value: "3", label: "3+" },
                           { value: "4", label: "4+" },
                           { value: "4.5", label: "4.5+" },
@@ -443,7 +445,7 @@ function VendorsPageContent() {
                     disabled={activeFiltersCount === 0}
                     className="text-xs font-semibold text-[#8c6a3c] transition hover:text-[#30251f] disabled:cursor-not-allowed disabled:opacity-40"
                   >
-                    Clear all filters
+                    {t("vendors.list.clearAllFilters")}
                   </button>
 
                   <button
@@ -451,7 +453,7 @@ function VendorsPageContent() {
                     onClick={() => setFiltersOpen(false)}
                     className="rounded-full bg-[#30251f] px-6 py-2.5 text-xs font-semibold text-white transition hover:bg-[#42332a]"
                   >
-                    Show results
+                    {t("vendors.list.showResults")}
                   </button>
                 </div>
               </div>
@@ -470,7 +472,9 @@ function VendorsPageContent() {
                 {selected.length}
               </span>
               <span className="text-sm font-medium">
-                {selected.length === 1 ? "vendor selected" : "vendors selected"}
+                {selected.length === 1
+                  ? t("vendors.list.selectedOne")
+                  : t("vendors.list.selectedMany")}
               </span>
             </div>
             <div className="mt-3 flex items-center gap-2 sm:mt-0">
@@ -479,7 +483,7 @@ function VendorsPageContent() {
                 onClick={() => setSelected([])}
                 className="rounded-lg px-3 py-2 text-xs font-semibold text-white/70 transition hover:text-white"
               >
-                Clear All
+                {t("compare.clearAll")}
               </button>
               <Link
                 href={
@@ -497,7 +501,7 @@ function VendorsPageContent() {
                 }`}
               >
                 <GitCompare size={15} />
-                Compare ({selected.length})
+                {t("vendors.list.compareButton", { count: selected.length })}
               </Link>
             </div>
           </div>
@@ -526,13 +530,15 @@ function VendorsPageContent() {
         {/* Error */}
         {!loading && error && (
           <div className="rounded-2xl border border-red-200 bg-red-50 p-10 text-center">
-            <p className="font-medium text-red-600">{error}</p>
+            <p className="font-medium text-red-600">
+              {t("vendors.list.loadError")}
+            </p>
             <button
               type="button"
               onClick={fetchResults}
               className="mt-4 rounded-full bg-red-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-red-700"
             >
-              Try again
+              {t("vendors.list.tryAgain")}
             </button>
           </div>
         )}
@@ -543,9 +549,9 @@ function VendorsPageContent() {
             <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#f8f5ef]">
               <Search className="h-6 w-6 text-[#b99a62]" />
             </div>
-            <p className="font-serif text-lg text-[#30251f]">No vendors found</p>
+            <p className="font-serif text-lg text-[#30251f]">{t("vendors.list.emptyTitle")}</p>
             <p className="mt-2 text-sm text-[#766d67]">
-              Try adjusting your filters or search terms.
+              {t("vendors.list.emptyText")}
             </p>
             {activeFiltersCount > 0 && (
               <button
@@ -553,7 +559,7 @@ function VendorsPageContent() {
                 onClick={clearAllFilters}
                 className="mt-5 rounded-full bg-[#30251f] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#42332a]"
               >
-                Clear all filters
+                {t("vendors.list.clearAllFilters")}
               </button>
             )}
           </div>
@@ -567,7 +573,7 @@ function VendorsPageContent() {
                 <span className="font-semibold text-[#30251f]">
                   {result?.totalCount ?? items.length}
                 </span>{" "}
-                vendors found
+                {t("vendors.list.found")}
               </p>
               {selectedCategory && (
                 <span className="rounded-full border border-[#eadbce] bg-[#f9f1e9] px-3 py-1.5 text-xs font-semibold text-[#8c6a3c]">
@@ -601,7 +607,7 @@ function VendorsPageContent() {
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   className="flex h-10 w-10 items-center justify-center rounded-full border border-[#e4dbd0] bg-white text-[#5f544d] transition hover:border-[#b99a62] hover:bg-[#f9f1e9] disabled:opacity-40 disabled:hover:border-[#e4dbd0] disabled:hover:bg-white"
                 >
-                  <ChevronLeft size={16} />
+                  <ChevronLeft size={16} className="rtl:rotate-180" />
                 </button>
 
                 <div className="flex items-center gap-1">
@@ -640,7 +646,7 @@ function VendorsPageContent() {
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   className="flex h-10 w-10 items-center justify-center rounded-full border border-[#e4dbd0] bg-white text-[#5f544d] transition hover:border-[#b99a62] hover:bg-[#f9f1e9] disabled:opacity-40 disabled:hover:border-[#e4dbd0] disabled:hover:bg-white"
                 >
-                  <ChevronRight size={16} />
+                  <ChevronRight size={16} className="rtl:rotate-180" />
                 </button>
               </div>
             )}

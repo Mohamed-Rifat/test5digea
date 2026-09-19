@@ -1,0 +1,35 @@
+const vendors = {
+  list: {
+    eyebrow: "مقدمو خدماتنا",
+    titlePrefix: "مقدمو خدمات موثوقين",
+    titleHighlight: "ليوم عمرك",
+    description:
+      "اكتشف محترفي الأفراح المعتمدين، وقارن التقييمات والمواقع، ولاقي المناسب لكل جزء من يومك.",
+    searchPlaceholder: "دوّر على مقدم خدمة بالاسم...",
+    filters: "الفلاتر",
+    search: "بحث",
+    refineTitle: "حسّن بحثك",
+    refineSubtitle: "ضيّق الاختيارات على اللي يناسب يومك",
+    closeFilters: "قفل الفلاتر",
+    category: "التصنيف",
+    allCategories: "كل التصنيفات",
+    reset: "إعادة ضبط",
+    location: "الموقع",
+    locationPlaceholder: "مثلًا: القاهرة، الإسكندرية",
+    minimumRating: "أقل تقييم",
+    anyRating: "أي تقييم",
+    clearAllFilters: "مسح كل الفلاتر",
+    showResults: "اعرض النتايج",
+    selectedOne: "مقدم خدمة مختار",
+    selectedMany: "مقدمي خدمات مختارين",
+    compareButton: "قارن ({count})",
+    loadError: "مقدرناش نحمّل مقدمي الخدمات دلوقتي. حاول تاني.",
+    tryAgain: "حاول تاني",
+    emptyTitle: "مفيش مقدمي خدمات",
+    emptyText: "جرّب تغيّر الفلاتر أو كلمات البحث.",
+    found: "مقدم خدمة لقيناهم",
+    maxCompare: "تقدر تقارن لحد {max} مقدمي خدمات مرة واحدة.",
+  },
+};
+
+export default vendors;

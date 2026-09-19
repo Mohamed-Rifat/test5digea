@@ -291,7 +291,7 @@ export default function SiteNavbar() {
             <form onSubmit={handleSearchSubmit} className="relative">
               <Search
                 size={16}
-                className="pointer-events-none absolute inset-s-3 top-1/2 -translate-y-1/2 text-[#a89c92]"
+                className="pointer-events-none absolute start-3 top-1/2 -translate-y-1/2 text-[#a89c92]"
               />
               <input
                 value={search}
@@ -307,7 +307,7 @@ export default function SiteNavbar() {
             </form>
 
             {showSearchTargets && (
-              <div className="absolute inset-e-0 top-full z-30 mt-2 w-64 overflow-hidden rounded-xl border border-[#eee7e1] bg-white p-1.5 shadow-[0_18px_40px_rgba(48,37,31,0.14)]">
+              <div className="absolute end-0 top-full z-30 mt-2 w-64 overflow-hidden rounded-xl border border-[#eee7e1] bg-white p-1.5 shadow-[0_18px_40px_rgba(48,37,31,0.14)]">
                 {searchTargets.map((target) => {
                   const Icon = target.icon;
                   return (
@@ -411,7 +411,7 @@ export default function SiteNavbar() {
                     className="fixed inset-0 z-10"
                     onClick={() => setMenuOpen(false)}
                   />
-                  <div className="absolute inset-e-0 z-20 mt-2 w-52 overflow-hidden rounded-2xl border border-[#eee7e1] bg-white py-2 shadow-[0_18px_40px_rgba(48,37,31,0.14)]">
+                  <div className="absolute end-0 z-20 mt-2 w-52 overflow-hidden rounded-2xl border border-[#eee7e1] bg-white py-2 shadow-[0_18px_40px_rgba(48,37,31,0.14)]">
                     {(isAdmin || isVendor) && (
                       <Link
                         href={getHomePath(role)}
@@ -525,7 +525,7 @@ export default function SiteNavbar() {
                 </button>
 
                 {mobileAccountOpen && (
-                  <div className="absolute inset-e-0 z-30 mt-2 w-52 overflow-hidden rounded-2xl border border-[#eee7e1] bg-white py-2 shadow-[0_18px_40px_rgba(48,37,31,0.14)]">
+                  <div className="absolute end-0 z-30 mt-2 w-52 overflow-hidden rounded-2xl border border-[#eee7e1] bg-white py-2 shadow-[0_18px_40px_rgba(48,37,31,0.14)]">
                     <Link
                       href="/roadmap"
                       onClick={() => setMobileAccountOpen(false)}
@@ -578,7 +578,7 @@ export default function SiteNavbar() {
           <form onSubmit={handleSearchSubmit} className="relative">
             <Search
               size={16}
-              className="pointer-events-none absolute inset-s-3.5 top-1/2 -translate-y-1/2 text-[#a89c92]"
+              className="pointer-events-none absolute start-3.5 top-1/2 -translate-y-1/2 text-[#a89c92]"
             />
             <input
               ref={mobileSearchInputRef}
@@ -636,7 +636,7 @@ export default function SiteNavbar() {
 
         {/* panel */}
         <div
-          className={`absolute inset-e-0 top-0 flex h-full w-[85%] max-w-sm flex-col bg-[#f8f5ef] shadow-2xl transition-transform duration-300 ease-out ${
+          className={`absolute end-0 top-0 flex h-full w-[85%] max-w-sm flex-col bg-[#f8f5ef] shadow-2xl transition-transform duration-300 ease-out ${
             mobileOpen ? "translate-x-0" : "translate-x-full rtl:-translate-x-full"
           }`}
         >

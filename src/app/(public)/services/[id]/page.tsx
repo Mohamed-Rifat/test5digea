@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useLanguage } from "@/context/LanguageContext";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
@@ -28,11 +29,12 @@ import type { Service } from "@/types/service";
 
 export default function ServiceDetailPage() {
   const params = useParams<{ id: string }>();
+  const { t } = useLanguage();
   const { isAuthenticated, isUser } = useAuth();
 
   const [service, setService] = useState<Service | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(false);
   const [activeImage, setActiveImage] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
 
@@ -49,13 +51,13 @@ export default function ServiceDetailPage() {
     const load = async () => {
       try {
         setLoading(true);
-        setError(null);
+        setError(false);
 
         const data = await getService(params.id);
 
         setService(data);
       } catch (err) {
-        setError("This service could not be found.");
+        setError(true);
       } finally {
         setLoading(false);
       }
@@ -78,13 +80,15 @@ export default function ServiceDetailPage() {
     return (
       <main className="min-h-screen bg-[#faf8f6]">
         <div className="mx-auto max-w-xl px-4 py-24 text-center">
-          <p className="text-[#766d67]">{error || "Service not found."}</p>
+          <p className="text-[#766d67]">{error
+              ? t("services.detail.notFound")
+              : t("services.detail.notFoundFallback")}</p>
           <Link
             href="/services"
             className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#30251f] px-6 py-3 text-sm font-medium text-white"
           >
-            <ArrowLeft size={16} />
-            Back to Services
+            <ArrowLeft size={16} className="rtl:rotate-180" />
+            {t("services.detail.backToServices")}
           </Link>
         </div>
       </main>
@@ -111,8 +115,8 @@ export default function ServiceDetailPage() {
           href="/services"
           className="mb-6 inline-flex items-center gap-2 text-sm font-medium text-[#766d67] hover:text-[#30251f]"
         >
-          <ArrowLeft size={16} />
-          Back to Services
+          <ArrowLeft size={16} className="rtl:rotate-180" />
+          {t("services.detail.backToServices")}
         </Link>
 
         <div className="grid gap-10 lg:grid-cols-[1.2fr_0.8fr]">
@@ -138,13 +142,13 @@ export default function ServiceDetailPage() {
                   <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/0 transition group-hover:bg-black/10">
                     <span className="flex items-center gap-2 rounded-full bg-black/60 px-3 py-1.5 text-xs font-medium text-white opacity-0 backdrop-blur transition group-hover:opacity-100">
                       <Maximize2 size={13} />
-                      View full size
+                      {t("services.detail.viewFullSize")}
                     </span>
                   </div>
 
                   {/* Image counter */}
                   {service.images.length > 1 && (
-                    <span className="absolute bottom-4 right-4 rounded-full bg-black/55 px-2.5 py-1 text-[11px] font-medium text-white backdrop-blur">
+                    <span className="absolute bottom-4 end-4 rounded-full bg-black/55 px-2.5 py-1 text-[11px] font-medium text-white backdrop-blur">
                       {activeImage + 1} / {service.images.length}
                     </span>
                   )}
@@ -168,7 +172,7 @@ export default function ServiceDetailPage() {
                 }
                 onToggle={toggleFavorite}
                 size="lg"
-                className="absolute right-4 top-4 shadow-sm"
+                className="absolute end-4 top-4 shadow-sm"
               />
 
               <button
@@ -182,14 +186,16 @@ export default function ServiceDetailPage() {
                     name: service.name,
                   });
                 }}
-                className={`absolute left-4 top-4 inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold shadow-sm backdrop-blur ${
+                className={`absolute start-4 top-4 inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold shadow-sm backdrop-blur ${
                   isSelected(service.id)
                     ? "bg-[#30251f] text-white"
                     : "bg-white/90 text-[#514740]"
                 }`}
               >
                 <GitCompare size={14} />
-                {isSelected(service.id) ? "Added to compare" : "Compare"}
+                {isSelected(service.id)
+                  ? t("services.detail.addedToCompare")
+                  : t("services.detail.compare")}
               </button>
             </div>
 
@@ -224,8 +230,13 @@ export default function ServiceDetailPage() {
                 className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-[#a47e43] hover:underline"
               >
                 <ImagesIcon size={13} />
-                View all {service.images.length} photo
-                {service.images.length > 1 ? "s" : ""}
+                {service.images.length > 1
+                  ? t("services.detail.viewAllPhotosMany", {
+                      count: service.images.length,
+                    })
+                  : t("services.detail.viewAllPhotosOne", {
+                      count: service.images.length,
+                    })}
               </button>
             )}
 
@@ -268,7 +279,7 @@ export default function ServiceDetailPage() {
           <div>
             <div className="sticky top-24 rounded-2xl border border-[#eee7e1] bg-white p-6">
               <h2 className="mb-4 font-serif text-lg text-[#30251f]">
-                Pricing
+                {t("services.detail.pricing")}
               </h2>
 
               {service.prices && service.prices.length > 0 ? (
@@ -282,14 +293,14 @@ export default function ServiceDetailPage() {
                         {price.label}
                       </span>
                       <span className="font-serif text-base text-[#a47e43]">
-                        {formatPrice(price.price)} EGP
+                        {formatPrice(price.price)} {t("common.currency")}
                       </span>
                     </div>
                   ))}
                 </div>
               ) : (
                 <p className="text-sm text-[#9b8f86]">
-                  Contact the vendor for pricing.
+                  {t("services.detail.contactForPricing")}
                 </p>
               )}
 
@@ -298,7 +309,7 @@ export default function ServiceDetailPage() {
                   href={`/vendors/${service.vendorId}`}
                   className="flex w-full items-center justify-center rounded-full border border-[#e4dbd0] px-5 py-3 text-sm font-medium text-[#30251f] transition hover:border-[#b99a62]"
                 >
-                  View Vendor Profile
+                  {t("services.detail.viewVendorProfile")}
                 </Link>
 
                 {isAuthenticated && isUser && roadmapItem && (
@@ -315,26 +326,26 @@ export default function ServiceDetailPage() {
                     {roadmapItem.selectedVendorId === service.vendorId ? (
                       <>
                         <CheckCircle2 size={16} />
-                        Selected in Your Roadmap
+                        {t("services.detail.selectedInRoadmap")}
                       </>
                     ) : addedToRoadmap ? (
                       <>
                         <CheckCircle2 size={16} />
-                        Added to Roadmap
+                        {t("services.detail.addedToRoadmap")}
                       </>
                     ) : (
-                      "Select for My Wedding Roadmap"
+                      t("services.detail.selectForRoadmap")
                     )}
                   </button>
                 )}
 
                 {isAuthenticated && isUser && !roadmapItem && (
                   <p className="rounded-xl bg-[#f8f1e4] px-4 py-3 text-center text-xs text-[#9b8367]">
-                    Start your{" "}
+                    {t("services.detail.startRoadmapPrefix")}{" "}
                     <Link href="/roadmap" className="underline">
-                      wedding roadmap
+                      {t("services.detail.startRoadmapLink")}
                     </Link>{" "}
-                    to book vendors by category.
+                    {t("services.detail.startRoadmapSuffix")}
                   </p>
                 )}
               </div>

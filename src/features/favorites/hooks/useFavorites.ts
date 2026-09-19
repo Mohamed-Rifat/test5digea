@@ -9,6 +9,7 @@ import {
 } from "@/features/favorites/api";
 import { getApiErrorMessage } from "@/lib/error";
 import { useToast } from "@/components/providers/ToastProvider";
+import { useLanguage } from "@/context/LanguageContext";
 
 import type {
   Favorite,
@@ -46,6 +47,7 @@ export const useFavorites = (
   params?: GetFavoritesParams
 ): UseFavoritesReturn => {
   const { toast } = useToast();
+  const { t } = useLanguage();
   const [favorites, setFavorites] = useState<Favorite[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -107,14 +109,14 @@ export const useFavorites = (
 
         return true;
       } catch (err) {
-        toast(getApiErrorMessage(err, "Failed to remove favorite."), "error");
+        toast(getApiErrorMessage(err, t("favorites.removeError")), "error");
 
         return false;
       } finally {
         setActionLoading(null);
       }
     },
-    [toast]
+    [toast, t]
   );
 
   const toggleFavorite = useCallback(
@@ -147,14 +149,14 @@ export const useFavorites = (
 
         return true;
       } catch (err) {
-        toast(getApiErrorMessage(err, "Failed to update favorites."), "error");
+        toast(getApiErrorMessage(err, t("favorites.updateError")), "error");
 
         return false;
       } finally {
         setActionLoading(null);
       }
     },
-    [isFavorited, fetchFavorites, toast]
+    [isFavorited, fetchFavorites, toast, t]
   );
 
   return {

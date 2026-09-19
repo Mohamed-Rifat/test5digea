@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useLanguage } from "@/context/LanguageContext";
 import {
     ArrowRight,
     Heart,
@@ -11,6 +12,8 @@ import {
 } from "lucide-react";
 
 export default function AboutPage() {
+    const { t } = useLanguage();
+
     return (
         <main className="relative min-h-screen overflow-hidden bg-[#f8f5ef] px-4 py-4 text-[#30251f] sm:px-6 sm:py-6">
             <div className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -60,8 +63,8 @@ export default function AboutPage() {
                         <div className="flex items-center gap-2">
                             <Sparkles className="h-3 w-3 text-[#b99a62]" />
 
-                            <span className="text-[9px] font-medium uppercase tracking-[0.45em] text-[#9b8367] sm:text-[10px]">
-                                Our Story
+                            <span className="text-[9px] font-medium uppercase tracking-[0.45em] rtl:tracking-normal text-[#9b8367] sm:text-[10px]">
+                                {t("about.eyebrow")}
                             </span>
 
                             <Sparkles className="h-3 w-3 text-[#b99a62]" />
@@ -70,10 +73,10 @@ export default function AboutPage() {
                         <span className="h-px w-8 bg-[#b99a62]/50 sm:w-14" />
                     </div>
 
-                    <h1 className="max-w-4xl font-serif text-4xl font-light leading-[1.05] tracking-tight text-[#30251f] sm:text-6xl lg:text-[5.2rem]">
-                        Where Every
-                        <span className="relative mx-2 inline-block italic text-[#a47e43] sm:mx-3">
-                            Love Story
+                    <h1 className="max-w-4xl font-serif text-4xl font-light leading-[1.05] rtl:leading-[1.3] tracking-tight rtl:tracking-normal text-[#30251f] sm:text-6xl lg:text-[5.2rem]">
+                        {t("about.titlePrefix")}
+                        <span className="relative mx-2 inline-block italic rtl:not-italic text-[#a47e43] sm:mx-3">
+                            {t("about.titleHighlight")}
                             <svg
                                 viewBox="0 0 250 18"
                                 className="absolute -bottom-3 left-0 w-full"
@@ -89,14 +92,11 @@ export default function AboutPage() {
                             </svg>
                         </span>
                         <br />
-                        Deserves a Perfect Beginning.
+                        {t("about.titleSuffix")}
                     </h1>
 
                     <p className="mx-auto mt-8 max-w-2xl text-sm leading-8 text-[#766d67] sm:text-base">
-                        5digea is a wedding marketplace created to make
-                        discovering the right people, places, and services
-                        for your special day feel effortless, beautiful,
-                        and truly personal.
+                        {t("about.intro")}
                     </p>
 
                     <div className="mt-9 flex flex-col items-center gap-3 sm:flex-row">
@@ -105,14 +105,14 @@ export default function AboutPage() {
                             className="group inline-flex items-center gap-3 rounded-full border border-[#c6a66f] bg-[#30251f] px-7 py-3.5 text-sm font-medium text-white shadow-[0_8px_30px_rgba(48,37,31,0.15)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#42332a] hover:shadow-[0_14px_35px_rgba(48,37,31,0.22)]"
                         >
                             <Search className="h-4 w-4" />
-                            Explore Services
+                            {t("about.exploreServices")}
                         </Link>
 
                         <Link
                             href="/contact"
                             className="inline-flex items-center gap-3 rounded-full border border-[#b99a62]/40 bg-white/40 px-7 py-3.5 text-sm font-medium text-[#493b32] backdrop-blur-sm transition-all duration-300 hover:border-[#b99a62] hover:bg-white/80"
                         >
-                            Talk to Us
+                            {t("about.talkToUs")}
                         </Link>
                     </div>
                 </section>
@@ -127,23 +127,19 @@ export default function AboutPage() {
                                     <Heart className="h-5 w-5 text-[#a47e43]" />
                                 </div>
 
-                                <p className="mb-3 text-[9px] font-medium uppercase tracking-[0.4em] text-[#9b8367]">
-                                    Our Mission
+                                <p className="mb-3 text-[9px] font-medium uppercase tracking-[0.4em] rtl:tracking-normal text-[#9b8367]">
+                                    {t("about.mission.label")}
                                 </p>
 
-                                <h2 className="max-w-xl font-serif text-3xl font-light leading-tight text-[#30251f] sm:text-4xl">
-                                    Turning wedding planning into a
-                                    <span className="italic text-[#a47e43]">
-                                        {" "}beautiful journey.
+                                <h2 className="max-w-xl font-serif text-3xl font-light leading-tight rtl:leading-snug text-[#30251f] sm:text-4xl">
+                                    {t("about.mission.titlePrefix")}
+                                    <span className="italic rtl:not-italic text-[#a47e43]">
+                                        {" "}{t("about.mission.titleHighlight")}
                                     </span>
                                 </h2>
 
                                 <p className="mt-6 max-w-xl text-sm leading-7 text-[#766d67]">
-                                    We believe finding wedding services
-                                    should feel exciting rather than
-                                    overwhelming. 5digea brings trusted
-                                    vendors and couples together in one
-                                    elegant, simple experience.
+                                    {t("about.mission.text")}
                                 </p>
                             </div>
                         </div>
@@ -155,14 +151,13 @@ export default function AboutPage() {
                                         <Search className="h-4 w-4 text-[#a47e43]" />
                                     </div>
 
-                                    <span className="text-xs font-medium uppercase tracking-[0.18em] text-[#493b32]">
-                                        Discover
+                                    <span className="text-xs font-medium uppercase tracking-[0.18em] rtl:tracking-normal text-[#493b32]">
+                                        {t("about.discover.title")}
                                     </span>
                                 </div>
 
                                 <p className="text-sm leading-7 text-[#766d67]">
-                                    Explore wedding services and discover
-                                    options that match your vision.
+                                    {t("about.discover.text")}
                                 </p>
                             </div>
 
@@ -172,14 +167,13 @@ export default function AboutPage() {
                                         <Store className="h-4 w-4 text-[#a47e43]" />
                                     </div>
 
-                                    <span className="text-xs font-medium uppercase tracking-[0.18em] text-[#493b32]">
-                                        Connect
+                                    <span className="text-xs font-medium uppercase tracking-[0.18em] rtl:tracking-normal text-[#493b32]">
+                                        {t("about.connect.title")}
                                     </span>
                                 </div>
 
                                 <p className="text-sm leading-7 text-[#766d67]">
-                                    Connect couples with talented vendors
-                                    who can bring their dreams to life.
+                                    {t("about.connect.text")}
                                 </p>
                             </div>
                         </div>
@@ -193,8 +187,8 @@ export default function AboutPage() {
                         <div className="flex items-center gap-2">
                             <span className="h-1.5 w-1.5 rotate-45 border border-[#b99a62]" />
 
-                            <span className="text-[8px] font-medium uppercase tracking-[0.4em] text-[#9b8367] sm:text-[9px]">
-                                What We Believe
+                            <span className="text-[8px] font-medium uppercase tracking-[0.4em] rtl:tracking-normal text-[#9b8367] sm:text-[9px]">
+                                {t("about.beliefs.eyebrow")}
                             </span>
 
                             <span className="h-1.5 w-1.5 rotate-45 border border-[#b99a62]" />
@@ -204,23 +198,23 @@ export default function AboutPage() {
                     </div>
 
                     <div className="grid gap-4 sm:grid-cols-3">
-                        {[
+                        {([
                             {
                                 number: "01",
-                                title: "Meaningful",
-                                text: "Every wedding is different. Your choices should feel like yours.",
+                                titleKey: "about.beliefs.meaningful.title",
+                                textKey: "about.beliefs.meaningful.text",
                             },
                             {
                                 number: "02",
-                                title: "Beautiful",
-                                text: "We believe the planning experience should be as beautiful as the day itself.",
+                                titleKey: "about.beliefs.beautiful.title",
+                                textKey: "about.beliefs.beautiful.text",
                             },
                             {
                                 number: "03",
-                                title: "Trusted",
-                                text: "We aim to make discovering the right wedding professionals easier and clearer.",
+                                titleKey: "about.beliefs.trusted.title",
+                                textKey: "about.beliefs.trusted.text",
                             },
-                        ].map((item) => (
+                        ] as const).map((item) => (
                             <div
                                 key={item.number}
                                 className="group rounded-sm border border-[#b99a62]/20 bg-white/35 p-7 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:border-[#b99a62]/40 hover:bg-white/60 hover:shadow-[0_15px_40px_rgba(80,60,40,0.06)]"
@@ -230,11 +224,11 @@ export default function AboutPage() {
                                 </span>
 
                                 <h3 className="mt-5 font-serif text-2xl font-light text-[#30251f]">
-                                    {item.title}
+                                    {t(item.titleKey)}
                                 </h3>
 
                                 <p className="mt-3 text-sm leading-7 text-[#766d67]">
-                                    {item.text}
+                                    {t(item.textKey)}
                                 </p>
                             </div>
                         ))}
@@ -246,22 +240,21 @@ export default function AboutPage() {
                         <Sparkles className="mx-auto h-5 w-5 text-[#b99a62]" />
 
                         <h2 className="mt-5 font-serif text-3xl font-light text-[#30251f] sm:text-4xl">
-                            Let&apos;s make your day
-                            <span className="italic text-[#a47e43]">
-                                {" "}unforgettable.
+                            {t("about.cta.titlePrefix")}
+                            <span className="italic rtl:not-italic text-[#a47e43]">
+                                {" "}{t("about.cta.titleHighlight")}
                             </span>
                         </h2>
 
                         <p className="mx-auto mt-4 max-w-lg text-sm leading-7 text-[#766d67]">
-                            Start exploring the people and services that
-                            will help turn your wedding vision into reality.
+                            {t("about.cta.text")}
                         </p>
 
                         <Link
                             href="/services"
                             className="mt-7 inline-flex items-center gap-3 rounded-sm bg-[#30251f] px-7 py-3.5 text-sm font-medium text-white transition-all duration-300 hover:bg-[#42332a] hover:shadow-[0_12px_30px_rgba(48,37,31,0.18)]"
                         >
-                            Begin Your Journey
+                            {t("about.cta.button")}
                         </Link>
                     </div>
                 </section>

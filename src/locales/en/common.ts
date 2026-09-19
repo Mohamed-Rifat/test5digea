@@ -24,6 +24,11 @@ const common: Translation["common"] = {
   new: "New",
   addToCompare: "Add to comparison",
   removeFromCompare: "Remove from comparison",
+  imageViewer: "Image viewer",
+  previousImage: "Previous image",
+  nextImage: "Next image",
+  imageNumber: "Image {number}",
+  titleImageNumber: "{title} — image {number}",
 };
 
 export default common;

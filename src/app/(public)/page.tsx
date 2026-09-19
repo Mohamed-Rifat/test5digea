@@ -354,7 +354,7 @@ export default function Home() {
           type="button"
           onClick={toggleMute}
           aria-label={t("home.hero.toggleSound")}
-          className="absolute inset-e-5 top-5 z-30 flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-black/40 text-white backdrop-blur-sm transition hover:bg-black/60 sm:inset-e-8 sm:top-8"
+          className="absolute end-5 top-5 z-30 flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-black/40 text-white backdrop-blur-sm transition hover:bg-black/60 sm:end-8 sm:top-8"
         >
           {isMuted ? (
             <VolumeX size={18} />

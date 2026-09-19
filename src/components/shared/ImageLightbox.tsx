@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
 
+import { useLanguage } from "@/context/LanguageContext";
+
 export interface LightboxImage {
   id: string;
   url: string;
@@ -28,6 +30,8 @@ export default function ImageLightbox({
   onClose,
   title,
 }: ImageLightboxProps) {
+  const { t, dir } = useLanguage();
+  const isRtl = dir === "rtl";
   const [index, setIndex] = useState(initialIndex);
   const [mounted, setMounted] = useState(false);
 
@@ -44,10 +48,13 @@ export default function ImageLightbox({
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") onClose();
-      if (event.key === "ArrowRight") {
+      // Arrow keys follow the visual direction: in RTL, ← goes forward.
+      const forwardKey = isRtl ? "ArrowLeft" : "ArrowRight";
+      const backKey = isRtl ? "ArrowRight" : "ArrowLeft";
+      if (event.key === forwardKey) {
         setIndex((prev) => (prev + 1) % images.length);
       }
-      if (event.key === "ArrowLeft") {
+      if (event.key === backKey) {
         setIndex((prev) => (prev - 1 + images.length) % images.length);
       }
     };
@@ -57,7 +64,7 @@ export default function ImageLightbox({
       document.body.style.overflow = "";
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [open, images.length, onClose]);
+  }, [open, images.length, onClose, isRtl]);
 
   if (!open || !mounted || images.length === 0) return null;
 
@@ -69,7 +76,7 @@ export default function ImageLightbox({
       className="fixed inset-0 z-100 flex flex-col bg-black/95 backdrop-blur-sm animate-in fade-in duration-150"
       role="dialog"
       aria-modal="true"
-      aria-label={title || "Image viewer"}
+      aria-label={title || t("common.imageViewer")}
       onClick={onClose}
     >
       {/* Top bar */}
@@ -77,7 +84,7 @@ export default function ImageLightbox({
         <span className="text-xs font-medium tracking-wide text-white/70 sm:text-sm">
           {title}
           {images.length > 1 && (
-            <span className="ml-2 text-white/50">
+            <span className="ms-2 text-white/50">
               {index + 1} / {images.length}
             </span>
           )}
@@ -89,7 +96,7 @@ export default function ImageLightbox({
             event.stopPropagation();
             onClose();
           }}
-          aria-label="Close"
+          aria-label={t("common.close")}
           className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20"
         >
           <X size={18} />
@@ -103,9 +110,10 @@ export default function ImageLightbox({
             type="button"
             onClick={(event) => {
               event.stopPropagation();
-              goPrev();
+              if (isRtl) goNext();
+              else goPrev();
             }}
-            aria-label="Previous image"
+            aria-label={isRtl ? t("common.nextImage") : t("common.previousImage")}
             className="absolute left-2 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20 sm:left-4 sm:h-12 sm:w-12"
           >
             <ChevronLeft size={22} />
@@ -115,7 +123,11 @@ export default function ImageLightbox({
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={images[index]?.url}
-          alt={title ? `${title} — image ${index + 1}` : `Image ${index + 1}`}
+          alt={
+            title
+              ? t("common.titleImageNumber", { title, number: index + 1 })
+              : t("common.imageNumber", { number: index + 1 })
+          }
           className="max-h-full max-w-full select-none rounded-lg object-contain shadow-2xl"
           onClick={(event) => event.stopPropagation()}
         />
@@ -125,9 +137,10 @@ export default function ImageLightbox({
             type="button"
             onClick={(event) => {
               event.stopPropagation();
-              goNext();
+              if (isRtl) goPrev();
+              else goNext();
             }}
-            aria-label="Next image"
+            aria-label={isRtl ? t("common.previousImage") : t("common.nextImage")}
             className="absolute right-2 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20 sm:right-4 sm:h-12 sm:w-12"
           >
             <ChevronRight size={22} />

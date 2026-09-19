@@ -7,6 +7,9 @@ import vendor from "./vendor";
 import admin from "./admin";
 import roadmap from "./roadmap";
 import services from "./services";
+import vendors from "./vendors";
+import about from "./about";
+import contact from "./contact";
 import reviews from "./reviews";
 import favorites from "./favorites";
 import compare from "./compare";
@@ -23,6 +26,9 @@ const ar = {
   admin,
   roadmap,
   services,
+  vendors,
+  about,
+  contact,
   reviews,
   favorites,
   compare,

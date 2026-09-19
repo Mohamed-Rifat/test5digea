@@ -9,6 +9,7 @@ import {
   useState,
 } from "react";
 import { useToast } from "@/components/providers/ToastProvider";
+import { useLanguage } from "@/context/LanguageContext";
 
 export interface CompareServiceItem {
   id: string;
@@ -33,6 +34,7 @@ const CompareContext = createContext<CompareContextValue | null>(null);
 
 export function CompareProvider({ children }: { children: React.ReactNode }) {
   const { toast } = useToast();
+  const { t } = useLanguage();
   const [selected, setSelected] = useState<CompareServiceItem[]>([]);
   const [hydrated, setHydrated] = useState(false);
 
@@ -88,16 +90,13 @@ export function CompareProvider({ children }: { children: React.ReactNode }) {
         }
 
         if (prev.length > 0 && prev[0].categoryId !== service.categoryId) {
-          toast(
-            "You can only compare services from the same category.",
-            "error"
-          );
+          toast(t("compare.errors.sameCategory"), "error");
           return prev;
         }
 
         if (prev.length >= MAX_COMPARE_SERVICES) {
           toast(
-            `You can compare up to ${MAX_COMPARE_SERVICES} services at once.`,
+            t("compare.errors.maxServices", { max: MAX_COMPARE_SERVICES }),
             "error"
           );
           return prev;
@@ -106,7 +105,7 @@ export function CompareProvider({ children }: { children: React.ReactNode }) {
         return [...prev, service];
       });
     },
-    [toast]
+    [toast, t]
   );
 
   const value = useMemo(

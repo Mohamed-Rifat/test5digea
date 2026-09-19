@@ -4,6 +4,7 @@ import { Heart } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { useAuth } from "@/context/AuthContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { FavoriteTargetType } from "@/types/favorite";
 
 interface FavoriteButtonProps {
@@ -27,6 +28,7 @@ export default function FavoriteButton({
 }: FavoriteButtonProps) {
   const router = useRouter();
   const { isAuthenticated } = useAuth();
+  const { t } = useLanguage();
 
   const dimensions = size === "lg" ? "h-11 w-11" : "h-9 w-9";
   const iconSize = size === "lg" ? 20 : 16;
@@ -48,7 +50,9 @@ export default function FavoriteButton({
       type="button"
       onClick={handleClick}
       disabled={loading}
-      aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
+      aria-label={
+        isFavorited ? t("favorites.removeFromFavorites") : t("favorites.addToFavorites")
+      }
       aria-pressed={isFavorited}
       className={`flex ${dimensions} items-center justify-center rounded-full border transition disabled:opacity-60 ${
         isFavorited
