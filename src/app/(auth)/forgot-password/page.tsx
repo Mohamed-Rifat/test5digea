@@ -8,9 +8,11 @@ import Image from "next/image";
 
 import { forgotPassword } from "@/features/auth/api";
 import { getApiErrorMessage } from "@/lib/error";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
+  const { t } = useLanguage();
 
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
@@ -26,7 +28,7 @@ export default function ForgotPasswordPage() {
     event.preventDefault();
 
     if (!validateEmail(email)) {
-      setError("Please enter a valid email address.");
+      setError(t("auth.validation.invalidEmail"));
       return;
     }
 
@@ -48,7 +50,7 @@ export default function ForgotPasswordPage() {
       setError(
         getApiErrorMessage(
           err,
-          "We couldn't send a reset code. Please try again."
+          t("auth.forgotPasswordPage.failed")
         )
       );
     } finally {
@@ -81,29 +83,28 @@ export default function ForgotPasswordPage() {
                 <div className="mb-5 flex items-center gap-3">
                   <span className="h-px w-8 bg-[#d8c8bc]" />
 
-                  <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#d8c8bc]">
-                    Account recovery
+                  <p className="text-xs font-semibold uppercase tracking-[0.28em] rtl:tracking-normal text-[#d8c8bc]">
+                    {t("auth.forgotPasswordPage.eyebrow")}
                   </p>
                 </div>
 
-                <h2 className="animate-slide-up text-4xl font-semibold leading-[1.12] tracking-tight text-white xl:text-[3.25rem]">
-                  Let&apos;s get you back into your account.
+                <h2 className="animate-slide-up text-4xl font-semibold leading-[1.12] tracking-tight text-white xl:text-[3.25rem] rtl:leading-[1.4] rtl:tracking-normal">
+                  {t("auth.forgotPasswordPage.heroTitle")}
                 </h2>
 
                 <p
                   className="mt-7 max-w-md text-[15px] leading-7 text-[#d9d0ca] animate-slide-up"
                   style={{ animationDelay: "0.15s" }}
                 >
-                  Enter your email and we&apos;ll send you a one-time code to
-                  reset your password.
+                  {t("auth.forgotPasswordPage.heroText")}
                 </p>
               </div>
 
               <p
-                className="text-sm tracking-wide text-[#bdb1a8] animate-fade-in"
+                className="text-sm tracking-wide rtl:tracking-normal text-[#bdb1a8] animate-fade-in"
                 style={{ animationDelay: "0.3s" }}
               >
-                Plan it. Celebrate it. Remember it.
+                {t("auth.brand.tagline")}
               </p>
             </div>
           </section>
@@ -129,18 +130,17 @@ export default function ForgotPasswordPage() {
               {/* Heading */}
               <div className="mb-9">
                 <h1
-                  className="text-[2rem] font-semibold leading-tight tracking-[-0.03em] text-[#30251f] sm:text-4xl animate-slide-up"
+                  className="text-[2rem] font-semibold leading-tight tracking-[-0.03em] rtl:tracking-normal rtl:leading-snug text-[#30251f] sm:text-4xl animate-slide-up"
                   style={{ animationDelay: "0.05s" }}
                 >
-                  Forgot your password?
+                  {t("auth.forgotPasswordPage.title")}
                 </h1>
 
                 <p
                   className="mx-auto mt-3 max-w-sm text-sm leading-6 text-[#7b7069] animate-slide-up"
                   style={{ animationDelay: "0.1s" }}
                 >
-                  No worries — enter your email and we&apos;ll send you a
-                  verification code.
+                  {t("auth.forgotPasswordPage.subtitle")}
                 </p>
               </div>
 
@@ -154,11 +154,11 @@ export default function ForgotPasswordPage() {
                   </div>
 
                   <p className="mt-4 text-sm font-semibold text-emerald-700">
-                    Verification code sent
+                    {t("auth.forgotPasswordPage.sentTitle")}
                   </p>
 
                   <p className="mt-1 text-xs leading-5 text-emerald-600">
-                    Check {email} for your code. Redirecting you now...
+                    {t("auth.forgotPasswordPage.sentMessage", { email })}
                   </p>
                 </div>
               ) : (
@@ -181,7 +181,7 @@ export default function ForgotPasswordPage() {
                       autoComplete="email"
                       disabled={loading}
                       aria-invalid={!!error}
-                      className={`peer block w-full border-0 border-b-2 bg-transparent px-0 py-3 text-[15px] text-[#30251f] appearance-none outline-none transition-all duration-300 placeholder:text-transparent focus:ring-0 ${
+                      className={`peer block w-full border-0 border-b-2 bg-transparent px-0 py-3 text-[15px] text-[#30251f] appearance-none outline-none transition-all duration-300 placeholder:text-transparent focus:ring-0 [unicode-bidi:plaintext] ltr:text-left rtl:text-right ${
                         error
                           ? "border-red-300 focus:border-red-500"
                           : "border-[#ded5ce] hover:border-[#cbbdb3] focus:border-[#9a8171]"
@@ -190,7 +190,7 @@ export default function ForgotPasswordPage() {
 
                     <label
                       htmlFor="email"
-                      className={`pointer-events-none absolute left-0 top-3 -z-10 origin-left text-sm text-[#a59a92] duration-300 transform transition-all ${
+                      className={`pointer-events-none absolute start-0 top-3 -z-10 ltr:origin-left rtl:origin-right text-sm text-[#a59a92] duration-300 transform transition-all ${
                         email
                           ? "-translate-y-6 scale-75"
                           : "peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-focus:-translate-y-6 peer-focus:scale-75"
@@ -200,7 +200,7 @@ export default function ForgotPasswordPage() {
                           : "peer-focus:text-[#9a8171]"
                       }`}
                     >
-                      Email address
+                      {t("auth.email")}
                     </label>
                   </div>
 
@@ -225,10 +225,10 @@ export default function ForgotPasswordPage() {
                     {loading ? (
                       <span className="relative flex items-center gap-2">
                         <Loader2 size={18} className="animate-spin" />
-                        Sending code...
+                        {t("auth.forgotPasswordPage.submitting")}
                       </span>
                     ) : (
-                      <span className="relative">Send verification code</span>
+                      <span className="relative">{t("auth.forgotPasswordPage.submit")}</span>
                     )}
                   </button>
                 </form>
@@ -242,9 +242,9 @@ export default function ForgotPasswordPage() {
                 >
                   <ArrowLeft
                     size={15}
-                    className="transition-transform duration-200 group-hover:-translate-x-0.5"
+                    className="transition-transform duration-200 rtl:rotate-180 ltr:group-hover:-translate-x-0.5 rtl:group-hover:translate-x-0.5"
                   />
-                  Back to sign in
+                  {t("auth.brand.backToSignIn")}
                 </Link>
               </div>
             </div>

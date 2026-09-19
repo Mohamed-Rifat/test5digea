@@ -5,6 +5,7 @@ import { Building2, MapPin, Check, GitCompare } from "lucide-react";
 
 import FavoriteButton from "@/components/shared/FavoriteButton";
 import RatingStars from "@/components/shared/RatingStars";
+import { useLanguage } from "@/context/LanguageContext";
 import { FavoriteTargetType } from "@/types/favorite";
 import type { Vendor } from "@/types/vendor";
 
@@ -25,6 +26,8 @@ export default function VendorCard({
   selected,
   onSelect,
 }: VendorCardProps) {
+  const { t } = useLanguage();
+
   return (
     <div
       className={`group relative flex flex-col overflow-hidden rounded-2xl border bg-white transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(48,37,31,0.1)] ${
@@ -33,7 +36,7 @@ export default function VendorCard({
     >
       <Link href={`/vendors/${vendor.id}`} className="flex min-h-0 flex-1 flex-col">
         <div className="relative h-36 w-full shrink-0 bg-linear-to-br sm:h-40 from-[#f0e9e0] to-[#e4d8c8]">
-          <div className="absolute -bottom-8 left-5 flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-[#f4eee9] shadow-sm">
+          <div className="absolute -bottom-8 start-5 flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-[#f4eee9] shadow-sm">
             {vendor.profileImageUrl ? (
               <img
                 src={vendor.profileImageUrl}
@@ -90,7 +93,7 @@ export default function VendorCard({
           isFavorited={!!favorited}
           loading={!!favoriteLoading}
           onToggle={onToggleFavorite}
-          className="absolute right-3 top-3 z-10 shadow-sm"
+          className="absolute end-3 top-3 z-10 shadow-sm"
         />
       )}
 
@@ -103,8 +106,10 @@ export default function VendorCard({
             onSelect(vendor.id);
           }}
           aria-pressed={selected}
-          aria-label={selected ? "Remove from comparison" : "Add to comparison"}
-          className={`absolute left-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full border shadow-sm transition ${
+          aria-label={
+            selected ? t("common.removeFromCompare") : t("common.addToCompare")
+          }
+          className={`absolute start-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full border shadow-sm transition ${
             selected
               ? "border-[#30251f] bg-[#30251f] text-white"
               : "border-[#e4dbd0] bg-white/90 text-[#8d7b70] hover:border-[#b99a62] hover:text-[#a47e43]"

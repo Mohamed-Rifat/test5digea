@@ -1,4 +1,8 @@
+"use client";
+
 import { Star } from "lucide-react";
+
+import { useLanguage } from "@/context/LanguageContext";
 
 interface RatingStarsProps {
   rating: number;
@@ -11,6 +15,7 @@ export default function RatingStars({
   reviewsCount,
   size = 14,
 }: RatingStarsProps) {
+  const { t } = useLanguage();
   const rounded = Math.round(rating);
 
   return (
@@ -30,7 +35,7 @@ export default function RatingStars({
       </div>
 
       <span className="text-xs font-medium text-[#766d67]">
-        {rating > 0 ? rating.toFixed(1) : "New"}
+        {rating > 0 ? rating.toFixed(1) : t("common.new")}
         {typeof reviewsCount === "number" && reviewsCount > 0 && (
           <span className="text-[#9b8f86]"> ({reviewsCount})</span>
         )}

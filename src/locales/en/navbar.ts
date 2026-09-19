@@ -1,0 +1,35 @@
+import type { Translation } from "../types";
+
+const navbar: Translation["navbar"] = {
+  home: "Home",
+  services: "Services",
+  vendors: "Vendors",
+  categories: "Categories",
+  about: "About",
+  contact: "Contact",
+  browseByCategory: "Browse by category",
+  noCategories: "No categories available yet.",
+  viewAllVendors: "View all vendors",
+  searchPlaceholder: "Search…",
+  searchPlaceholderMobile: "Search vendors, services…",
+  searchPrefix: "Search",
+  searchQuery: "for “{query}”",
+  browse: "Browse {target}",
+  login: "Log In",
+  signUp: "Sign Up",
+  joinUs: "Join us",
+  logout: "Logout",
+  account: "Account",
+  accountMenu: "Account menu",
+  signedIn: "Signed in",
+  myProfile: "My Profile",
+  favorites: "Favorites",
+  weddingRoadmap: "Wedding Roadmap",
+  security: "Security",
+  adminDashboard: "Admin Dashboard",
+  vendorDashboard: "Vendor Dashboard",
+  openMenu: "Open menu",
+  closeMenu: "Close menu",
+};
+
+export default navbar;

@@ -1,0 +1,27 @@
+const common = {
+  language: "اللغة",
+  loading: "جارٍ التحميل...",
+  save: "حفظ",
+  cancel: "إلغاء",
+  confirm: "تأكيد",
+  delete: "حذف",
+  edit: "تعديل",
+  close: "إغلاق",
+  back: "رجوع",
+  next: "التالي",
+  previous: "السابق",
+  search: "بحث",
+  submit: "إرسال",
+  viewAll: "عرض الكل",
+  yes: "نعم",
+  no: "لا",
+  startingAt: "يبدأ من",
+  currency: "ج.م",
+  priceOnRequest: "تواصل للسعر",
+  byVendor: "من {name}",
+  new: "جديد",
+  addToCompare: "أضف للمقارنة",
+  removeFromCompare: "شيل من المقارنة",
+};
+
+export default common;

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Check, ImageOff, GitCompare } from "lucide-react";
 
 import FavoriteButton from "@/components/shared/FavoriteButton";
+import { useLanguage } from "@/context/LanguageContext";
 import { FavoriteTargetType } from "@/types/favorite";
 import { formatPrice, startingPrice } from "@/lib/format";
 import type { Service } from "@/types/service";
@@ -25,6 +26,7 @@ export default function ServiceCard({
   selected,
   onSelect,
 }: ServiceCardProps) {
+  const { t } = useLanguage();
   const price = startingPrice(service.prices);
   const image = [...(service.images ?? [])].sort((a, b) => a.displayOrder - b.displayOrder)[0]?.url;
 
@@ -49,7 +51,7 @@ export default function ServiceCard({
           )}
 
           {service.categoryName && (
-            <span className="absolute left-3 top-3 rounded-full bg-white/90 px-3 py-1 text-[11px] font-medium text-[#5f544d] backdrop-blur">
+            <span className="absolute start-3 top-3 rounded-full bg-white/90 px-3 py-1 text-[11px] font-medium text-[#5f544d] backdrop-blur">
               {service.categoryName}
             </span>
           )}
@@ -61,7 +63,7 @@ export default function ServiceCard({
           </h3>
 
           <p className="mt-1 text-xs text-[#9b8f86]">
-            by {service.vendorBusinessName}
+            {t("common.byVendor", { name: service.vendorBusinessName })}
           </p>
 
           <p className="mt-3 line-clamp-2 flex-1 text-sm leading-6 text-[#766d67]">
@@ -69,9 +71,11 @@ export default function ServiceCard({
           </p>
 
           <div className="mt-4 flex items-center justify-between border-t border-[#f0e9e0] pt-4">
-            <span className="text-xs text-[#9b8f86]">Starting at</span>
+            <span className="text-xs text-[#9b8f86]">{t("common.startingAt")}</span>
             <span className="font-serif text-lg text-[#a47e43]">
-              {price !== null ? `${formatPrice(price)} EGP` : "Contact"}
+              {price !== null
+                ? `${formatPrice(price)} ${t("common.currency")}`
+                : t("common.priceOnRequest")}
             </span>
           </div>
         </div>
@@ -84,7 +88,7 @@ export default function ServiceCard({
           isFavorited={!!favorited}
           loading={!!favoriteLoading}
           onToggle={onToggleFavorite}
-          className="absolute right-3 top-3 z-10 shadow-sm"
+          className="absolute end-3 top-3 z-10 shadow-sm"
         />
       )}
 
@@ -97,8 +101,10 @@ export default function ServiceCard({
             onSelect(service);
           }}
           aria-pressed={selected}
-          aria-label={selected ? "Remove from comparison" : "Add to comparison"}
-          className={`absolute right-3 top-14 z-10 flex h-9 w-9 items-center justify-center rounded-full border shadow-sm transition ${
+          aria-label={
+            selected ? t("common.removeFromCompare") : t("common.addToCompare")
+          }
+          className={`absolute end-3 top-14 z-10 flex h-9 w-9 items-center justify-center rounded-full border shadow-sm transition ${
             selected
               ? "border-[#30251f] bg-[#30251f] text-white"
               : "border-[#e4dbd0] bg-white/90 text-[#8d7b70] hover:border-[#b99a62] hover:text-[#a47e43]"

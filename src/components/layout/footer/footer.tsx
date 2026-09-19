@@ -5,24 +5,30 @@ import { ArrowUpRight, Mail, MapPin, Phone, } from "lucide-react";
 import { FaFacebookF, FaInstagram, FaTiktok, } from "react-icons/fa";
 import Image from "next/image";
 
-const footerLinks = {
+import { useLanguage } from "@/context/LanguageContext";
+import type { TranslationKey } from "@/locales";
+
+const footerLinks: Record<
+    string,
+    { labelKey: TranslationKey; href: string }[]
+> = {
     discover: [
-        { label: "Vendors", href: "/vendors" },
-        { label: "Services", href: "/services" },
-        { label: "Browse by Category", href: "/vendors" },
-        { label: "Compare", href: "/compare" },
+        { labelKey: "footer.vendors", href: "/vendors" },
+        { labelKey: "footer.services", href: "/services" },
+        { labelKey: "footer.browseByCategory", href: "/vendors" },
+        { labelKey: "footer.compare", href: "/compare" },
     ],
 
     forCouples: [
-        { label: "Favorites", href: "/favorites" },
-        { label: "Wedding Roadmap", href: "/roadmap" },
-        { label: "My Profile", href: "/profile" },
+        { labelKey: "footer.favorites", href: "/favorites" },
+        { labelKey: "footer.weddingRoadmap", href: "/roadmap" },
+        { labelKey: "footer.myProfile", href: "/profile" },
     ],
 
     company: [
-        { label: "About Us", href: "/about" },
-        { label: "Contact Us", href: "/contact" },
-        { label: "Help Center", href: "/support" },
+        { labelKey: "footer.aboutUs", href: "/about" },
+        { labelKey: "footer.contactUs", href: "/contact" },
+        { labelKey: "footer.helpCenter", href: "/support" },
     ],
 };
 
@@ -45,6 +51,8 @@ const socialLinks = [
 ];
 
 export default function Footer() {
+    const { t } = useLanguage();
+
     return (
         <footer className="relative overflow-hidden bg-[#30251f] text-white">
             {/* =========================================================
@@ -84,9 +92,7 @@ export default function Footer() {
                         </Link>
 
                         <p className="mt-5 max-w-90 text-[13px] leading-6 text-white/45 sm:text-sm sm:leading-7">
-                            Your trusted destination for discovering the people,
-                            places, and services that make every celebration
-                            unforgettable.
+                            {t("footer.tagline")}
                         </p>
 
                         {/* Contact */}
@@ -99,7 +105,7 @@ export default function Footer() {
                                     <Mail className="h-3.5 w-3.5" />
                                 </span>
 
-                                <span>hello@5digea.com</span>
+                                <span dir="ltr">hello@5digea.com</span>
                             </a>
 
                             <a
@@ -110,7 +116,7 @@ export default function Footer() {
                                     <Phone className="h-3.5 w-3.5" />
                                 </span>
 
-                                <span>+2001222800121</span>
+                                <span dir="ltr">+2001222800121</span>
                             </a>
 
                             <div className="flex items-center gap-3 text-[13px] text-white/45 sm:text-sm">
@@ -118,7 +124,7 @@ export default function Footer() {
                                     <MapPin className="h-3.5 w-3.5" />
                                 </span>
 
-                                <span>Egypt</span>
+                                <span>{t("footer.location")}</span>
                             </div>
                         </div>
                     </div>
@@ -126,19 +132,19 @@ export default function Footer() {
                     <div className="grid grid-cols-2 gap-x-8 gap-y-10 sm:grid-cols-3 sm:gap-x-10 lg:pt-8 ">
                         {/* Discover */}
                         <FooterColumn
-                            title="Discover"
+                            title={t("footer.discover")}
                             links={footerLinks.discover}
                         />
 
                         {/* For Couples */}
                         <FooterColumn
-                            title="For Couples"
+                            title={t("footer.forCouples")}
                             links={footerLinks.forCouples}
                         />
 
                         {/* Company */}
                         <FooterColumn
-                            title="Company"
+                            title={t("footer.company")}
                             links={footerLinks.company}
                         />
                     </div>
@@ -155,7 +161,7 @@ export default function Footer() {
                 <div className="flex items-center justify-between gap-4 py-6 sm:py-7">
                     {/* Copyright */}
                     <p className="text-[14px] leading-5 text-white/30 sm:text-xs">
-                        © {new Date().getFullYear()} 5digea. All rights reserved.
+                        {t("footer.copyright", { year: new Date().getFullYear() })}
                     </p>
 
                     {/* Social */}
@@ -188,7 +194,7 @@ export default function Footer() {
 interface FooterColumnProps {
     title: string;
     links: {
-        label: string;
+        labelKey: TranslationKey;
         href: string;
     }[];
 }
@@ -197,22 +203,24 @@ function FooterColumn({
     title,
     links,
 }: FooterColumnProps) {
+    const { t } = useLanguage();
+
     return (
         <div>
-            <h3 className="mb-5 text-[10px] font-semibold uppercase tracking-[0.22em] text-[#cdb9aa] sm:text-[11px]">
+            <h3 className="mb-5 text-[10px] font-semibold uppercase tracking-[0.22em] rtl:tracking-normal text-[#cdb9aa] sm:text-[11px]">
                 {title}
             </h3>
 
             <ul className="space-y-3.5">
                 {links.map((link) => (
-                    <li key={link.label}>
+                    <li key={link.labelKey}>
                         <Link
                             href={link.href}
                             className="group inline-flex items-center gap-1.5 text-[13px] text-white/45 transition-colors duration-300 hover:text-white sm:text-sm"
                         >
-                            <span>{link.label}</span>
+                            <span>{t(link.labelKey)}</span>
 
-                            <ArrowUpRight className="h-3 w-3 -translate-y-0.5 opacity-0 transition-all duration-300 group-hover:translate-x-0.5 group-hover:opacity-60" />
+                            <ArrowUpRight className="h-3 w-3 -translate-y-0.5 opacity-0 transition-all duration-300 rtl:-scale-x-100 ltr:group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5 group-hover:opacity-60" />
                         </Link>
                     </li>
                 ))}

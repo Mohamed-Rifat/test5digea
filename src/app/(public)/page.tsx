@@ -8,6 +8,7 @@ import {
   BadgeCheck,
   Building2,
   Compass,
+  Handshake,
   Heart,
   Paperclip,
   Search,
@@ -16,7 +17,9 @@ import {
   Sparkles,
   Star,
   Store,
+  TrendingUp,
   Users,
+  Users2,
   Volume2,
   VolumeX,
 } from "lucide-react";
@@ -26,6 +29,7 @@ import ServiceCard from "@/components/public/ServiceCard";
 import VendorCard from "@/components/public/VendorCard";
 import RatingStars from "@/components/shared/RatingStars";
 import { useAuth } from "@/context/AuthContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { useCategories } from "@/features/categories/hooks/useCategories";
 import { getServices } from "@/features/services/api";
 import { searchVendorList } from "@/features/vendors/api";
@@ -50,7 +54,13 @@ const HERO_VIDEO_URL =
   "https://res.cloudinary.com/dqwoefi7l/video/upload/promo-Wedding_jvscmu.mp4";
 
 export default function Home() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isUser } = useAuth();
+  const { t, dir } = useLanguage();
+  const isRtl = dir === "rtl";
+
+  // Only pitch "join us" to guests and couples — vendors are already in,
+  // and admins manage the platform.
+  const canJoinAsVendor = !isAuthenticated || isUser;
 
   const {
     categories,
@@ -69,7 +79,7 @@ export default function Home() {
 
   const [allServices, setAllServices] = useState<Service[]>([]);
   const [servicesLoading, setServicesLoading] = useState(true);
-  const [servicesError, setServicesError] = useState<string | null>(null);
+  const [servicesError, setServicesError] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -77,7 +87,7 @@ export default function Home() {
     const loadServices = async () => {
       try {
         setServicesLoading(true);
-        setServicesError(null);
+        setServicesError(false);
 
         const data = await getServices();
 
@@ -86,7 +96,7 @@ export default function Home() {
         }
       } catch {
         if (!cancelled) {
-          setServicesError("Failed to load services.");
+          setServicesError(true);
         }
       } finally {
         if (!cancelled) {
@@ -110,7 +120,7 @@ export default function Home() {
 
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [vendorsLoading, setVendorsLoading] = useState(true);
-  const [vendorsError, setVendorsError] = useState<string | null>(null);
+  const [vendorsError, setVendorsError] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -118,7 +128,7 @@ export default function Home() {
     const loadVendors = async () => {
       try {
         setVendorsLoading(true);
-        setVendorsError(null);
+        setVendorsError(false);
 
         const data = await searchVendorList({
           sortBy: 0,
@@ -134,7 +144,7 @@ export default function Home() {
         }
       } catch {
         if (!cancelled) {
-          setVendorsError("Failed to load vendors.");
+          setVendorsError(true);
         }
       } finally {
         if (!cancelled) {
@@ -289,6 +299,10 @@ export default function Home() {
   const goToPrevTestimonial = () => goToTestimonial(activeIndex - 1);
   const goToNextTestimonial = () => goToTestimonial(activeIndex + 1);
 
+  // In RTL the flex track lays slides out right-to-left, so it has to slide
+  // in the opposite direction to bring the next slide into view.
+  const trackOffset = (isRtl ? 1 : -1) * activeIndex * 100;
+
   const currentReview = reviews[activeIndex];
   const currentTilt =
     TESTIMONIAL_TILTS[activeIndex % TESTIMONIAL_TILTS.length];
@@ -339,8 +353,8 @@ export default function Home() {
         <button
           type="button"
           onClick={toggleMute}
-          aria-label="Toggle sound"
-          className="absolute right-5 top-5 z-30 flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-black/40 text-white backdrop-blur-sm transition hover:bg-black/60 sm:right-8 sm:top-8"
+          aria-label={t("home.hero.toggleSound")}
+          className="absolute end-5 top-5 z-30 flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-black/40 text-white backdrop-blur-sm transition hover:bg-black/60 sm:end-8 sm:top-8"
         >
           {isMuted ? (
             <VolumeX size={18} />
@@ -359,17 +373,15 @@ export default function Home() {
             </span>
           </div>
 
-          <h1 className="font-serif text-4xl font-light leading-tight text-white drop-shadow-sm sm:text-5xl lg:text-6xl">
-            Plan your perfect day with{" "}
-            <span className="italic text-[#e8cd9a]">
-              trusted vendors
+          <h1 className="font-serif text-4xl font-light leading-tight rtl:leading-snug text-white drop-shadow-sm sm:text-5xl lg:text-6xl">
+            {t("home.hero.title")}{" "}
+            <span className="italic rtl:not-italic text-[#e8cd9a]">
+              {t("home.hero.titleHighlight")}
             </span>
           </h1>
 
           <p className="mx-auto mt-5 max-w-xl text-sm leading-7 text-white/80 sm:text-base">
-            Discover approved wedding professionals and curated services,
-            compare your options, and build your wedding roadmap in one
-            place.
+            {t("home.hero.description")}
           </p>
 
           <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row">
@@ -378,7 +390,7 @@ export default function Home() {
               className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-7 py-3.5 text-sm font-medium text-[#30251f] shadow-lg transition hover:bg-[#f3ede6] hover:shadow-xl"
             >
               <Search size={16} />
-              Explore services
+              {t("home.hero.exploreServices")}
             </Link>
 
             <Link
@@ -386,7 +398,7 @@ export default function Home() {
               className="inline-flex items-center justify-center gap-2 rounded-full border border-white/30 bg-white/10 px-7 py-3.5 text-sm font-medium text-white backdrop-blur transition hover:bg-white/20"
             >
               <Store size={16} />
-              Browse vendors
+              {t("home.hero.browseVendors")}
             </Link>
           </div>
 
@@ -404,12 +416,12 @@ export default function Home() {
 
         <div className="mb-8 flex items-end justify-between gap-4">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[.18em] text-[#9b8171]">
-              Categories
+            <p className="text-xs font-semibold uppercase tracking-[.18em] text-[#9b8171] rtl:tracking-normal">
+              {t("home.categories.eyebrow")}
             </p>
 
             <h2 className="mt-2 text-2xl font-semibold text-[#30251f] sm:text-3xl">
-              Wedding services for every need
+              {t("home.categories.title")}
             </h2>
           </div>
 
@@ -418,7 +430,7 @@ export default function Home() {
               href="/vendors"
               className="hidden shrink-0 items-center gap-1.5 text-sm font-semibold text-[#8e685e] hover:text-[#30251f] sm:inline-flex"
             >
-              View all <ArrowRight size={14} />
+              {t("common.viewAll")} <ArrowRight size={14} className="rtl:rotate-180" />
             </Link>
           )}
         </div>
@@ -437,7 +449,7 @@ export default function Home() {
         {!categoriesLoading && categoriesError && (
           <div className="rounded-2xl border border-red-200 bg-red-50 p-10 text-center">
             <p className="font-medium text-red-600">
-              {categoriesError}
+              {t("home.categories.loadError")}
             </p>
           </div>
         )}
@@ -447,7 +459,7 @@ export default function Home() {
           categories.length === 0 && (
             <div className="rounded-2xl border border-[#eee5df] bg-white p-10 text-center shadow-sm">
               <p className="text-[#756960]">
-                No categories available yet.
+                {t("home.categories.empty")}
               </p>
             </div>
           )}
@@ -488,7 +500,7 @@ export default function Home() {
                     </p>
 
                     <span className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-[#8e685e]">
-                      Browse vendors <ArrowRight size={14} />
+                      {t("home.categories.browseVendors")} <ArrowRight size={14} className="rtl:rotate-180" />
                     </span>
                   </Link>
                 ))}
@@ -503,12 +515,12 @@ export default function Home() {
 
         <div className="mb-8 flex items-end justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[.18em] text-[#9b8171]">
-              Featured
+            <p className="text-xs font-semibold uppercase tracking-[.18em] text-[#9b8171] rtl:tracking-normal">
+              {t("home.vendors.eyebrow")}
             </p>
 
             <h2 className="mt-2 text-2xl font-semibold text-[#30251f] sm:text-3xl">
-              Trusted vendors couples love
+              {t("home.vendors.title")}
             </h2>
           </div>
 
@@ -516,7 +528,7 @@ export default function Home() {
             href="/vendors"
             className="hidden items-center gap-1.5 text-sm font-semibold text-[#8e685e] hover:text-[#30251f] sm:inline-flex"
           >
-            View all <ArrowRight size={14} />
+            {t("common.viewAll")} <ArrowRight size={14} className="rtl:rotate-180" />
           </Link>
         </div>
 
@@ -534,7 +546,7 @@ export default function Home() {
         {!vendorsLoading && vendorsError && (
           <div className="rounded-2xl border border-red-200 bg-red-50 p-10 text-center">
             <p className="font-medium text-red-600">
-              {vendorsError}
+              {t("home.vendors.loadError")}
             </p>
           </div>
         )}
@@ -544,7 +556,7 @@ export default function Home() {
           vendors.length === 0 && (
             <div className="rounded-2xl border border-[#eee5df] bg-white p-10 text-center shadow-sm">
               <p className="text-[#756960]">
-                No vendors available yet.
+                {t("home.vendors.empty")}
               </p>
             </div>
           )}
@@ -566,7 +578,7 @@ export default function Home() {
           href="/vendors"
           className="mt-6 flex items-center justify-center gap-1.5 text-sm font-semibold text-[#8e685e] hover:text-[#30251f] sm:hidden"
         >
-          View all vendors <ArrowRight size={14} />
+          {t("home.vendors.viewAllVendors")} <ArrowRight size={14} className="rtl:rotate-180" />
         </Link>
       </section>
 
@@ -578,12 +590,12 @@ export default function Home() {
 
           <div className="mb-8 flex items-end justify-between">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[.18em] text-[#9b8171]">
-                Featured
+              <p className="text-xs font-semibold uppercase tracking-[.18em] text-[#9b8171] rtl:tracking-normal">
+                {t("home.services.eyebrow")}
               </p>
 
               <h2 className="mt-2 text-2xl font-semibold text-[#30251f] sm:text-3xl">
-                Popular services
+                {t("home.services.title")}
               </h2>
             </div>
 
@@ -591,7 +603,7 @@ export default function Home() {
               href="/services"
               className="hidden items-center gap-1.5 text-sm font-semibold text-[#8e685e] hover:text-[#30251f] sm:inline-flex"
             >
-              View all <ArrowRight size={14} />
+              {t("common.viewAll")} <ArrowRight size={14} className="rtl:rotate-180" />
             </Link>
           </div>
 
@@ -609,7 +621,7 @@ export default function Home() {
           {!servicesLoading && servicesError && (
             <div className="rounded-2xl border border-red-200 bg-red-50 p-10 text-center">
               <p className="font-medium text-red-600">
-                {servicesError}
+                {t("home.services.loadError")}
               </p>
             </div>
           )}
@@ -619,7 +631,7 @@ export default function Home() {
             featuredServices.length === 0 && (
               <div className="rounded-2xl border border-[#eee5df] bg-white p-10 text-center shadow-sm">
                 <p className="text-[#756960]">
-                  No services available yet.
+                  {t("home.services.empty")}
                 </p>
               </div>
             )}
@@ -641,7 +653,7 @@ export default function Home() {
             href="/services"
             className="mt-6 flex items-center justify-center gap-1.5 text-sm font-semibold text-[#8e685e] hover:text-[#30251f] sm:hidden"
           >
-            View all services <ArrowRight size={14} />
+            {t("home.services.viewAllServices")} <ArrowRight size={14} className="rtl:rotate-180" />
           </Link>
         </div>
       </section>
@@ -691,22 +703,21 @@ export default function Home() {
             <div className="mx-auto max-w-2xl text-center">
               <div className="mb-4 flex items-center justify-center gap-3">
                 <span className="h-px w-10 bg-[#c9ad82]" />
-                <span className="text-[10px] font-semibold uppercase tracking-[0.35em] text-[#d9bf98]">
-                  Testimonials
+                <span className="text-[10px] font-semibold uppercase tracking-[0.35em] text-[#d9bf98] rtl:tracking-normal">
+                  {t("home.testimonials.eyebrow")}
                 </span>
                 <span className="h-px w-10 bg-[#c9ad82]" />
               </div>
 
-              <h2 className="font-serif text-3xl font-light leading-tight text-[#faf6ef] sm:text-4xl lg:text-5xl">
-                Loved by couples,{" "}
-                <span className="ml-2 italic text-[#e0b64a]">
-                  remembered forever.
+              <h2 className="font-serif text-3xl font-light leading-tight rtl:leading-snug text-[#faf6ef] sm:text-4xl lg:text-5xl">
+                {t("home.testimonials.title")}{" "}
+                <span className="ms-2 italic rtl:not-italic text-[#e0b64a]">
+                  {t("home.testimonials.titleHighlight")}
                 </span>
               </h2>
 
               <p className="mx-auto mt-4 max-w-xl text-sm leading-7 text-[#c9bcae] sm:text-base">
-                Real experiences from couples who trusted our wedding professionals
-                to be part of their special day.
+                {t("home.testimonials.description")}
               </p>
             </div>
 
@@ -717,8 +728,14 @@ export default function Home() {
                 <>
                   <button
                     type="button"
-                    onClick={goToPrevTestimonial}
-                    aria-label="Previous testimonial"
+                    onClick={
+                      isRtl ? goToNextTestimonial : goToPrevTestimonial
+                    }
+                    aria-label={
+                      isRtl
+                        ? t("home.testimonials.next")
+                        : t("home.testimonials.previous")
+                    }
                     className="absolute left-0 top-1/2 z-30 hidden h-10 w-10 -translate-x-14 -translate-y-1/2 items-center justify-center rounded-full border border-[#4a352c] bg-[#2e1b16]/70 text-[#e6d7c2] backdrop-blur transition hover:border-[#e0b64a] hover:text-[#e0b64a] sm:flex"
                   >
                     <ArrowLeft size={16} />
@@ -726,8 +743,14 @@ export default function Home() {
 
                   <button
                     type="button"
-                    onClick={goToNextTestimonial}
-                    aria-label="Next testimonial"
+                    onClick={
+                      isRtl ? goToPrevTestimonial : goToNextTestimonial
+                    }
+                    aria-label={
+                      isRtl
+                        ? t("home.testimonials.previous")
+                        : t("home.testimonials.next")
+                    }
                     className="absolute right-0 top-1/2 z-30 hidden h-10 w-10 -translate-y-1/2 translate-x-14 items-center justify-center rounded-full border border-[#4a352c] bg-[#2e1b16]/70 text-[#e6d7c2] backdrop-blur transition hover:border-[#e0b64a] hover:text-[#e0b64a] sm:flex"
                   >
                     <ArrowRight size={16} />
@@ -745,7 +768,7 @@ export default function Home() {
               <div className="relative overflow-hidden px-2">
                 <div
                   className="flex transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]"
-                  style={{ transform: `translateX(-${activeIndex * 100}%)` }}
+                  style={{ transform: `translateX(${trackOffset}%)` }}
                 >
                   {reviews.map((review, index) => {
                     const isActive = index === activeIndex;
@@ -785,18 +808,21 @@ export default function Home() {
                               <div>
                                 <div className="flex items-center gap-1.5">
                                   <h3 className="text-base font-bold text-[#2c2015] sm:text-lg">
-                                    {review?.userFullName || "Happy Couple"}
+                                    {review?.userFullName || t("home.testimonials.happyCouple")}
                                   </h3>
                                   <BadgeCheck className="h-4 w-4 shrink-0 text-[#c9962e]" />
                                 </div>
                                 <p className="text-xs font-medium text-[#a4937d] sm:text-sm">
-                                  Customer
+                                  {t("home.testimonials.customer")}
                                 </p>
                               </div>
                             </div>
 
                             {/* Quote */}
-                            <p className="mt-7 text-[15px] leading-8 text-[#493a2c] sm:text-[17px] sm:leading-9">
+                            <p
+                              dir="auto"
+                              className="mt-7 text-[15px] leading-8 text-[#493a2c] sm:text-[17px] sm:leading-9"
+                            >
                               &ldquo;{review?.comment}&rdquo;
                             </p>
 
@@ -819,8 +845,8 @@ export default function Home() {
                             {(review?.vendorId || review?.vendorBusinessName) && (
                               <div className="mt-7 flex items-center justify-between gap-3 border-t border-dashed border-[#e3d6bd] pt-5">
                                 <div>
-                                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#a4937d]">
-                                    Reviewed vendor
+                                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#a4937d] rtl:tracking-normal">
+                                    {t("home.testimonials.reviewedVendor")}
                                   </p>
 
                                   {review?.vendorId ? (
@@ -829,7 +855,7 @@ export default function Home() {
                                       className="text-sm font-semibold text-[#5a4632] transition hover:text-[#a47e43]"
                                     >
                                       {review.vendorBusinessName ||
-                                        "Wedding Vendor"}
+                                        t("home.testimonials.weddingVendor")}
                                     </Link>
                                   ) : (
                                     <span className="text-sm font-semibold text-[#5a4632]">
@@ -859,7 +885,7 @@ export default function Home() {
                   <button
                     key={review.id}
                     type="button"
-                    aria-label={`Go to testimonial ${index + 1}`}
+                    aria-label={t("home.testimonials.goTo", { number: index + 1 })}
                     onClick={() => goToTestimonial(index)}
                     className={`h-1.5 rounded-full transition-all duration-500 ${index === activeIndex
                       ? "w-8 bg-[#e0b64a]"
@@ -881,30 +907,27 @@ export default function Home() {
 
           <div>
 
-            <p className="text-xs font-semibold uppercase tracking-[.18em] text-[#9b8171]">
-              About 5digea
+            <p className="text-xs font-semibold uppercase tracking-[.18em] text-[#9b8171] rtl:tracking-normal">
+              {t("home.about.eyebrow")}
             </p>
 
-            <h2 className="mt-2 max-w-lg font-serif text-3xl font-light leading-tight text-[#30251f] sm:text-4xl">
-              A wedding marketplace built around{" "}
-              <span className="italic text-[#a47e43]">
-                trust
+            <h2 className="mt-2 max-w-lg font-serif text-3xl font-light leading-tight rtl:leading-snug text-[#30251f] sm:text-4xl">
+              {t("home.about.title")}{" "}
+              <span className="italic rtl:not-italic text-[#a47e43]">
+                {t("home.about.titleHighlight")}
               </span>.
             </h2>
 
             <p className="mt-4 max-w-lg text-sm leading-7 text-[#766d67]">
-              We believe finding wedding services should feel exciting rather
-              than overwhelming. 5digea brings approved vendors and couples
-              together in one elegant, simple experience — from the first
-              search to the final &ldquo;I do.&rdquo;
+              {t("home.about.description")}
             </p>
 
             <Link
               href="/about"
               className="mt-6 inline-flex items-center gap-2 rounded-full border border-[#e4dbd0] bg-white px-6 py-3 text-sm font-semibold text-[#5f544d] transition hover:border-[#b99a62] hover:text-[#30251f]"
             >
-              Learn our story
-              <ArrowRight size={14} />
+              {t("home.about.cta")}
+              <ArrowRight size={14} className="rtl:rotate-180" />
             </Link>
           </div>
 
@@ -916,12 +939,11 @@ export default function Home() {
               </div>
 
               <h3 className="mt-4 text-sm font-semibold text-[#30251f]">
-                Vetted vendors
+                {t("home.about.vetted.title")}
               </h3>
 
               <p className="mt-1.5 text-xs leading-6 text-[#81746d]">
-                Every vendor is reviewed and approved before appearing on the
-                platform.
+                {t("home.about.vetted.description")}
               </p>
             </div>
 
@@ -931,12 +953,11 @@ export default function Home() {
               </div>
 
               <h3 className="mt-4 text-sm font-semibold text-[#30251f]">
-                Guided planning
+                {t("home.about.guided.title")}
               </h3>
 
               <p className="mt-1.5 text-xs leading-6 text-[#81746d]">
-                Your personal roadmap keeps every category and vendor decision
-                organized.
+                {t("home.about.guided.description")}
               </p>
             </div>
 
@@ -946,11 +967,11 @@ export default function Home() {
               </div>
 
               <h3 className="mt-4 text-sm font-semibold text-[#30251f]">
-                Real reviews
+                {t("home.about.reviews.title")}
               </h3>
 
               <p className="mt-1.5 text-xs leading-6 text-[#81746d]">
-                Feedback from real couples helps you choose with confidence.
+                {t("home.about.reviews.description")}
               </p>
             </div>
 
@@ -960,17 +981,92 @@ export default function Home() {
               </div>
 
               <h3 className="mt-4 text-sm font-semibold text-[#30251f]">
-                Built for couples
+                {t("home.about.couples.title")}
               </h3>
 
               <p className="mt-1.5 text-xs leading-6 text-[#81746d]">
-                Compare, save favorites, and plan together in one shared place.
+                {t("home.about.couples.description")}
               </p>
             </div>
 
           </div>
         </div>
       </section>
+
+      {/* ================= Join us — become a vendor ================= */}
+
+      {canJoinAsVendor && (
+        <section className="px-4 py-20 sm:px-6 lg:px-8">
+          <div className="mx-auto grid gap-10 rounded-4xl border border-[#e4dbd0] bg-white p-8 shadow-sm lg:max-w-10/12 lg:grid-cols-[1.1fr_1fr] lg:items-center lg:p-14">
+            <div>
+              <div className="inline-flex items-center gap-2 rounded-full border border-[#e4dbd0] bg-[#faf7f4] px-3 py-1.5">
+                <Handshake size={14} className="text-[#a47e43]" />
+                <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-[#9b8171] rtl:tracking-normal">
+                  {t("home.join.badge")}
+                </span>
+              </div>
+
+              <h2 className="mt-5 max-w-lg font-serif text-3xl font-light leading-tight rtl:leading-snug text-[#30251f] sm:text-4xl">
+                {t("home.join.title")}{" "}
+                <span className="italic rtl:not-italic text-[#a47e43]">
+                  {t("home.join.titleHighlight")}
+                </span>
+              </h2>
+
+              <p className="mt-4 max-w-lg text-sm leading-7 text-[#766d67]">
+                {t("home.join.description")}
+              </p>
+
+              <Link
+                href="/become-a-vendor"
+                className="mt-6 inline-flex items-center gap-2 rounded-full border border-[#c6a66f] bg-[#30251f] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#42332a]"
+              >
+                <Handshake size={15} />
+                {t("home.join.cta")}
+                <ArrowRight size={14} className="rtl:rotate-180" />
+              </Link>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="rounded-2xl border border-[#eee5df] bg-[#faf7f4] p-5">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-[#a47e43]">
+                  <Users2 size={18} />
+                </div>
+                <h3 className="mt-4 text-sm font-semibold text-[#30251f]">
+                  {t("home.join.reach.title")}
+                </h3>
+                <p className="mt-1.5 text-xs leading-6 text-[#81746d]">
+                  {t("home.join.reach.description")}
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-[#eee5df] bg-[#faf7f4] p-5">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-[#a47e43]">
+                  <BadgeCheck size={18} />
+                </div>
+                <h3 className="mt-4 text-sm font-semibold text-[#30251f]">
+                  {t("home.join.badgeCard.title")}
+                </h3>
+                <p className="mt-1.5 text-xs leading-6 text-[#81746d]">
+                  {t("home.join.badgeCard.description")}
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-[#eee5df] bg-[#faf7f4] p-5 sm:col-span-2">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-[#a47e43]">
+                  <TrendingUp size={18} />
+                </div>
+                <h3 className="mt-4 text-sm font-semibold text-[#30251f]">
+                  {t("home.join.grow.title")}
+                </h3>
+                <p className="mt-1.5 text-xs leading-6 text-[#81746d]">
+                  {t("home.join.grow.description")}
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ================= Coming Soon — Mobile App ================= */}
 
@@ -1002,35 +1098,33 @@ export default function Home() {
                     className="text-[#a47e43]"
                   />
 
-                  <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-[#9b8367]">
-                    Coming Soon
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-[#9b8367] rtl:tracking-normal">
+                    {t("home.app.badge")}
                   </span>
                 </div>
 
-                <h2 className="mt-5 font-serif text-3xl font-light leading-tight text-[#30251f] sm:text-4xl">
-                  The 5digea app is{" "}
-                  <span className="italic text-[#a47e43]">
-                    almost here
+                <h2 className="mt-5 font-serif text-3xl font-light leading-tight rtl:leading-snug text-[#30251f] sm:text-4xl">
+                  {t("home.app.title")}{" "}
+                  <span className="italic rtl:not-italic text-[#a47e43]">
+                    {t("home.app.titleHighlight")}
                   </span>
                 </h2>
 
                 <p className="mt-4 max-w-lg text-sm leading-7 text-[#766d67]">
-                  Plan your wedding on the go — manage your roadmap, chat with
-                  vendors, and get real-time updates. Download the app on iOS
-                  and Android very soon.
+                  {t("home.app.description")}
                 </p>
 
                 <div className="mt-7 flex flex-wrap gap-3">
 
                   <div
                     aria-disabled="true"
-                    className="group flex cursor-not-allowed items-center gap-3 rounded-2xl border border-[#30251f]/10 bg-[#30251f] px-5 py-3 text-left text-white opacity-90 shadow-lg transition"
+                    className="group flex cursor-not-allowed items-center gap-3 rounded-2xl border border-[#30251f]/10 bg-[#30251f] px-5 py-3 text-start text-white opacity-90 shadow-lg transition"
                   >
                     <FaApple className="h-6 w-6" />
 
                     <div className="leading-tight">
-                      <p className="text-[9px] uppercase tracking-widest text-white/60">
-                        Coming soon on
+                      <p className="text-[9px] uppercase tracking-widest text-white/60 rtl:tracking-normal">
+                        {t("home.app.comingSoonOn")}
                       </p>
                       <p className="text-sm font-semibold">App Store</p>
                     </div>
@@ -1038,13 +1132,13 @@ export default function Home() {
 
                   <div
                     aria-disabled="true"
-                    className="group flex cursor-not-allowed items-center gap-3 rounded-2xl border border-[#30251f]/10 bg-[#30251f] px-5 py-3 text-left text-white opacity-90 shadow-lg transition"
+                    className="group flex cursor-not-allowed items-center gap-3 rounded-2xl border border-[#30251f]/10 bg-[#30251f] px-5 py-3 text-start text-white opacity-90 shadow-lg transition"
                   >
                     <FaGooglePlay className="h-5 w-5" />
 
                     <div className="leading-tight">
-                      <p className="text-[9px] uppercase tracking-widest text-white/60">
-                        Coming soon on
+                      <p className="text-[9px] uppercase tracking-widest text-white/60 rtl:tracking-normal">
+                        {t("home.app.comingSoonOn")}
                       </p>
                       <p className="text-sm font-semibold">Google Play</p>
                     </div>
@@ -1072,7 +1166,7 @@ export default function Home() {
                         </p>
 
                         <p className="mt-1 font-serif text-lg font-light">
-                          Your wedding roadmap
+                          {t("home.app.phoneTitle")}
                         </p>
 
                         <div className="mt-4 h-2 w-3/4 rounded-full bg-white/15" />
@@ -1121,21 +1215,20 @@ export default function Home() {
             <div className="mx-auto flex items-center justify-center gap-2 text-[#d5b77d]">
               <Sparkles size={16} />
 
-              <span className="text-[10px] font-semibold uppercase tracking-[0.3em]">
-                Start planning today
+              <span className="text-[10px] font-semibold uppercase tracking-[0.3em] rtl:tracking-normal">
+                {t("home.cta.eyebrow")}
               </span>
             </div>
 
-            <h2 className="mx-auto mt-4 max-w-xl font-serif text-3xl font-light leading-tight text-white sm:text-4xl">
-              Ready to build{" "}
-              <span className="italic text-[#d8bd89]">
-                your wedding roadmap?
+            <h2 className="mx-auto mt-4 max-w-xl font-serif text-3xl font-light leading-tight rtl:leading-snug text-white sm:text-4xl">
+              {t("home.cta.title")}{" "}
+              <span className="italic rtl:not-italic text-[#d8bd89]">
+                {t("home.cta.titleHighlight")}
               </span>
             </h2>
 
             <p className="mx-auto mt-3 max-w-lg text-sm leading-relaxed text-white/60">
-              Track every category, save your favorite vendors, and know exactly
-              what to do next — all in one place.
+              {t("home.cta.description")}
             </p>
 
             <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
@@ -1147,8 +1240,8 @@ export default function Home() {
                 <Sparkles size={16} />
 
                 {isAuthenticated
-                  ? "Open your roadmap"
-                  : "Get started free"}
+                  ? t("home.cta.openRoadmap")
+                  : t("home.cta.getStarted")}
               </Link>
 
               <Link
@@ -1156,7 +1249,7 @@ export default function Home() {
                 className="inline-flex items-center justify-center gap-2 rounded-full border border-white/20 px-7 py-3.5 text-sm font-medium text-white/80 transition hover:border-white/40 hover:text-white"
               >
                 <Building2 size={16} />
-                Browse vendors
+                {t("home.cta.browseVendors")}
               </Link>
 
             </div>

@@ -15,6 +15,7 @@ import Image from "next/image";
 
 import { login } from "@/features/auth/api";
 import { getApiErrorMessage } from "@/lib/error";
+import { useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
 import {
   getHomePath,
@@ -23,6 +24,7 @@ import {
 
 function LoginForm() {
   const router = useRouter();
+  const { t } = useLanguage();
   const searchParams = useSearchParams();
   const { setAuth } = useAuth();
 
@@ -79,7 +81,7 @@ function LoginForm() {
     event.preventDefault();
 
     if (!isEmailValid) {
-      setError("Please enter a valid email address.");
+      setError(t("auth.validation.invalidEmail"));
       return;
     }
 
@@ -100,7 +102,7 @@ function LoginForm() {
     } catch (err: unknown) {
       console.error("Login failed:", err);
 
-      setError(getApiErrorMessage(err, "Email or password is incorrect."));
+      setError(getApiErrorMessage(err, t("auth.loginPage.invalidCredentials")));
     } finally {
       setLoading(false);
     }
@@ -132,29 +134,28 @@ function LoginForm() {
                 <div className="mb-5 flex items-center gap-3">
                   <span className="h-px w-8 bg-[#d8c8bc]" />
 
-                  <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#d8c8bc]">
-                    Your wedding journey
+                  <p className="text-xs font-semibold uppercase tracking-[0.28em] rtl:tracking-normal text-[#d8c8bc]">
+                    {t("auth.loginPage.eyebrow")}
                   </p>
                 </div>
 
-                <h2 className="animate-slide-up text-4xl font-semibold leading-[1.12] tracking-tight text-white xl:text-[3.25rem]">
-                  Every beautiful moment starts with a plan.
+                <h2 className="animate-slide-up text-4xl font-semibold leading-[1.12] tracking-tight text-white xl:text-[3.25rem] rtl:leading-[1.4] rtl:tracking-normal">
+                  {t("auth.loginPage.heroTitle")}
                 </h2>
 
                 <p
                   className="mt-7 max-w-md text-[15px] leading-7 text-[#d9d0ca] animate-slide-up"
                   style={{ animationDelay: "0.15s" }}
                 >
-                  Discover the right services, find trusted partners, and
-                  create the wedding day you&apos;ve always imagined.
+                  {t("auth.loginPage.heroText")}
                 </p>
               </div>
 
               <p
-                className="text-sm tracking-wide text-[#bdb1a8] animate-fade-in"
+                className="text-sm tracking-wide rtl:tracking-normal text-[#bdb1a8] animate-fade-in"
                 style={{ animationDelay: "0.3s" }}
               >
-                Plan it. Celebrate it. Remember it.
+                {t("auth.brand.tagline")}
               </p>
             </div>
           </section>
@@ -181,17 +182,17 @@ function LoginForm() {
               {/* Heading */}
               <div className="mb-9">
                 <h1
-                  className="text-[2rem] font-semibold leading-tight tracking-[-0.03em] text-[#30251f] sm:text-4xl animate-slide-up"
+                  className="text-[2rem] font-semibold leading-tight tracking-[-0.03em] rtl:tracking-normal rtl:leading-snug text-[#30251f] sm:text-4xl animate-slide-up"
                   style={{ animationDelay: "0.05s" }}
                 >
-                  Sign in to your account
+                  {t("auth.loginPage.title")}
                 </h1>
 
                 <p
                   className="mx-auto mt-3 max-w-sm text-sm leading-6 text-[#7b7069] animate-slide-up"
                   style={{ animationDelay: "0.1s" }}
                 >
-                  Continue your wedding journey with 5digea.
+                  {t("auth.loginPage.subtitle")}
                 </p>
               </div>
 
@@ -202,7 +203,7 @@ function LoginForm() {
                   className="mb-5 flex items-center justify-center gap-2 rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700 animate-fade-in"
                 >
                   <CheckCircle size={16} />
-                  Password reset successfully. Please sign in.
+                  {t("auth.loginPage.resetSuccess")}
                 </div>
               )}
 
@@ -231,7 +232,7 @@ function LoginForm() {
                       !!error ||
                       (!isEmailValid && touched.email)
                     }
-                    className={`peer block w-full border-0 border-b-2 bg-transparent px-0 py-3 text-[15px] text-[#30251f] appearance-none outline-none transition-all duration-300 placeholder:text-transparent focus:ring-0 ${
+                    className={`peer block w-full border-0 border-b-2 bg-transparent px-0 py-3 text-[15px] text-[#30251f] appearance-none outline-none transition-all duration-300 placeholder:text-transparent focus:ring-0 [unicode-bidi:plaintext] ltr:text-left rtl:text-right ${
                       error ||
                       (!isEmailValid && touched.email)
                         ? "border-red-300 focus:border-red-500"
@@ -241,7 +242,7 @@ function LoginForm() {
 
                   <label
                     htmlFor="email"
-                    className={`pointer-events-none absolute left-0 top-3 -z-10 origin-left text-sm text-[#a59a92] duration-300 transform transition-all ${
+                    className={`pointer-events-none absolute start-0 top-3 -z-10 ltr:origin-left rtl:origin-right text-sm text-[#a59a92] duration-300 transform transition-all ${
                       formData.email
                         ? "-translate-y-6 scale-75"
                         : "peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-focus:-translate-y-6 peer-focus:scale-75"
@@ -252,7 +253,7 @@ function LoginForm() {
                         : "peer-focus:text-[#9a8171]"
                     }`}
                   >
-                    Email address
+                    {t("auth.email")}
                   </label>
 
                   {touched.email &&
@@ -278,8 +279,8 @@ function LoginForm() {
                           }
                         >
                           {isEmailValid
-                            ? "Valid email"
-                            : "Invalid email format"}
+                            ? t("auth.feedback.validEmail")
+                            : t("auth.feedback.invalidEmailFormat")}
                         </span>
                       </div>
                     )}
@@ -300,7 +301,7 @@ function LoginForm() {
                     autoComplete="current-password"
                     disabled={loading}
                     aria-invalid={!!error}
-                    className={`peer block w-full border-0 border-b-2 bg-transparent px-0 py-3 pr-12 text-[15px] text-[#30251f] appearance-none outline-none transition-all duration-300 placeholder:text-transparent focus:ring-0 ${
+                    className={`peer block w-full border-0 border-b-2 bg-transparent px-0 py-3 pe-12 text-[15px] text-[#30251f] appearance-none outline-none transition-all duration-300 placeholder:text-transparent focus:ring-0 [unicode-bidi:plaintext] ltr:text-left rtl:text-right ${
                       error
                         ? "border-red-300 focus:border-red-500"
                         : "border-[#ded5ce] hover:border-[#cbbdb3] focus:border-[#9a8171]"
@@ -309,7 +310,7 @@ function LoginForm() {
 
                   <label
                     htmlFor="password"
-                    className={`pointer-events-none absolute left-0 top-3 -z-10 origin-left text-sm text-[#a59a92] duration-300 transform transition-all ${
+                    className={`pointer-events-none absolute start-0 top-3 -z-10 ltr:origin-left rtl:origin-right text-sm text-[#a59a92] duration-300 transform transition-all ${
                       formData.password
                         ? "-translate-y-6 scale-75"
                         : "peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-focus:-translate-y-6 peer-focus:scale-75"
@@ -319,7 +320,7 @@ function LoginForm() {
                         : "peer-focus:text-[#9a8171]"
                     }`}
                   >
-                    Password
+                    {t("auth.password")}
                   </label>
 
                   <button
@@ -332,10 +333,10 @@ function LoginForm() {
                     disabled={loading}
                     aria-label={
                       showPassword
-                        ? "Hide password"
-                        : "Show password"
+                        ? t("auth.hidePassword")
+                        : t("auth.showPassword")
                     }
-                    className="absolute right-0 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-[#8c7d73] transition-all duration-200 hover:bg-[#f0ebe7] hover:text-[#30251f] focus:outline-none focus:ring-2 focus:ring-[#9a8171]/20 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="absolute end-0 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-[#8c7d73] transition-all duration-200 hover:bg-[#f0ebe7] hover:text-[#30251f] focus:outline-none focus:ring-2 focus:ring-[#9a8171]/20 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {showPassword ? (
                       <EyeOff
@@ -360,7 +361,7 @@ function LoginForm() {
                     href="/forgot-password"
                     className="text-xs font-medium text-[#9a8171] transition-all duration-200 hover:text-[#30251f] hover:underline hover:underline-offset-4"
                   >
-                    Forgot password?
+                    {t("auth.forgotPassword")}
                   </Link>
                 </div>
 
@@ -394,11 +395,11 @@ function LoginForm() {
                         size={18}
                         className="animate-spin"
                       />
-                      Signing in...
+                      {t("auth.loginPage.submitting")}
                     </span>
                   ) : (
                     <span className="relative">
-                      Sign in
+                      {t("auth.signIn")}
                     </span>
                   )}
                 </button>
@@ -412,7 +413,7 @@ function LoginForm() {
                 <div className="h-px flex-1 bg-[#e8e1dc]" />
 
                 <span className="text-[10px] font-medium tracking-[0.18em] text-[#a59a92]">
-                  OR
+                  {t("auth.brand.or")}
                 </span>
 
                 <div className="h-px flex-1 bg-[#e8e1dc]" />
@@ -423,15 +424,15 @@ function LoginForm() {
                 className="text-center text-sm text-[#7b7069] animate-fade-in"
                 style={{ animationDelay: "0.45s" }}
               >
-                Don&apos;t have an account?{" "}
+                {t("auth.noAccount")}{" "}
                 <Link
                   href="/register"
                   className="group relative font-semibold text-[#30251f] transition-colors duration-200 hover:text-[#9a8171]"
                 >
                   <span className="relative">
-                    Create account
+                    {t("auth.createAccount")}
 
-                    <span className="absolute -bottom-0.5 left-0 h-0.5 w-0 bg-[#9a8171] transition-all duration-300 group-hover:w-full" />
+                    <span className="absolute -bottom-0.5 start-0 h-0.5 w-0 bg-[#9a8171] transition-all duration-300 group-hover:w-full" />
                   </span>
                 </Link>
               </p>
@@ -445,7 +446,7 @@ function LoginForm() {
                   href="/"
                   className="group inline-flex items-center gap-2 text-sm font-medium text-[#9a8171] transition-all duration-200 hover:gap-3 hover:text-[#30251f]"
                 >
-                  Home - Guest Mode
+                  {t("auth.brand.guestMode")}
                 </Link>
               </div>
             </div>

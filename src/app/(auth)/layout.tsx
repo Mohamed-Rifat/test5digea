@@ -1,5 +1,5 @@
 import Footer from "@/components/layout/footer/footer";
-
+import SiteNavbar from "@/components/layout/SiteNavbar";
 export default function AuthLayout({
   children,
 }: Readonly<{
@@ -7,7 +7,10 @@ export default function AuthLayout({
 }>) {
   return (
     <>
-      {children}
+    <SiteNavbar/>
+      <div className="relative">
+        {children}
+      </div>
       <Footer />
     </>
   );

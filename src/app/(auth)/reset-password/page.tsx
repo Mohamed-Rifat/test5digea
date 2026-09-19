@@ -16,9 +16,11 @@ import {
 
 import { resetPassword } from "@/features/auth/api";
 import { getApiErrorMessage } from "@/lib/error";
+import { useLanguage } from "@/context/LanguageContext";
 
 function ResetPasswordForm() {
   const router = useRouter();
+  const { t } = useLanguage();
   const searchParams = useSearchParams();
   const email = searchParams.get("email") ?? "";
   const otp = searchParams.get("otp") ?? "";
@@ -57,14 +59,14 @@ function ResetPasswordForm() {
   const getStrengthInfo = (strength: number) => {
     if (strength === 0) return { color: "bg-gray-200", text: "", width: "0%" };
     if (strength <= 20)
-      return { color: "bg-red-500", text: "Weak", width: "20%" };
+      return { color: "bg-red-500", text: t("auth.passwordStrength.weak"), width: "20%" };
     if (strength <= 40)
-      return { color: "bg-orange-500", text: "Fair", width: "40%" };
+      return { color: "bg-orange-500", text: t("auth.passwordStrength.fair"), width: "40%" };
     if (strength <= 60)
-      return { color: "bg-yellow-500", text: "Good", width: "60%" };
+      return { color: "bg-yellow-500", text: t("auth.passwordStrength.good"), width: "60%" };
     if (strength <= 80)
-      return { color: "bg-blue-500", text: "Strong", width: "80%" };
-    return { color: "bg-emerald-500", text: "Very Strong", width: "100%" };
+      return { color: "bg-blue-500", text: t("auth.passwordStrength.strong"), width: "80%" };
+    return { color: "bg-emerald-500", text: t("auth.passwordStrength.veryStrong"), width: "100%" };
   };
 
   const handlePasswordChange = (value: string) => {
@@ -85,17 +87,17 @@ function ResetPasswordForm() {
     event.preventDefault();
 
     if (!email || !otp) {
-      setError("This reset link is invalid or has expired.");
+      setError(t("auth.resetPasswordPage.linkInvalid"));
       return;
     }
 
     if (newPassword.length < 8) {
-      setError("Password must be at least 8 characters.");
+      setError(t("auth.validation.passwordTooShort"));
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      setError("Passwords do not match.");
+      setError(t("auth.validation.passwordMismatch"));
       return;
     }
 
@@ -116,7 +118,7 @@ function ResetPasswordForm() {
       setError(
         getApiErrorMessage(
           err,
-          "We couldn't reset your password. Please try again."
+          t("auth.resetPasswordPage.failed")
         )
       );
     } finally {
@@ -151,29 +153,28 @@ function ResetPasswordForm() {
                 <div className="mb-5 flex items-center gap-3">
                   <span className="h-px w-8 bg-[#d8c8bc]" />
 
-                  <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#d8c8bc]">
-                    Account recovery
+                  <p className="text-xs font-semibold uppercase tracking-[0.28em] rtl:tracking-normal text-[#d8c8bc]">
+                    {t("auth.resetPasswordPage.eyebrow")}
                   </p>
                 </div>
 
-                <h2 className="animate-slide-up text-4xl font-semibold leading-[1.12] tracking-tight text-white xl:text-[3.25rem]">
-                  One last step to secure your account.
+                <h2 className="animate-slide-up text-4xl font-semibold leading-[1.12] tracking-tight text-white xl:text-[3.25rem] rtl:leading-[1.4] rtl:tracking-normal">
+                  {t("auth.resetPasswordPage.heroTitle")}
                 </h2>
 
                 <p
                   className="mt-7 max-w-md text-[15px] leading-7 text-[#d9d0ca] animate-slide-up"
                   style={{ animationDelay: "0.15s" }}
                 >
-                  Choose a strong new password to get back to planning your
-                  perfect wedding.
+                  {t("auth.resetPasswordPage.heroText")}
                 </p>
               </div>
 
               <p
-                className="text-sm tracking-wide text-[#bdb1a8] animate-fade-in"
+                className="text-sm tracking-wide rtl:tracking-normal text-[#bdb1a8] animate-fade-in"
                 style={{ animationDelay: "0.3s" }}
               >
-                Plan it. Celebrate it. Remember it.
+                {t("auth.brand.tagline")}
               </p>
             </div>
           </section>
@@ -199,18 +200,17 @@ function ResetPasswordForm() {
               {/* Heading */}
               <div className="mb-9">
                 <h1
-                  className="text-[2rem] font-semibold leading-tight tracking-[-0.03em] text-[#30251f] sm:text-4xl animate-slide-up"
+                  className="text-[2rem] font-semibold leading-tight tracking-[-0.03em] rtl:tracking-normal rtl:leading-snug text-[#30251f] sm:text-4xl animate-slide-up"
                   style={{ animationDelay: "0.05s" }}
                 >
-                  Set a new password
+                  {t("auth.resetPasswordPage.title")}
                 </h1>
 
                 <p
                   className="mx-auto mt-3 max-w-sm text-sm leading-6 text-[#7b7069] animate-slide-up"
                   style={{ animationDelay: "0.1s" }}
                 >
-                  Your new password must be different from previous
-                  passwords.
+                  {t("auth.resetPasswordPage.subtitle")}
                 </p>
               </div>
 
@@ -224,24 +224,24 @@ function ResetPasswordForm() {
                   </div>
 
                   <p className="mt-4 text-sm font-semibold text-emerald-700">
-                    Password reset successfully
+                    {t("auth.resetPasswordPage.successTitle")}
                   </p>
 
                   <p className="mt-1 text-xs leading-5 text-emerald-600">
-                    Taking you to sign in...
+                    {t("auth.resetPasswordPage.successMessage")}
                   </p>
                 </div>
               ) : linkInvalid ? (
                 <div className="animate-fade-in rounded-2xl border border-red-100 bg-red-50 px-6 py-8 text-center">
                   <p className="text-sm font-semibold text-red-700">
-                    This reset link is invalid or has expired.
+                    {t("auth.resetPasswordPage.linkInvalid")}
                   </p>
 
                   <Link
                     href="/forgot-password"
                     className="mt-4 inline-flex items-center justify-center rounded-full bg-[#30251f] px-5 py-2.5 text-xs font-semibold text-white transition hover:bg-[#43352d]"
                   >
-                    Request a new code
+                    {t("auth.resetPasswordPage.requestNewCode")}
                   </Link>
                 </div>
               ) : (
@@ -264,7 +264,7 @@ function ResetPasswordForm() {
                         autoComplete="new-password"
                         disabled={loading}
                         aria-invalid={!!error}
-                        className={`peer block w-full border-0 border-b-2 bg-transparent px-0 py-3 pr-12 text-[15px] text-[#30251f] appearance-none outline-none transition-all duration-300 placeholder:text-transparent focus:ring-0 ${
+                        className={`peer block w-full border-0 border-b-2 bg-transparent px-0 py-3 pe-12 text-[15px] text-[#30251f] appearance-none outline-none transition-all duration-300 placeholder:text-transparent focus:ring-0 [unicode-bidi:plaintext] ltr:text-left rtl:text-right ${
                           error
                             ? "border-red-300 focus:border-red-500"
                             : newPassword.length > 0 && passwordStrength > 0
@@ -279,7 +279,7 @@ function ResetPasswordForm() {
 
                       <label
                         htmlFor="newPassword"
-                        className={`pointer-events-none absolute left-0 top-3 -z-10 origin-left text-sm text-[#a59a92] duration-300 transform transition-all ${
+                        className={`pointer-events-none absolute start-0 top-3 -z-10 ltr:origin-left rtl:origin-right text-sm text-[#a59a92] duration-300 transform transition-all ${
                           newPassword
                             ? "-translate-y-6 scale-75"
                             : "peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-focus:-translate-y-6 peer-focus:scale-75"
@@ -289,7 +289,7 @@ function ResetPasswordForm() {
                             : "peer-focus:text-[#9a8171]"
                         }`}
                       >
-                        New password
+                        {t("auth.newPassword")}
                       </label>
 
                       <button
@@ -297,9 +297,9 @@ function ResetPasswordForm() {
                         onClick={() => setShowPassword((prev) => !prev)}
                         disabled={loading}
                         aria-label={
-                          showPassword ? "Hide password" : "Show password"
+                          showPassword ? t("auth.hidePassword") : t("auth.showPassword")
                         }
-                        className="absolute right-0 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-[#8c7d73] transition-all duration-200 hover:bg-[#f0ebe7] hover:text-[#30251f] focus:outline-none focus:ring-2 focus:ring-[#9a8171]/20 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="absolute end-0 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-[#8c7d73] transition-all duration-200 hover:bg-[#f0ebe7] hover:text-[#30251f] focus:outline-none focus:ring-2 focus:ring-[#9a8171]/20 disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         {showPassword ? (
                           <EyeOff size={18} strokeWidth={1.8} />
@@ -339,11 +339,11 @@ function ResetPasswordForm() {
 
                         <div className="grid grid-cols-2 gap-x-4 gap-y-1 pt-1">
                           {[
-                            { key: "minLength", label: "At least 8 characters" },
-                            { key: "hasUpperCase", label: "Uppercase letter" },
-                            { key: "hasLowerCase", label: "Lowercase letter" },
-                            { key: "hasNumber", label: "Number" },
-                            { key: "hasSpecialChar", label: "Special character" },
+                            { key: "minLength", label: t("auth.passwordRequirements.minLength") },
+                            { key: "hasUpperCase", label: t("auth.passwordRequirements.hasUpperCase") },
+                            { key: "hasLowerCase", label: t("auth.passwordRequirements.hasLowerCase") },
+                            { key: "hasNumber", label: t("auth.passwordRequirements.hasNumber") },
+                            { key: "hasSpecialChar", label: t("auth.passwordRequirements.hasSpecialChar") },
                           ].map((req) => (
                             <div
                               key={req.key}
@@ -392,7 +392,7 @@ function ResetPasswordForm() {
                         autoComplete="new-password"
                         disabled={loading}
                         aria-invalid={passwordsDoNotMatch || !!error}
-                        className={`peer block w-full border-0 border-b-2 bg-transparent px-0 py-3 pr-12 text-[15px] text-[#30251f] appearance-none outline-none transition-all duration-300 placeholder:text-transparent focus:ring-0 ${
+                        className={`peer block w-full border-0 border-b-2 bg-transparent px-0 py-3 pe-12 text-[15px] text-[#30251f] appearance-none outline-none transition-all duration-300 placeholder:text-transparent focus:ring-0 [unicode-bidi:plaintext] ltr:text-left rtl:text-right ${
                           passwordsDoNotMatch || error
                             ? "border-red-300 focus:border-red-500"
                             : passwordsMatch
@@ -403,7 +403,7 @@ function ResetPasswordForm() {
 
                       <label
                         htmlFor="confirmPassword"
-                        className={`pointer-events-none absolute left-0 top-3 -z-10 origin-left transform text-sm transition-all duration-300 ${
+                        className={`pointer-events-none absolute start-0 top-3 -z-10 ltr:origin-left rtl:origin-right transform text-sm transition-all duration-300 ${
                           confirmPassword
                             ? "-translate-y-6 scale-75"
                             : "peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-focus:-translate-y-6 peer-focus:scale-75"
@@ -415,7 +415,7 @@ function ResetPasswordForm() {
                               : "text-[#a59a92] peer-focus:text-[#9a8171]"
                         }`}
                       >
-                        Confirm new password
+                        {t("auth.confirmNewPassword")}
                       </label>
 
                       <button
@@ -426,10 +426,10 @@ function ResetPasswordForm() {
                         disabled={loading}
                         aria-label={
                           showConfirmPassword
-                            ? "Hide confirm password"
-                            : "Show confirm password"
+                            ? t("auth.hideConfirmPassword")
+                            : t("auth.showConfirmPassword")
                         }
-                        className="absolute right-0 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-[#8c7d73] transition-all duration-200 hover:bg-[#f0ebe7] hover:text-[#30251f] focus:outline-none focus:ring-2 focus:ring-[#9a8171]/20 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="absolute end-0 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-[#8c7d73] transition-all duration-200 hover:bg-[#f0ebe7] hover:text-[#30251f] focus:outline-none focus:ring-2 focus:ring-[#9a8171]/20 disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         {showConfirmPassword ? (
                           <EyeOff size={18} strokeWidth={1.8} />
@@ -445,14 +445,14 @@ function ResetPasswordForm() {
                           <>
                             <Check size={14} className="text-emerald-500" />
                             <span className="text-emerald-600">
-                              Passwords match
+                              {t("auth.feedback.passwordsMatch")}
                             </span>
                           </>
                         ) : (
                           <>
                             <X size={14} className="text-red-500" />
                             <span className="text-red-500">
-                              Passwords do not match
+                              {t("auth.feedback.passwordsDoNotMatch")}
                             </span>
                           </>
                         )}
@@ -483,10 +483,10 @@ function ResetPasswordForm() {
                     {loading ? (
                       <span className="relative flex items-center gap-2">
                         <Loader2 size={18} className="animate-spin" />
-                        Resetting...
+                        {t("auth.resetPasswordPage.submitting")}
                       </span>
                     ) : (
-                      <span className="relative">Reset password</span>
+                      <span className="relative">{t("auth.resetPassword")}</span>
                     )}
                   </button>
                 </form>
@@ -500,9 +500,9 @@ function ResetPasswordForm() {
                 >
                   <ArrowLeft
                     size={15}
-                    className="transition-transform duration-200 group-hover:-translate-x-0.5"
+                    className="transition-transform duration-200 rtl:rotate-180 ltr:group-hover:-translate-x-0.5 rtl:group-hover:translate-x-0.5"
                   />
-                  Back to sign in
+                  {t("auth.brand.backToSignIn")}
                 </Link>
               </div>
             </div>

@@ -8,12 +8,15 @@ import { ArrowLeft, Loader2, ShieldCheck } from "lucide-react";
 
 import { forgotPassword, verifyOtp } from "@/features/auth/api";
 import { getApiErrorMessage } from "@/lib/error";
+import { useLanguage } from "@/context/LanguageContext";
+import { normalizeDigits } from "@/lib/i18n";
 
 const OTP_LENGTH = 6;
 const RESEND_COOLDOWN_SECONDS = 30;
 
 function VerifyOtpForm() {
   const router = useRouter();
+  const { t } = useLanguage();
   const searchParams = useSearchParams();
   const email = searchParams.get("email") ?? "";
 
@@ -37,7 +40,7 @@ function VerifyOtpForm() {
   const otp = digits.join("");
 
   const handleDigitChange = (index: number, value: string) => {
-    const sanitized = value.replace(/\D/g, "");
+    const sanitized = normalizeDigits(value).replace(/\D/g, "");
 
     if (!sanitized) {
       const next = [...digits];
@@ -76,12 +79,12 @@ function VerifyOtpForm() {
     event.preventDefault();
 
     if (!email) {
-      setError("Missing email address. Please start over.");
+      setError(t("auth.verifyOtpPage.missingEmail"));
       return;
     }
 
     if (otp.length !== OTP_LENGTH) {
-      setError(`Please enter the ${OTP_LENGTH}-digit code.`);
+      setError(t("auth.verifyOtpPage.enterCode", { length: OTP_LENGTH }));
       return;
     }
 
@@ -102,7 +105,7 @@ function VerifyOtpForm() {
       setError(
         getApiErrorMessage(
           err,
-          "That code isn't valid or has expired. Please try again."
+          t("auth.verifyOtpPage.invalidCode")
         )
       );
     } finally {
@@ -125,7 +128,7 @@ function VerifyOtpForm() {
       console.error("Resending OTP failed:", err);
 
       setError(
-        getApiErrorMessage(err, "Couldn't resend the code. Please try again.")
+        getApiErrorMessage(err, t("auth.verifyOtpPage.resendFailed"))
       );
     } finally {
       setResending(false);
@@ -157,29 +160,28 @@ function VerifyOtpForm() {
                 <div className="mb-5 flex items-center gap-3">
                   <span className="h-px w-8 bg-[#d8c8bc]" />
 
-                  <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#d8c8bc]">
-                    Account recovery
+                  <p className="text-xs font-semibold uppercase tracking-[0.28em] rtl:tracking-normal text-[#d8c8bc]">
+                    {t("auth.verifyOtpPage.eyebrow")}
                   </p>
                 </div>
 
-                <h2 className="animate-slide-up text-4xl font-semibold leading-[1.12] tracking-tight text-white xl:text-[3.25rem]">
-                  Almost there — just confirm it&apos;s you.
+                <h2 className="animate-slide-up text-4xl font-semibold leading-[1.12] tracking-tight text-white xl:text-[3.25rem] rtl:leading-[1.4] rtl:tracking-normal">
+                  {t("auth.verifyOtpPage.heroTitle")}
                 </h2>
 
                 <p
                   className="mt-7 max-w-md text-[15px] leading-7 text-[#d9d0ca] animate-slide-up"
                   style={{ animationDelay: "0.15s" }}
                 >
-                  Enter the code we sent to your email to continue resetting
-                  your password.
+                  {t("auth.verifyOtpPage.heroText")}
                 </p>
               </div>
 
               <p
-                className="text-sm tracking-wide text-[#bdb1a8] animate-fade-in"
+                className="text-sm tracking-wide rtl:tracking-normal text-[#bdb1a8] animate-fade-in"
                 style={{ animationDelay: "0.3s" }}
               >
-                Plan it. Celebrate it. Remember it.
+                {t("auth.brand.tagline")}
               </p>
             </div>
           </section>
@@ -209,10 +211,10 @@ function VerifyOtpForm() {
                 </div>
 
                 <h1
-                  className="text-[2rem] font-semibold leading-tight tracking-[-0.03em] text-[#30251f] sm:text-4xl animate-slide-up"
+                  className="text-[2rem] font-semibold leading-tight tracking-[-0.03em] rtl:tracking-normal rtl:leading-snug text-[#30251f] sm:text-4xl animate-slide-up"
                   style={{ animationDelay: "0.05s" }}
                 >
-                  Enter verification code
+                  {t("auth.verifyOtpPage.title")}
                 </h1>
 
                 <p
@@ -221,14 +223,14 @@ function VerifyOtpForm() {
                 >
                   {email ? (
                     <>
-                      We sent a {OTP_LENGTH}-digit code to{" "}
-                      <span className="font-semibold text-[#30251f]">
+                      {t("auth.verifyOtpPage.sentToPrefix", { length: OTP_LENGTH })}{" "}
+                      <bdi className="font-semibold text-[#30251f]">
                         {email}
-                      </span>
+                      </bdi>
                       .
                     </>
                   ) : (
-                    "We couldn't find an email for this request."
+                    t("auth.verifyOtpPage.noEmail")
                   )}
                 </p>
               </div>
@@ -236,6 +238,7 @@ function VerifyOtpForm() {
               <form onSubmit={handleSubmit} noValidate className="space-y-6">
                 {/* OTP boxes */}
                 <div
+                  dir="ltr"
                   className="flex justify-center gap-2 animate-fade-in sm:gap-3"
                   style={{ animationDelay: "0.15s" }}
                 >
@@ -255,7 +258,7 @@ function VerifyOtpForm() {
                       }
                       onKeyDown={(event) => handleKeyDown(index, event)}
                       disabled={loading}
-                      aria-label={`Digit ${index + 1}`}
+                      aria-label={t("auth.verifyOtpPage.digitLabel", { number: index + 1 })}
                       aria-invalid={!!error}
                       className={`h-13 w-11 rounded-xl border-2 bg-transparent text-center text-lg font-semibold text-[#30251f] outline-none transition-all duration-200 sm:h-14 sm:w-12 ${
                         error
@@ -287,20 +290,20 @@ function VerifyOtpForm() {
                   {loading ? (
                     <span className="relative flex items-center gap-2">
                       <Loader2 size={18} className="animate-spin" />
-                      Verifying...
+                      {t("auth.verifyOtpPage.submitting")}
                     </span>
                   ) : (
-                    <span className="relative">Verify code</span>
+                    <span className="relative">{t("auth.verifyOtpPage.submit")}</span>
                   )}
                 </button>
               </form>
 
               {/* Resend */}
               <p className="mt-6 text-center text-sm text-[#7b7069]">
-                Didn&apos;t get the code?{" "}
+                {t("auth.verifyOtpPage.didntGetCode")}{" "}
                 {cooldown > 0 ? (
                   <span className="font-semibold text-[#a59a92]">
-                    Resend in {cooldown}s
+                    {t("auth.verifyOtpPage.resendIn", { seconds: cooldown })}
                   </span>
                 ) : (
                   <button
@@ -309,7 +312,7 @@ function VerifyOtpForm() {
                     disabled={resending || !email}
                     className="font-semibold text-[#30251f] transition-colors duration-200 hover:text-[#9a8171] disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    {resending ? "Resending..." : "Resend code"}
+                    {resending ? t("auth.verifyOtpPage.resending") : t("auth.verifyOtpPage.resend")}
                   </button>
                 )}
               </p>
@@ -322,9 +325,9 @@ function VerifyOtpForm() {
                 >
                   <ArrowLeft
                     size={15}
-                    className="transition-transform duration-200 group-hover:-translate-x-0.5"
+                    className="transition-transform duration-200 rtl:rotate-180 ltr:group-hover:-translate-x-0.5 rtl:group-hover:translate-x-0.5"
                   />
-                  Back to sign in
+                  {t("auth.brand.backToSignIn")}
                 </Link>
               </div>
             </div>

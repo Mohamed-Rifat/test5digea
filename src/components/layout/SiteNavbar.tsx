@@ -20,35 +20,44 @@ import {
   Store,
   BriefcaseBusiness,
   KeyRound,
+  Handshake,
 } from "lucide-react";
 
 import { useAuth } from "@/context/AuthContext";
 import { getHomePath } from "@/lib/auth-utils";
 import { useCategories } from "@/features/categories/hooks/useCategories";
+import LanguageSwitcher from "@/components/layout/LanguageSwitcher";
+import { useLanguage } from "@/context/LanguageContext";
+import type { TranslationKey } from "@/locales";
 
 // Primary links rendered before the Categories dropdown.
-const primaryLinks = [
-  { label: "Home", href: "/" },
-  { label: "Services", href: "/services" },
-  { label: "Vendors", href: "/vendors" },
+const primaryLinks: { labelKey: TranslationKey; href: string }[] = [
+  { labelKey: "navbar.home", href: "/" },
+  { labelKey: "navbar.services", href: "/services" },
+  { labelKey: "navbar.vendors", href: "/vendors" },
 ];
 
 // Links rendered after the Categories dropdown.
-const secondaryLinks = [
-  { label: "About", href: "/about" },
-  { label: "Contact", href: "/contact" },
+const secondaryLinks: { labelKey: TranslationKey; href: string }[] = [
+  { labelKey: "navbar.about", href: "/about" },
+  { labelKey: "navbar.contact", href: "/contact" },
 ];
 
 // Where the navbar search can jump to (Vendors or Services) — same pattern
 // as the admin dashboard's quick search.
-const searchTargets = [
-  { label: "Vendors", href: "/vendors", icon: Store },
-  { label: "Services", href: "/services", icon: BriefcaseBusiness },
+const searchTargets: {
+  labelKey: TranslationKey;
+  href: string;
+  icon: typeof Store;
+}[] = [
+  { labelKey: "navbar.vendors", href: "/vendors", icon: Store },
+  { labelKey: "navbar.services", href: "/services", icon: BriefcaseBusiness },
 ];
 
 export default function SiteNavbar() {
   const router = useRouter();
   const pathname = usePathname();
+  const { t } = useLanguage();
   const { isAuthenticated, isAdmin, isVendor, isUser, user, role, logout } =
     useAuth();
   const { categories } = useCategories();
@@ -71,6 +80,7 @@ export default function SiteNavbar() {
     href === "/" ? pathname === "/" : pathname?.startsWith(href);
 
   const activeCategories = categories.filter((c) => c.isActive);
+  const canJoinAsVendor = !isAuthenticated || isUser;
 
   // Close the desktop categories dropdown on outside click.
   useEffect(() => {
@@ -199,7 +209,7 @@ export default function SiteNavbar() {
                   : "text-[#5f544d] hover:bg-[#f0e9e0] hover:text-[#30251f]"
               }`}
             >
-              {link.label}
+              {t(link.labelKey)}
             </Link>
           ))}
 
@@ -215,7 +225,7 @@ export default function SiteNavbar() {
                   : "text-[#5f544d] hover:bg-[#f0e9e0] hover:text-[#30251f]"
               }`}
             >
-              Categories
+              {t("navbar.categories")}
               <ChevronDown
                 size={16}
                 className={`transition-transform ${categoriesOpen ? "rotate-180" : ""}`}
@@ -225,11 +235,11 @@ export default function SiteNavbar() {
             {categoriesOpen && (
               <div className="absolute left-1/2 top-full z-30 mt-3 w-[min(90vw,720px)] -translate-x-1/2 rounded-2xl border border-[#eee7e1] bg-white p-4 shadow-[0_18px_40px_rgba(48,37,31,0.14)]">
                 <p className="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-[#a47e43]">
-                  Browse by category
+                  {t("navbar.browseByCategory")}
                 </p>
                 {activeCategories.length === 0 ? (
                   <p className="px-1 py-2 text-sm text-[#766d67]">
-                    No categories available yet.
+                    {t("navbar.noCategories")}
                   </p>
                 ) : (
                   <div className="grid grid-cols-2 gap-1 sm:grid-cols-3">
@@ -238,7 +248,7 @@ export default function SiteNavbar() {
                         key={category.id}
                         type="button"
                         onClick={() => goToCategory(category.id)}
-                        className="rounded-xl px-3 py-2 text-left text-sm text-[#5f544d] transition hover:bg-[#faf7f4] hover:text-[#30251f]"
+                        className="rounded-xl px-3 py-2 text-start text-sm text-[#5f544d] transition hover:bg-[#faf7f4] hover:text-[#30251f]"
                       >
                         {category.name}
                       </button>
@@ -251,8 +261,8 @@ export default function SiteNavbar() {
                     onClick={() => setCategoriesOpen(false)}
                     className="flex items-center gap-1 px-1 py-1 text-sm font-medium text-[#a47e43] hover:text-[#8a6836]"
                   >
-                    View all vendors
-                    <ChevronRight size={14} />
+                    {t("navbar.viewAllVendors")}
+                    <ChevronRight size={14} className="rtl:rotate-180" />
                   </Link>
                 </div>
               </div>
@@ -269,7 +279,7 @@ export default function SiteNavbar() {
                   : "text-[#5f544d] hover:bg-[#f0e9e0] hover:text-[#30251f]"
               }`}
             >
-              {link.label}
+              {t(link.labelKey)}
             </Link>
           ))}
         </nav>
@@ -281,7 +291,7 @@ export default function SiteNavbar() {
             <form onSubmit={handleSearchSubmit} className="relative">
               <Search
                 size={16}
-                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#a89c92]"
+                className="pointer-events-none absolute inset-s-3 top-1/2 -translate-y-1/2 text-[#a89c92]"
               />
               <input
                 value={search}
@@ -291,13 +301,13 @@ export default function SiteNavbar() {
                 }}
                 onFocus={() => setShowSearchTargets(true)}
                 type="text"
-                placeholder="Search…"
-                className="w-40 rounded-full border border-[#e4dbd0] bg-white py-2 pl-9 pr-3 text-sm text-[#30251f] outline-none transition focus:w-64 focus:border-[#b99a62]"
+                placeholder={t("navbar.searchPlaceholder")}
+                className="w-40 rounded-full border border-[#e4dbd0] bg-white py-2 ps-9 pe-3 text-sm text-[#30251f] outline-none transition focus:w-64 focus:border-[#b99a62]"
               />
             </form>
 
             {showSearchTargets && (
-              <div className="absolute right-0 top-full z-30 mt-2 w-64 overflow-hidden rounded-xl border border-[#eee7e1] bg-white p-1.5 shadow-[0_18px_40px_rgba(48,37,31,0.14)]">
+              <div className="absolute inset-e-0 top-full z-30 mt-2 w-64 overflow-hidden rounded-xl border border-[#eee7e1] bg-white p-1.5 shadow-[0_18px_40px_rgba(48,37,31,0.14)]">
                 {searchTargets.map((target) => {
                   const Icon = target.icon;
                   return (
@@ -305,16 +315,17 @@ export default function SiteNavbar() {
                       key={target.href}
                       type="button"
                       onClick={() => goToSearch(target.href)}
-                      className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm text-[#5f544d] transition hover:bg-[#faf7f4] hover:text-[#30251f]"
+                      className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-start text-sm text-[#5f544d] transition hover:bg-[#faf7f4] hover:text-[#30251f]"
                     >
                       <Icon size={15} className="text-[#a47e43]" />
                       {search.trim() ? (
                         <span>
-                          Search <span className="font-semibold">{target.label}</span>{" "}
-                          for &ldquo;{search.trim()}&rdquo;
+                          {t("navbar.searchPrefix")}{" "}
+                          <span className="font-semibold">{t(target.labelKey)}</span>{" "}
+                          {t("navbar.searchQuery", { query: search.trim() })}
                         </span>
                       ) : (
-                        <span>Browse {target.label}</span>
+                        <span>{t("navbar.browse", { target: t(target.labelKey) })}</span>
                       )}
                     </button>
                   );
@@ -327,7 +338,7 @@ export default function SiteNavbar() {
             <>
               <Link
                 href="/favorites"
-                aria-label="Favorites"
+                aria-label={t("navbar.favorites")}
                 className={`flex h-10 w-10 items-center justify-center rounded-full border border-[#e4dbd0] text-[#5f544d] transition hover:border-[#b99a62] hover:text-[#a47e43] ${
                   isActive("/favorites") ? "border-[#b99a62] text-[#a47e43]" : ""
                 }`}
@@ -337,7 +348,7 @@ export default function SiteNavbar() {
 
               <Link
                 href="/roadmap"
-                aria-label="Wedding Roadmap"
+                aria-label={t("navbar.weddingRoadmap")}
                 className={`flex h-10 w-10 items-center justify-center rounded-full border border-[#e4dbd0] text-[#5f544d] transition hover:border-[#b99a62] hover:text-[#a47e43] ${
                   isActive("/roadmap") ? "border-[#b99a62] text-[#a47e43]" : ""
                 }`}
@@ -347,34 +358,50 @@ export default function SiteNavbar() {
             </>
           )}
 
+          <LanguageSwitcher />
+
           {!isAuthenticated ? (
-            <div className="flex items-center gap-2 pl-2">
+            <div className="flex items-center gap-2 ps-2">
               <Link
                 href="/login"
                 className="rounded-full px-4 py-2 text-sm font-medium text-[#5f544d] transition hover:text-[#30251f]"
               >
-                Log In
+                {t("navbar.login")}
               </Link>
 
               <Link
                 href="/register"
                 className="rounded-full border border-[#c6a66f] bg-[#30251f] px-5 py-2.5 text-sm font-medium text-white transition hover:bg-[#42332a]"
               >
-                Sign Up
+                {t("navbar.signUp")}
               </Link>
+
+          {canJoinAsVendor && (
+            <Link
+              href="/become-a-vendor"
+              className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition ${
+                isActive("/become-a-vendor")
+                  ? "bg-[#30251f] text-white"
+                  : "text-[#a47e43] hover:bg-[#f0e9e0] hover:text-[#8a6836]"
+              }`}
+            >
+              <Handshake size={15} />
+              {t("navbar.joinUs")}
+            </Link>
+          )}
             </div>
           ) : (
-            <div className="relative pl-2">
+            <div className="relative ps-2">
               <button
                 type="button"
                 onClick={() => setMenuOpen((v) => !v)}
-                className="flex items-center gap-2 rounded-full border border-[#e4dbd0] py-1.5 pl-1.5 pr-3 text-sm font-medium text-[#30251f] transition hover:border-[#b99a62]"
+                className="flex items-center gap-2 rounded-full border border-[#e4dbd0] py-1.5 ps-1.5 pe-3 text-sm font-medium text-[#30251f] transition hover:border-[#b99a62]"
               >
                 <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#f0e9e0] text-[#a47e43]">
                   <UserIcon size={16} />
                 </span>
                 <span className="max-w-27.5 truncate">
-                  {user?.fullName || "Account"}
+                  {user?.fullName || t("navbar.account")}
                 </span>
               </button>
 
@@ -384,7 +411,7 @@ export default function SiteNavbar() {
                     className="fixed inset-0 z-10"
                     onClick={() => setMenuOpen(false)}
                   />
-                  <div className="absolute right-0 z-20 mt-2 w-52 overflow-hidden rounded-2xl border border-[#eee7e1] bg-white py-2 shadow-[0_18px_40px_rgba(48,37,31,0.14)]">
+                  <div className="absolute inset-e-0 z-20 mt-2 w-52 overflow-hidden rounded-2xl border border-[#eee7e1] bg-white py-2 shadow-[0_18px_40px_rgba(48,37,31,0.14)]">
                     {(isAdmin || isVendor) && (
                       <Link
                         href={getHomePath(role)}
@@ -392,7 +419,7 @@ export default function SiteNavbar() {
                         className="flex items-center gap-2 px-4 py-2.5 text-sm text-[#5f544d] hover:bg-[#faf7f4] hover:text-[#30251f]"
                       >
                         <LayoutDashboard size={16} />
-                        {isAdmin ? "Admin Dashboard" : "Vendor Dashboard"}
+                        {isAdmin ? t("navbar.adminDashboard") : t("navbar.vendorDashboard")}
                       </Link>
                     )}
 
@@ -404,7 +431,7 @@ export default function SiteNavbar() {
                           className="flex items-center gap-2 px-4 py-2.5 text-sm text-[#5f544d] hover:bg-[#faf7f4] hover:text-[#30251f]"
                         >
                           <User size={16} />
-                          My Profile
+                          {t("navbar.myProfile")}
                         </Link>
                         <Link
                           href="/favorites"
@@ -412,7 +439,7 @@ export default function SiteNavbar() {
                           className="flex items-center gap-2 px-4 py-2.5 text-sm text-[#5f544d] hover:bg-[#faf7f4] hover:text-[#30251f]"
                         >
                           <Heart size={16} />
-                          Favorites
+                          {t("navbar.favorites")}
                         </Link>
                         <Link
                           href="/roadmap"
@@ -420,7 +447,7 @@ export default function SiteNavbar() {
                           className="flex items-center gap-2 px-4 py-2.5 text-sm text-[#5f544d] hover:bg-[#faf7f4] hover:text-[#30251f]"
                         >
                           <Map size={16} />
-                          Wedding Roadmap
+                          {t("navbar.weddingRoadmap")}
                         </Link>
                       </>
                     )}
@@ -431,10 +458,10 @@ export default function SiteNavbar() {
                         setMenuOpen(false);
                         logout();
                       }}
-                      className="flex w-full items-center gap-2 border-t border-[#f0e9e0] px-4 py-2.5 text-left text-sm text-[#b3453a] hover:bg-[#faf7f4]"
+                      className="flex w-full items-center gap-2 border-t border-[#f0e9e0] px-4 py-2.5 text-start text-sm text-[#b3453a] hover:bg-[#faf7f4]"
                     >
                       <LogOut size={16} />
-                      Logout
+                      {t("navbar.logout")}
                     </button>
                   </div>
                 </>
@@ -453,7 +480,7 @@ export default function SiteNavbar() {
               setMobileAccountOpen(false);
               setMobileSearchOpen((v) => !v);
             }}
-            aria-label="Search"
+            aria-label={t("common.search")}
             aria-expanded={mobileSearchOpen}
             className={`flex h-9 w-9 items-center justify-center rounded-xl border border-[#e4dbd0] transition ${
               mobileSearchOpen
@@ -468,7 +495,7 @@ export default function SiteNavbar() {
             <>
               <Link
                 href="/favorites"
-                aria-label="Favorites"
+                aria-label={t("navbar.favorites")}
                 className={`flex h-9 w-9 items-center justify-center rounded-xl border border-[#e4dbd0] text-[#5f544d] transition hover:border-[#b99a62] hover:text-[#a47e43] ${
                   isActive("/favorites") ? "border-[#b99a62] text-[#a47e43]" : ""
                 }`}
@@ -486,7 +513,7 @@ export default function SiteNavbar() {
                     setMobileSearchOpen(false);
                     setMobileAccountOpen((v) => !v);
                   }}
-                  aria-label="Account menu"
+                  aria-label={t("navbar.accountMenu")}
                   aria-expanded={mobileAccountOpen}
                   className={`flex h-9 w-9 items-center justify-center rounded-xl border border-[#e4dbd0] transition ${
                     mobileAccountOpen
@@ -498,14 +525,14 @@ export default function SiteNavbar() {
                 </button>
 
                 {mobileAccountOpen && (
-                  <div className="absolute right-0 z-30 mt-2 w-52 overflow-hidden rounded-2xl border border-[#eee7e1] bg-white py-2 shadow-[0_18px_40px_rgba(48,37,31,0.14)]">
+                  <div className="absolute inset-e-0 z-30 mt-2 w-52 overflow-hidden rounded-2xl border border-[#eee7e1] bg-white py-2 shadow-[0_18px_40px_rgba(48,37,31,0.14)]">
                     <Link
                       href="/roadmap"
                       onClick={() => setMobileAccountOpen(false)}
                       className="flex items-center gap-2 px-4 py-2.5 text-sm text-[#5f544d] hover:bg-[#faf7f4] hover:text-[#30251f]"
                     >
                       <Map size={16} />
-                      Wedding Roadmap
+                      {t("navbar.weddingRoadmap")}
                     </Link>
                     <Link
                       href="/profile"
@@ -513,7 +540,7 @@ export default function SiteNavbar() {
                       className="flex items-center gap-2 px-4 py-2.5 text-sm text-[#5f544d] hover:bg-[#faf7f4] hover:text-[#30251f]"
                     >
                       <User size={16} />
-                      My Profile
+                      {t("navbar.myProfile")}
                     </Link>
                     <Link
                       href="/change-password"
@@ -521,7 +548,7 @@ export default function SiteNavbar() {
                       className="flex items-center gap-2 px-4 py-2.5 text-sm text-[#5f544d] hover:bg-[#faf7f4] hover:text-[#30251f]"
                     >
                       <KeyRound size={16} />
-                      Security
+                      {t("navbar.security")}
                     </Link>
                   </div>
                 )}
@@ -529,10 +556,14 @@ export default function SiteNavbar() {
             </>
           )}
 
+          {/* Language switcher (hidden on very narrow phones, where it lives
+              in the drawer instead so the header row never overflows). */}
+          <LanguageSwitcher variant="compact" className="hidden min-[360px]:block" />
+
           {/* MOBILE MENU BUTTON */}
           <button
             type="button"
-            aria-label="Toggle menu"
+            aria-label={t("navbar.openMenu")}
             onClick={openMobileDrawer}
             className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#e4dbd0] text-[#30251f]"
           >
@@ -547,15 +578,15 @@ export default function SiteNavbar() {
           <form onSubmit={handleSearchSubmit} className="relative">
             <Search
               size={16}
-              className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[#a89c92]"
+              className="pointer-events-none absolute inset-s-3.5 top-1/2 -translate-y-1/2 text-[#a89c92]"
             />
             <input
               ref={mobileSearchInputRef}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               type="text"
-              placeholder="Search vendors, services…"
-              className="h-11 w-full rounded-full border border-[#e4dbd0] bg-[#faf7f4] pl-10 pr-4 text-sm text-[#30251f] outline-none transition focus:border-[#b99a62] focus:bg-white"
+              placeholder={t("navbar.searchPlaceholderMobile")}
+              className="h-11 w-full rounded-full border border-[#e4dbd0] bg-[#faf7f4] ps-10 pe-4 text-sm text-[#30251f] outline-none transition focus:border-[#b99a62] focus:bg-white"
             />
           </form>
 
@@ -567,15 +598,16 @@ export default function SiteNavbar() {
                   key={target.href}
                   type="button"
                   onClick={() => goToSearch(target.href)}
-                  className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm text-[#5f544d] transition hover:bg-[#faf7f4] hover:text-[#30251f]"
+                  className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-start text-sm text-[#5f544d] transition hover:bg-[#faf7f4] hover:text-[#30251f]"
                 >
                   <Icon size={15} className="text-[#a47e43]" />
                   {search.trim() ? (
                     <span>
-                      Search <span className="font-semibold">{target.label}</span>
+                      {t("navbar.searchPrefix")}{" "}
+                      <span className="font-semibold">{t(target.labelKey)}</span>
                     </span>
                   ) : (
-                    <span>Browse {target.label}</span>
+                    <span>{t("navbar.browse", { target: t(target.labelKey) })}</span>
                   )}
                 </button>
               );
@@ -604,8 +636,8 @@ export default function SiteNavbar() {
 
         {/* panel */}
         <div
-          className={`absolute right-0 top-0 flex h-full w-[85%] max-w-sm flex-col bg-[#f8f5ef] shadow-2xl transition-transform duration-300 ease-out ${
-            mobileOpen ? "translate-x-0" : "translate-x-full"
+          className={`absolute inset-e-0 top-0 flex h-full w-[85%] max-w-sm flex-col bg-[#f8f5ef] shadow-2xl transition-transform duration-300 ease-out ${
+            mobileOpen ? "translate-x-0" : "translate-x-full rtl:-translate-x-full"
           }`}
         >
           {/* header */}
@@ -628,7 +660,7 @@ export default function SiteNavbar() {
             </Link>
             <button
               type="button"
-              aria-label="Close menu"
+              aria-label={t("navbar.closeMenu")}
               onClick={closeMobile}
               className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#e4dbd0] text-[#30251f]"
             >
@@ -650,7 +682,7 @@ export default function SiteNavbar() {
                       : "text-[#5f544d] hover:bg-[#f0e9e0]"
                   }`}
                 >
-                  {link.label}
+                  {t(link.labelKey)}
                 </Link>
               ))}
 
@@ -664,7 +696,7 @@ export default function SiteNavbar() {
               >
                 <span className="flex items-center gap-2">
                   <LayoutGrid size={16} />
-                  Categories
+                  {t("navbar.categories")}
                 </span>
                 <ChevronDown
                   size={16}
@@ -673,10 +705,10 @@ export default function SiteNavbar() {
               </button>
 
               {mobileCategoriesOpen && (
-                <div className="ml-2 flex flex-col gap-0.5 border-l border-[#eee7e1] pl-3">
+                <div className="ms-2 flex flex-col gap-0.5 border-s border-[#eee7e1] ps-3">
                   {activeCategories.length === 0 ? (
                     <p className="px-3 py-2 text-sm text-[#766d67]">
-                      No categories available yet.
+                      {t("navbar.noCategories")}
                     </p>
                   ) : (
                     activeCategories.map((category) => (
@@ -684,7 +716,7 @@ export default function SiteNavbar() {
                         key={category.id}
                         type="button"
                         onClick={() => goToCategory(category.id)}
-                        className="rounded-lg px-3 py-2 text-left text-sm text-[#5f544d] hover:bg-[#f0e9e0] hover:text-[#30251f]"
+                        className="rounded-lg px-3 py-2 text-start text-sm text-[#5f544d] hover:bg-[#f0e9e0] hover:text-[#30251f]"
                       >
                         {category.name}
                       </button>
@@ -704,9 +736,24 @@ export default function SiteNavbar() {
                       : "text-[#5f544d] hover:bg-[#f0e9e0]"
                   }`}
                 >
-                  {link.label}
+                  {t(link.labelKey)}
                 </Link>
               ))}
+
+              {canJoinAsVendor && (
+                <Link
+                  href="/become-a-vendor"
+                  onClick={closeMobile}
+                  className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium ${
+                    isActive("/become-a-vendor")
+                      ? "bg-[#30251f] text-white"
+                      : "text-[#a47e43] hover:bg-[#f0e9e0]"
+                  }`}
+                >
+                  <Handshake size={16} />
+                  {t("navbar.joinUs")}
+                </Link>
+              )}
 
               {(isAdmin || isVendor) && (
                 <>
@@ -717,7 +764,7 @@ export default function SiteNavbar() {
                     className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium text-[#5f544d] hover:bg-[#f0e9e0]"
                   >
                     <LayoutDashboard size={16} />
-                    {isAdmin ? "Admin Dashboard" : "Vendor Dashboard"}
+                    {isAdmin ? t("navbar.adminDashboard") : t("navbar.vendorDashboard")}
                   </Link>
                 </>
               )}
@@ -726,6 +773,8 @@ export default function SiteNavbar() {
 
           {/* footer */}
           <div className="border-t border-[#eee7e1] bg-[#fafafa] p-4">
+            <LanguageSwitcher variant="segmented" className="mb-3" />
+
             {!isAuthenticated ? (
               <div className="flex gap-2">
                 <Link
@@ -733,14 +782,14 @@ export default function SiteNavbar() {
                   onClick={closeMobile}
                   className="flex-1 rounded-full border border-[#e4dbd0] px-4 py-2.5 text-center text-sm font-medium text-[#30251f]"
                 >
-                  Log In
+                  {t("navbar.login")}
                 </Link>
                 <Link
                   href="/register"
                   onClick={closeMobile}
                   className="flex-1 rounded-full bg-[#30251f] px-4 py-2.5 text-center text-sm font-medium text-white"
                 >
-                  Sign Up
+                  {t("navbar.signUp")}
                 </Link>
               </div>
             ) : (
@@ -748,9 +797,9 @@ export default function SiteNavbar() {
                 <div className="min-w-0">
                   <p className="flex items-center gap-1.5 truncate text-sm font-bold text-[#30251f]">
                     <UserIcon size={16} className="shrink-0 text-[#a47e43]" />
-                    <span className="truncate">{user?.fullName || "Account"}</span>
+                    <span className="truncate">{user?.fullName || t("navbar.account")}</span>
                   </p>
-                  <p className="text-xs text-[#766d67]">Signed in</p>
+                  <p className="text-xs text-[#766d67]">{t("navbar.signedIn")}</p>
                 </div>
                 <button
                   type="button"
@@ -761,7 +810,7 @@ export default function SiteNavbar() {
                   className="flex shrink-0 items-center gap-1.5 rounded-full bg-[#f6dedb] px-3 py-2 text-sm font-medium text-[#b3453a] hover:bg-[#f0d0cc]"
                 >
                   <LogOut size={14} />
-                  Logout
+                  {t("navbar.logout")}
                 </button>
               </div>
             )}

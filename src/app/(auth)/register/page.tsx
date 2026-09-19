@@ -7,10 +7,12 @@ import { Check, Eye, EyeOff, Loader2, X, AlertCircle } from "lucide-react";
 import Image from "next/image";
 import { register } from "@/features/auth/api";
 import { getApiErrorMessage } from "@/lib/error";
+import { useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { t } = useLanguage();
   const { setAuth } = useAuth();
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -64,11 +66,11 @@ export default function RegisterPage() {
 
   const getStrengthInfo = (strength: number) => {
     if (strength === 0) return { color: 'bg-gray-200', text: '', width: '0%' };
-    if (strength <= 20) return { color: 'bg-red-500', text: 'Weak', width: '20%' };
-    if (strength <= 40) return { color: 'bg-orange-500', text: 'Fair', width: '40%' };
-    if (strength <= 60) return { color: 'bg-yellow-500', text: 'Good', width: '60%' };
-    if (strength <= 80) return { color: 'bg-blue-500', text: 'Strong', width: '80%' };
-    return { color: 'bg-emerald-500', text: 'Very Strong', width: '100%' };
+    if (strength <= 20) return { color: 'bg-red-500', text: t("auth.passwordStrength.weak"), width: '20%' };
+    if (strength <= 40) return { color: 'bg-orange-500', text: t("auth.passwordStrength.fair"), width: '40%' };
+    if (strength <= 60) return { color: 'bg-yellow-500', text: t("auth.passwordStrength.good"), width: '60%' };
+    if (strength <= 80) return { color: 'bg-blue-500', text: t("auth.passwordStrength.strong"), width: '80%' };
+    return { color: 'bg-emerald-500', text: t("auth.passwordStrength.veryStrong"), width: '100%' };
   };
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -118,17 +120,17 @@ export default function RegisterPage() {
     setError("");
 
     if (!isEmailValid) {
-      setError("Please enter a valid email address.");
+      setError(t("auth.validation.invalidEmail"));
       return;
     }
 
     if (formData.password !== confirmPassword) {
-      setError("Passwords do not match.");
+      setError(t("auth.validation.passwordMismatch"));
       return;
     }
 
     if (formData.password.length < 8) {
-      setError("Password must be at least 8 characters.");
+      setError(t("auth.validation.passwordTooShort"));
       return;
     }
 
@@ -146,7 +148,7 @@ export default function RegisterPage() {
     } catch (err: unknown) {
       console.error("Registration failed:", err);
 
-      setError(getApiErrorMessage(err, "Registration failed. Please try again."));
+      setError(getApiErrorMessage(err, t("auth.registerPage.failed")));
     } finally {
       setLoading(false);
     }
@@ -171,23 +173,22 @@ export default function RegisterPage() {
               <div className="max-w-lg">
                 <div className="mb-5 flex items-center gap-3">
                   <span className="h-px w-8 bg-[#d8c8bc]" />
-                  <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#d8c8bc]">
-                    Your wedding journey
+                  <p className="text-xs font-semibold uppercase tracking-[0.28em] rtl:tracking-normal text-[#d8c8bc]">
+                    {t("auth.registerPage.eyebrow")}
                   </p>
                 </div>
 
-                <h2 className="animate-slide-up text-4xl font-semibold leading-[1.12] tracking-tight text-white xl:text-[3.25rem]">
-                  Every beautiful moment starts with a plan.
+                <h2 className="animate-slide-up text-4xl font-semibold leading-[1.12] tracking-tight text-white xl:text-[3.25rem] rtl:leading-[1.4] rtl:tracking-normal">
+                  {t("auth.registerPage.heroTitle")}
                 </h2>
 
                 <p className="mt-7 max-w-md text-[15px] leading-7 text-[#d9d0ca] animate-slide-up" style={{ animationDelay: "0.15s" }}>
-                  Create your account, discover trusted partners, and start
-                  building the wedding day you&apos;ve always imagined.
+                  {t("auth.registerPage.heroText")}
                 </p>
               </div>
 
-              <p className="text-sm tracking-wide text-[#bdb1a8] animate-fade-in" style={{ animationDelay: "0.3s" }}>
-                Plan it. Celebrate it. Remember it.
+              <p className="text-sm tracking-wide rtl:tracking-normal text-[#bdb1a8] animate-fade-in" style={{ animationDelay: "0.3s" }}>
+                {t("auth.brand.tagline")}
               </p>
             </div>
           </section>
@@ -208,14 +209,14 @@ export default function RegisterPage() {
                 />
               </Link>
               <div className="mb-9">
-                <h1 className="text-[2rem] font-bold leading-tight tracking-[-0.03em] text-[#30251f] sm:text-4xl animate-slide-up" style={{ animationDelay: "0.05s" }}>
-                  Create your account
+                <h1 className="text-[2rem] font-bold leading-tight tracking-[-0.03em] rtl:tracking-normal rtl:leading-snug text-[#30251f] sm:text-4xl animate-slide-up" style={{ animationDelay: "0.05s" }}>
+                  {t("auth.registerPage.title")}
                 </h1>
                 <p
                   className="mx-auto mt-2 text-xs font-semibold leading-6 text-[#7b7069] animate-slide-up"
                   style={{ animationDelay: "0.1s" }}
                 >
-                  Join 5digea and start planning your perfect wedding.
+                  {t("auth.registerPage.subtitle")}
                 </p>
               </div>
 
@@ -235,7 +236,7 @@ export default function RegisterPage() {
                     disabled={loading}
                     required
                     aria-invalid={!!error}
-                    className={`peer block w-full border-0 border-b-2 bg-transparent px-0 py-3 text-[15px] text-[#30251f] appearance-none outline-none transition-all duration-300 placeholder:text-transparent focus:ring-0 ${error
+                    className={`peer block w-full border-0 border-b-2 bg-transparent px-0 py-3 text-[15px] text-[#30251f] appearance-none outline-none transition-all duration-300 placeholder:text-transparent focus:ring-0 [unicode-bidi:plaintext] ltr:text-left rtl:text-right ${error
                       ? "border-red-300 focus:border-red-500"
                       : "border-[#ded5ce] hover:border-[#cbbdb3] focus:border-[#9a8171]"
                       } disabled:cursor-not-allowed disabled:opacity-60`}
@@ -243,7 +244,7 @@ export default function RegisterPage() {
 
                   <label
                     htmlFor="fullName"
-                    className={`pointer-events-none absolute left-0 top-3 -z-10 origin-left text-sm text-[#a59a92] transform transition-all duration-300 ${formData.fullName
+                    className={`pointer-events-none absolute start-0 top-3 -z-10 ltr:origin-left rtl:origin-right text-sm text-[#a59a92] transform transition-all duration-300 ${formData.fullName
                       ? "-translate-y-6 scale-75"
                       : "peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-focus:-translate-y-6 peer-focus:scale-75"
                       } ${error
@@ -251,7 +252,7 @@ export default function RegisterPage() {
                         : "peer-focus:text-[#9a8171]"
                       }`}
                   >
-                    Full name
+                    {t("auth.fullName")}
                   </label>
                 </div>
 
@@ -270,7 +271,7 @@ export default function RegisterPage() {
                     disabled={loading}
                     required
                     aria-invalid={!!error || (!isEmailValid && touched.email)}
-                    className={`peer block w-full border-0 border-b-2 bg-transparent px-0 py-3 text-[15px] text-[#30251f] appearance-none outline-none transition-all duration-300 placeholder:text-transparent focus:ring-0 ${error || (!isEmailValid && touched.email)
+                    className={`peer block w-full border-0 border-b-2 bg-transparent px-0 py-3 text-[15px] text-[#30251f] appearance-none outline-none transition-all duration-300 placeholder:text-transparent focus:ring-0 [unicode-bidi:plaintext] ltr:text-left rtl:text-right ${error || (!isEmailValid && touched.email)
                       ? "border-red-300 focus:border-red-500"
                       : "border-[#ded5ce] hover:border-[#cbbdb3] focus:border-[#9a8171]"
                       } disabled:cursor-not-allowed disabled:opacity-60`}
@@ -278,7 +279,7 @@ export default function RegisterPage() {
 
                   <label
                     htmlFor="email"
-                    className={`pointer-events-none absolute left-0 top-3 -z-10 origin-left text-sm text-[#a59a92] transform transition-all duration-300 ${formData.email
+                    className={`pointer-events-none absolute start-0 top-3 -z-10 ltr:origin-left rtl:origin-right text-sm text-[#a59a92] transform transition-all duration-300 ${formData.email
                       ? "-translate-y-6 scale-75"
                       : "peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-focus:-translate-y-6 peer-focus:scale-75"
                       } ${error || (!isEmailValid && touched.email)
@@ -286,7 +287,7 @@ export default function RegisterPage() {
                         : "peer-focus:text-[#9a8171]"
                       }`}
                   >
-                    Email address
+                    {t("auth.email")}
                   </label>
 
                   {touched.email && formData.email.length > 0 && (
@@ -302,7 +303,7 @@ export default function RegisterPage() {
                           isEmailValid ? "text-emerald-600" : "text-red-500"
                         }
                       >
-                        {isEmailValid ? "Valid email" : "Invalid email format"}
+                        {isEmailValid ? t("auth.feedback.validEmail") : t("auth.feedback.invalidEmailFormat")}
                       </span>
                     </div>
                   )}
@@ -324,7 +325,7 @@ export default function RegisterPage() {
                       disabled={loading}
                       required
                       aria-invalid={!!error}
-                      className={`peer block w-full border-0 border-b-2 bg-transparent px-0 py-3 pr-12 text-[15px] text-[#30251f] appearance-none outline-none transition-all duration-300 placeholder:text-transparent focus:ring-0 ${error
+                      className={`peer block w-full border-0 border-b-2 bg-transparent px-0 py-3 pe-12 text-[15px] text-[#30251f] appearance-none outline-none transition-all duration-300 placeholder:text-transparent focus:ring-0 [unicode-bidi:plaintext] ltr:text-left rtl:text-right ${error
                         ? "border-red-300 focus:border-red-500"
                         : formData.password.length > 0 && passwordStrength > 0
                           ? passwordStrength >= 60
@@ -341,7 +342,7 @@ export default function RegisterPage() {
 
                     <label
                       htmlFor="password"
-                      className={`pointer-events-none absolute left-0 top-3 -z-10 origin-left text-sm text-[#a59a92] transform transition-all duration-300 ${formData.password
+                      className={`pointer-events-none absolute start-0 top-3 -z-10 ltr:origin-left rtl:origin-right text-sm text-[#a59a92] transform transition-all duration-300 ${formData.password
                         ? "-translate-y-6 scale-75"
                         : "peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-focus:-translate-y-6 peer-focus:scale-75"
                         } ${error
@@ -349,15 +350,15 @@ export default function RegisterPage() {
                           : "peer-focus:text-[#9a8171]"
                         }`}
                     >
-                      Password
+                      {t("auth.password")}
                     </label>
 
                     <button
                       type="button"
                       onClick={() => setShowPassword((previous) => !previous)}
                       disabled={loading}
-                      aria-label={showPassword ? "Hide password" : "Show password"}
-                      className="absolute right-0 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-[#8c7d73] transition-all duration-200 hover:bg-[#f0ebe7] hover:text-[#30251f] focus:outline-none focus:ring-2 focus:ring-[#9a8171]/20 disabled:cursor-not-allowed disabled:opacity-50"
+                      aria-label={showPassword ? t("auth.hidePassword") : t("auth.showPassword")}
+                      className="absolute end-0 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-[#8c7d73] transition-all duration-200 hover:bg-[#f0ebe7] hover:text-[#30251f] focus:outline-none focus:ring-2 focus:ring-[#9a8171]/20 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       {showPassword ? (
                         <EyeOff size={18} strokeWidth={1.8} />
@@ -388,18 +389,18 @@ export default function RegisterPage() {
                       <div className="mt-2 pt-1 border-t border-gray-100/80">
                         <p className="text-[11px] text-gray-400 flex items-center gap-1.5">
                           <span className="text-gray-300">💡</span>
-                          <span>Example: <span className="font-mono text-gray-500 bg-gray-50/80 px-1.5 py-0.5 rounded border border-gray-100/60">Aa@12345</span></span>
-                          <span className="text-gray-300 text-[10px]">(uppercase, lowercase, number, special)</span>
+                          <span>{t("auth.passwordStrength.example")} <span className="font-mono text-gray-500 bg-gray-50/80 px-1.5 py-0.5 rounded border border-gray-100/60">Aa@12345</span></span>
+                          <span className="text-gray-300 text-[10px]">{t("auth.passwordStrength.exampleHint")}</span>
                         </p>
                       </div>
 
                       <div className="grid grid-cols-2 gap-x-4 gap-y-1 pt-1">
                         {[
-                          { key: 'minLength', label: 'At least 8 characters' },
-                          { key: 'hasUpperCase', label: 'Uppercase letter' },
-                          { key: 'hasLowerCase', label: 'Lowercase letter' },
-                          { key: 'hasNumber', label: 'Number' },
-                          { key: 'hasSpecialChar', label: 'Special character' },
+                          { key: 'minLength', label: t("auth.passwordRequirements.minLength") },
+                          { key: 'hasUpperCase', label: t("auth.passwordRequirements.hasUpperCase") },
+                          { key: 'hasLowerCase', label: t("auth.passwordRequirements.hasLowerCase") },
+                          { key: 'hasNumber', label: t("auth.passwordRequirements.hasNumber") },
+                          { key: 'hasSpecialChar', label: t("auth.passwordRequirements.hasSpecialChar") },
                         ].map((req) => (
                           <div key={req.key} className="flex items-center gap-1.5 text-xs">
                             {passwordRequirements[req.key as keyof typeof passwordRequirements] ? (
@@ -436,7 +437,7 @@ export default function RegisterPage() {
                       disabled={loading}
                       required
                       aria-invalid={passwordsDoNotMatch || !!error}
-                      className={`peer block w-full border-0 border-b-2 bg-transparent px-0 py-3 pr-12 text-[15px] text-[#30251f] appearance-none outline-none transition-all duration-300 placeholder:text-transparent focus:ring-0 ${passwordsDoNotMatch || error
+                      className={`peer block w-full border-0 border-b-2 bg-transparent px-0 py-3 pe-12 text-[15px] text-[#30251f] appearance-none outline-none transition-all duration-300 placeholder:text-transparent focus:ring-0 [unicode-bidi:plaintext] ltr:text-left rtl:text-right ${passwordsDoNotMatch || error
                         ? "border-red-300 focus:border-red-500"
                         : passwordsMatch
                           ? "border-emerald-400 focus:border-emerald-500"
@@ -449,7 +450,7 @@ export default function RegisterPage() {
 
                     <label
                       htmlFor="confirmPassword"
-                      className={`pointer-events-none absolute left-0 top-3 -z-10 origin-left transform text-sm transition-all duration-300 ${confirmPassword
+                      className={`pointer-events-none absolute start-0 top-3 -z-10 ltr:origin-left rtl:origin-right transform text-sm transition-all duration-300 ${confirmPassword
                         ? "-translate-y-6 scale-75"
                         : "peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-focus:-translate-y-6 peer-focus:scale-75"
                         } ${passwordsDoNotMatch
@@ -459,7 +460,7 @@ export default function RegisterPage() {
                             : "text-[#a59a92] peer-focus:text-[#9a8171]"
                         }`}
                     >
-                      Confirm password
+                      {t("auth.confirmPassword")}
                     </label>
 
                     <button
@@ -470,10 +471,10 @@ export default function RegisterPage() {
                       disabled={loading}
                       aria-label={
                         showConfirmPassword
-                          ? "Hide confirm password"
-                          : "Show confirm password"
+                          ? t("auth.hideConfirmPassword")
+                          : t("auth.showConfirmPassword")
                       }
-                      className="absolute right-0 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-[#8c7d73] transition-all duration-200 hover:bg-[#f0ebe7] hover:text-[#30251f] focus:outline-none focus:ring-2 focus:ring-[#9a8171]/20 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="absolute end-0 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-[#8c7d73] transition-all duration-200 hover:bg-[#f0ebe7] hover:text-[#30251f] focus:outline-none focus:ring-2 focus:ring-[#9a8171]/20 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       {showConfirmPassword ? (
                         <EyeOff size={18} strokeWidth={1.8} />
@@ -489,14 +490,14 @@ export default function RegisterPage() {
                         <>
                           <Check size={14} className="text-emerald-500" />
                           <span className="text-emerald-600">
-                            Passwords match
+                            {t("auth.feedback.passwordsMatch")}
                           </span>
                         </>
                       ) : (
                         <>
                           <X size={14} className="text-red-500" />
                           <span className="text-red-500">
-                            Passwords do not match
+                            {t("auth.feedback.passwordsDoNotMatch")}
                           </span>
                         </>
                       )}
@@ -526,10 +527,10 @@ export default function RegisterPage() {
                   {loading ? (
                     <span className="relative flex items-center gap-2">
                       <Loader2 size={18} className="animate-spin" />
-                      Creating account...
+                      {t("auth.registerPage.submitting")}
                     </span>
                   ) : (
-                    <span className="relative">Create account</span>
+                    <span className="relative">{t("auth.createAccount")}</span>
                   )}
                 </button>
               </form>
@@ -537,20 +538,20 @@ export default function RegisterPage() {
               <div className="my-7 flex items-center gap-4 animate-fade-in" style={{ animationDelay: "0.45s" }}>
                 <div className="h-px flex-1 bg-[#e8e1dc]" />
                 <span className="text-[10px] font-medium tracking-[0.18em] text-[#a59a92]">
-                  OR
+                  {t("auth.brand.or")}
                 </span>
                 <div className="h-px flex-1 bg-[#e8e1dc]" />
               </div>
 
               <p className="text-center text-sm text-[#7b7069] animate-fade-in" style={{ animationDelay: "0.5s" }}>
-                Already have an account?{" "}
+                {t("auth.haveAccount")}{" "}
                 <Link
                   href="/login"
                   className="group relative font-semibold text-[#30251f] transition-colors duration-200 hover:text-[#9a8171]"
                 >
                   <span className="relative">
-                    Sign in
-                    <span className="absolute -bottom-0.5 left-0 h-0.5 w-0 bg-[#9a8171] transition-all duration-300 group-hover:w-full" />
+                    {t("auth.signIn")}
+                    <span className="absolute -bottom-0.5 start-0 h-0.5 w-0 bg-[#9a8171] transition-all duration-300 group-hover:w-full" />
                   </span>
                 </Link>
               </p>
@@ -560,7 +561,7 @@ export default function RegisterPage() {
                   href="/"
                   className="group inline-flex items-center gap-2 text-sm font-medium text-[#9a8171] transition-all duration-200 hover:gap-3 hover:text-[#30251f]"
                 >
-                  Home - Guest Mode
+                  {t("auth.brand.guestMode")}
                 </Link>
               </div>
             </div>

@@ -18,17 +18,21 @@ import {
 } from "lucide-react";
 
 import { useAuth } from "@/context/AuthContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { useFavorites } from "@/features/favorites/hooks/useFavorites";
 import { useRoadmap } from "@/features/roadmap/hooks/useRoadmap";
+import type { TranslationKey } from "@/locales";
 import { RoadmapItemStatus } from "@/types/roadmap";
 
-const ROLE_LABEL: Record<string, string> = {
-  Admin: "Administrator",
-  Vendor: "Vendor",
-  User: "Couple",
+const ROLE_LABEL_KEY: Record<string, TranslationKey> = {
+  Admin: "profile.roles.admin",
+  Vendor: "profile.roles.vendor",
+  User: "profile.roles.couple",
 };
 
 function SignedOutState() {
+  const { t } = useLanguage();
+
   return (
     <main className="flex min-h-screen items-center justify-center bg-[#faf8f6] px-4 py-20">
       <div className="w-full max-w-md overflow-hidden rounded-4xl border border-[#eee5df] bg-white shadow-[0_20px_60px_rgba(48,37,31,0.08)]">
@@ -39,17 +43,16 @@ function SignedOutState() {
             <UserRound size={26} strokeWidth={1.7} />
           </div>
 
-          <p className="mt-6 text-[11px] font-bold uppercase tracking-[0.22em] text-[#a47e43]">
-            Digea Account
+          <p className="mt-6 text-[11px] font-bold uppercase tracking-[0.22em] rtl:tracking-normal text-[#a47e43]">
+            {t("profile.signedOut.eyebrow")}
           </p>
 
-          <h1 className="mt-3 font-serif text-3xl font-light text-[#30251f]">
-            Your account
+          <h1 className="mt-3 font-serif text-3xl font-light rtl:leading-snug text-[#30251f]">
+            {t("profile.signedOut.title")}
           </h1>
 
           <p className="mx-auto mt-3 max-w-sm text-sm leading-7 text-[#81746d]">
-            Sign in to manage your wedding journey, saved vendors, and
-            planning progress.
+            {t("profile.signedOut.description")}
           </p>
 
           <div className="mt-8 flex flex-col gap-3">
@@ -57,15 +60,15 @@ function SignedOutState() {
               href="/login"
               className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-[#30251f] px-6 text-sm font-semibold text-white transition hover:bg-[#45362d]"
             >
-              Sign in
-              <ArrowRight size={16} />
+              {t("profile.signedOut.signIn")}
+              <ArrowRight size={16} className="rtl:rotate-180" />
             </Link>
 
             <Link
               href="/register"
               className="inline-flex h-12 items-center justify-center rounded-full border border-[#e5dbd2] px-6 text-sm font-semibold text-[#5f544d] transition hover:border-[#b99a62] hover:bg-[#faf8f6]"
             >
-              Create an account
+              {t("profile.signedOut.createAccount")}
             </Link>
           </div>
         </div>
@@ -85,6 +88,8 @@ function StatCard({
   value: string | number;
   description: string;
 }) {
+  const { t } = useLanguage();
+
   return (
     <div className="rounded-3xl border border-[#eee5df] bg-white p-5 shadow-[0_8px_30px_rgba(48,37,31,0.035)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_14px_35px_rgba(48,37,31,0.07)]">
       <div className="flex items-start justify-between gap-4">
@@ -92,12 +97,12 @@ function StatCard({
           {icon}
         </div>
 
-        <span className="rounded-full bg-[#faf8f6] px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.14em] text-[#a4968e]">
-          Overview
+        <span className="rounded-full bg-[#faf8f6] px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.14em] rtl:tracking-normal text-[#a4968e]">
+          {t("profile.overview.eyebrow")}
         </span>
       </div>
 
-      <p className="mt-5 text-[11px] font-bold uppercase tracking-[0.16em] text-[#9b8d85]">
+      <p className="mt-5 text-[11px] font-bold uppercase tracking-[0.16em] rtl:tracking-normal text-[#9b8d85]">
         {label}
       </p>
 
@@ -130,7 +135,7 @@ function ActionCard({
       href={href}
       className="group relative overflow-hidden rounded-[26px] border border-[#eee5df] bg-white p-6 shadow-[0_8px_30px_rgba(48,37,31,0.035)] transition-all duration-300 hover:-translate-y-1 hover:border-[#dfd1c6] hover:shadow-[0_18px_45px_rgba(48,37,31,0.09)]"
     >
-      <div className="absolute right-0 top-0 h-24 w-24 translate-x-8 -translate-y-8 rounded-full bg-[#faf5ee] opacity-70 transition duration-500 group-hover:scale-150" />
+      <div className="absolute end-0 top-0 h-24 w-24 translate-x-8 -translate-y-8 rtl:-translate-x-8 rounded-full bg-[#faf5ee] opacity-70 transition duration-500 group-hover:scale-150" />
 
       <div className="relative">
         <div className="flex items-start justify-between">
@@ -141,12 +146,12 @@ function ActionCard({
           <div className="flex h-8 w-8 items-center justify-center rounded-full border border-[#eee5df] text-[#a3958c] transition duration-300 group-hover:border-[#30251f] group-hover:bg-[#30251f] group-hover:text-white">
             <ArrowRight
               size={14}
-              className="transition-transform duration-300 group-hover:translate-x-0.5"
+              className="transition-transform duration-300 group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5"
             />
           </div>
         </div>
 
-        <p className="mt-6 text-[10px] font-bold uppercase tracking-[0.18em] text-[#a47e43]">
+        <p className="mt-6 text-[10px] font-bold uppercase tracking-[0.18em] rtl:tracking-normal text-[#a47e43]">
           {eyebrow}
         </p>
 
@@ -166,6 +171,7 @@ export default function ProfilePage() {
   const { user, role, isAuthenticated, logout } = useAuth();
   const { favorites, loading: favoritesLoading } = useFavorites();
   const { roadmap, loading: roadmapLoading } = useRoadmap();
+  const { t } = useLanguage();
 
   if (!isAuthenticated) return <SignedOutState />;
 
@@ -183,7 +189,12 @@ export default function ProfilePage() {
   const initial =
     user?.fullName?.trim()?.charAt(0).toUpperCase() || "?";
 
-  const roleLabel = role ? ROLE_LABEL[role] ?? role : "Couple";
+  const roleKey = role ? ROLE_LABEL_KEY[role] : undefined;
+  const roleLabel = role
+    ? roleKey
+      ? t(roleKey)
+      : role
+    : t("profile.roles.couple");
 
   return (
     <main className="min-h-screen bg-[#faf8f6]">
@@ -193,17 +204,16 @@ export default function ProfilePage() {
         ========================================= */}
         <div className="mb-8 flex flex-col gap-3 sm:mb-10 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-[#a47e43]">
-              My Account
+            <p className="text-[10px] font-bold uppercase tracking-[0.24em] rtl:tracking-normal text-[#a47e43]">
+              {t("profile.header.eyebrow")}
             </p>
 
-            <h1 className="mt-2 font-serif text-3xl font-light tracking-tight text-[#30251f] sm:text-4xl lg:text-[44px]">
-              Your personal space
+            <h1 className="mt-2 font-serif text-3xl font-light tracking-tight rtl:tracking-normal text-[#30251f] sm:text-4xl lg:text-[44px]">
+              {t("profile.header.title")}
             </h1>
 
             <p className="mt-2 max-w-xl text-sm leading-6 text-[#81746d]">
-              Everything you need to manage your Digea account and wedding
-              journey in one place.
+              {t("profile.header.description")}
             </p>
           </div>
 
@@ -226,14 +236,14 @@ export default function ProfilePage() {
                     {initial}
                   </div>
 
-                  <div className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full border-4 border-white bg-[#b99a62] text-white">
+                  <div className="absolute -bottom-1 -end-1 flex h-7 w-7 items-center justify-center rounded-full border-4 border-white bg-[#b99a62] text-white">
                     <CheckCircle2 size={13} strokeWidth={2.5} />
                   </div>
                 </div>
 
                 <div className="min-w-0">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#a47e43]">
-                    Welcome back
+                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] rtl:tracking-normal text-[#a47e43]">
+                    {t("profile.hero.welcomeBack")}
                   </p>
 
                   <h2 className="mt-1 truncate font-serif text-2xl font-light text-[#30251f] sm:text-3xl">
@@ -243,12 +253,12 @@ export default function ProfilePage() {
                   <div className="mt-2 flex max-w-full flex-wrap items-center gap-x-4 gap-y-2">
                     <div className="flex min-w-0 items-center gap-2 text-sm text-[#81746d]">
                       <Mail size={14} className="shrink-0 text-[#a47e43]" />
-                      <span className="truncate">{user?.email}</span>
+                      <span dir="ltr" className="truncate">{user?.email}</span>
                     </div>
 
                     <span className="hidden h-1 w-1 rounded-full bg-[#d7cbc3] sm:block" />
 
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-[#faf5ee] px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-[#a47e43]">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-[#faf5ee] px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest rtl:tracking-normal text-[#a47e43]">
                       <ShieldCheck size={12} />
                       {roleLabel}
                     </span>
@@ -265,8 +275,8 @@ export default function ProfilePage() {
             {/* Profile mini info */}
             <div className="grid gap-4 sm:grid-cols-3">
               <div className="rounded-2xl bg-[#faf8f6] p-4">
-                <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-[#a3958c]">
-                  Account type
+                <p className="text-[9px] font-bold uppercase tracking-[0.16em] rtl:tracking-normal text-[#a3958c]">
+                  {t("profile.hero.accountType")}
                 </p>
                 <p className="mt-1.5 text-sm font-semibold text-[#30251f]">
                   {roleLabel}
@@ -274,20 +284,26 @@ export default function ProfilePage() {
               </div>
 
               <div className="rounded-2xl bg-[#faf8f6] p-4">
-                <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-[#a3958c]">
-                  Wedding plan
+                <p className="text-[9px] font-bold uppercase tracking-[0.16em] rtl:tracking-normal text-[#a3958c]">
+                  {t("profile.hero.weddingPlan")}
                 </p>
                 <p className="mt-1.5 text-sm font-semibold text-[#30251f]">
-                  {roadmap ? "Active planning" : "Not started"}
+                  {roadmap
+                    ? t("profile.hero.activePlanning")
+                    : t("profile.hero.notStarted")}
                 </p>
               </div>
 
               <div className="rounded-2xl bg-[#faf8f6] p-4">
-                <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-[#a3958c]">
-                  Saved collection
+                <p className="text-[9px] font-bold uppercase tracking-[0.16em] rtl:tracking-normal text-[#a3958c]">
+                  {t("profile.hero.savedCollection")}
                 </p>
                 <p className="mt-1.5 text-sm font-semibold text-[#30251f]">
-                  {favoritesLoading ? "Loading..." : `${favorites.length} saved`}
+                  {favoritesLoading
+                    ? t("common.loading")
+                    : t("profile.hero.savedCount", {
+                        count: favorites.length,
+                      })}
                 </p>
               </div>
             </div>
@@ -300,12 +316,12 @@ export default function ProfilePage() {
         <section className="mt-8 lg:mt-10">
           <div className="mb-5 flex items-end justify-between">
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#a47e43]">
-                Overview
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] rtl:tracking-normal text-[#a47e43]">
+                {t("profile.overview.eyebrow")}
               </p>
 
               <h2 className="mt-1 font-serif text-2xl font-light text-[#30251f]">
-                Your journey at a glance
+                {t("profile.overview.title")}
               </h2>
             </div>
           </div>
@@ -320,8 +336,8 @@ export default function ProfilePage() {
                   </div>
 
                   <div>
-                    <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#9b8d85]">
-                      Wedding progress
+                    <p className="text-[11px] font-bold uppercase tracking-[0.16em] rtl:tracking-normal text-[#9b8d85]">
+                      {t("profile.overview.weddingProgress")}
                     </p>
 
                     {roadmapLoading ? (
@@ -333,12 +349,12 @@ export default function ProfilePage() {
                         </span>
 
                         <span className="text-xs text-[#9b8d85]">
-                          completed
+                          {t("profile.overview.completed")}
                         </span>
                       </div>
                     ) : (
                       <p className="mt-2 text-sm text-[#81746d]">
-                        Your planning journey has not started yet.
+                        {t("profile.overview.notStartedYet")}
                       </p>
                     )}
                   </div>
@@ -349,8 +365,8 @@ export default function ProfilePage() {
                     href="/roadmap"
                     className="inline-flex items-center gap-1.5 text-xs font-bold text-[#8e685e] transition hover:text-[#30251f]"
                   >
-                    View roadmap
-                    <ChevronRight size={14} />
+                    {t("profile.overview.viewRoadmap")}
+                    <ChevronRight size={14} className="rtl:rotate-180" />
                   </Link>
                 )}
               </div>
@@ -359,7 +375,10 @@ export default function ProfilePage() {
                 <div className="mt-6">
                   <div className="flex items-center justify-between text-[10px] font-semibold text-[#9b8d85]">
                     <span>
-                      {completedItems} of {totalItems} categories completed
+                      {t("profile.overview.categoriesCompleted", {
+                        completed: completedItems,
+                        total: totalItems,
+                      })}
                     </span>
 
                     <span>{progress}%</span>
@@ -379,8 +398,8 @@ export default function ProfilePage() {
                   href="/roadmap"
                   className="mt-5 inline-flex items-center gap-2 rounded-full bg-[#30251f] px-5 py-2.5 text-xs font-bold text-white transition hover:bg-[#45362d]"
                 >
-                  Start your roadmap
-                  <ArrowRight size={14} />
+                  {t("profile.overview.startRoadmap")}
+                  <ArrowRight size={14} className="rtl:rotate-180" />
                 </Link>
               )}
             </div>
@@ -388,9 +407,9 @@ export default function ProfilePage() {
             {/* Favorites */}
             <StatCard
               icon={<Heart size={19} />}
-              label="Saved favorites"
+              label={t("profile.overview.savedFavorites")}
               value={favoritesLoading ? "—" : favorites.length}
-              description="Vendors and services you've saved."
+              description={t("profile.overview.savedFavoritesDescription")}
             />
           </div>
         </section>
@@ -400,12 +419,12 @@ export default function ProfilePage() {
         ========================================= */}
         <section className="mt-10 lg:mt-12">
           <div className="mb-5">
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#a47e43]">
-              Quick access
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] rtl:tracking-normal text-[#a47e43]">
+              {t("profile.quickAccess.eyebrow")}
             </p>
 
             <h2 className="mt-1 font-serif text-2xl font-light text-[#30251f]">
-              Manage your account
+              {t("profile.quickAccess.title")}
             </h2>
           </div>
 
@@ -413,41 +432,41 @@ export default function ProfilePage() {
             <ActionCard
               href="/roadmap"
               icon={<CalendarDays size={20} />}
-              eyebrow="Planning"
-              title="Wedding roadmap"
-              description="Manage your wedding date, categories, progress, and selected vendors."
+              eyebrow={t("profile.quickAccess.roadmap.eyebrow")}
+              title={t("profile.quickAccess.roadmap.title")}
+              description={t("profile.quickAccess.roadmap.description")}
             />
 
             <ActionCard
               href="/favorites"
               icon={<Heart size={20} />}
-              eyebrow="Collection"
-              title="Saved favorites"
-              description="Revisit the vendors and services you've saved while planning."
+              eyebrow={t("profile.quickAccess.favorites.eyebrow")}
+              title={t("profile.quickAccess.favorites.title")}
+              description={t("profile.quickAccess.favorites.description")}
             />
 
             <ActionCard
               href="/vendors"
               icon={<Store size={20} />}
-              eyebrow="Discover"
-              title="Browse vendors"
-              description="Explore approved wedding professionals and find the right match."
+              eyebrow={t("profile.quickAccess.vendors.eyebrow")}
+              title={t("profile.quickAccess.vendors.title")}
+              description={t("profile.quickAccess.vendors.description")}
             />
 
             <ActionCard
               href="/compare"
               icon={<Sparkles size={20} />}
-              eyebrow="Decide"
-              title="Compare options"
-              description="Compare vendors or services side by side before making your choice."
+              eyebrow={t("profile.quickAccess.compare.eyebrow")}
+              title={t("profile.quickAccess.compare.title")}
+              description={t("profile.quickAccess.compare.description")}
             />
 
             <ActionCard
               href="/change-password"
               icon={<KeyRound size={20} />}
-              eyebrow="Security"
-              title="Change password"
-              description="Keep your account secure by updating your password whenever needed."
+              eyebrow={t("profile.quickAccess.security.eyebrow")}
+              title={t("profile.quickAccess.security.title")}
+              description={t("profile.quickAccess.security.description")}
             />
 
             <Link
@@ -459,19 +478,19 @@ export default function ProfilePage() {
               </div>
 
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#a47e43]">
-                  Keep planning
+                <p className="text-[10px] font-bold uppercase tracking-[0.18em] rtl:tracking-normal text-[#a47e43]">
+                  {t("profile.quickAccess.keepPlanning.eyebrow")}
                 </p>
 
                 <h3 className="mt-2 font-serif text-xl font-light text-[#30251f]">
-                  Your perfect day starts here.
+                  {t("profile.quickAccess.keepPlanning.title")}
                 </h3>
 
                 <div className="mt-4 inline-flex items-center gap-1.5 text-xs font-bold text-[#8e685e]">
-                  Continue your journey
+                  {t("profile.quickAccess.keepPlanning.cta")}
                   <ArrowRight
                     size={14}
-                    className="transition-transform group-hover:translate-x-1"
+                    className="transition-transform group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1"
                   />
                 </div>
               </div>
@@ -484,8 +503,7 @@ export default function ProfilePage() {
         ========================================= */}
         <div className="mt-10 border-t border-[#e9dfd8] pt-6 text-center">
           <p className="text-[11px] leading-5 text-[#a3958c]">
-            Your Digea account keeps your wedding planning journey organized,
-            personal, and easy to revisit.
+            {t("profile.footerNote")}
           </p>
         </div>
       </div>
