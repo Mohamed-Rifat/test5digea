@@ -223,7 +223,7 @@ export default function VendorHeader({ onMenuClick }: VendorHeaderProps) {
         <form onSubmit={runSearch} className="relative">
           <Search
             size={16}
-            className="pointer-events-none absolute start-3.5 top-1/2 -translate-y-1/2 text-[#a89c92]"
+            className="pointer-events-none absolute inset-s-3.5 top-1/2 -translate-y-1/2 text-[#a89c92]"
           />
           <input
             type="text"
@@ -538,7 +538,7 @@ export default function VendorHeader({ onMenuClick }: VendorHeaderProps) {
           <form onSubmit={runSearch} className="relative">
             <Search
               size={16}
-              className="pointer-events-none absolute start-3.5 top-1/2 -translate-y-1/2 text-[#a89c92]"
+              className="pointer-events-none absolute inset-s-3.5 top-1/2 -translate-y-1/2 text-[#a89c92]"
             />
 
             <input

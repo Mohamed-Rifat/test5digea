@@ -107,7 +107,7 @@ export default function AdminHeader({ onMenuClick }: AdminHeaderProps) {
           <form onSubmit={handleSubmit} className="relative">
             <Search
               size={17}
-              className="absolute start-4 top-1/2 -translate-y-1/2 text-[#b0a39b]"
+              className="absolute inset-s-4 top-1/2 -translate-y-1/2 text-[#b0a39b]"
             />
             <input
               type="text"
@@ -194,7 +194,7 @@ export default function AdminHeader({ onMenuClick }: AdminHeaderProps) {
           <form onSubmit={handleSubmit} className="relative">
             <Search
               size={16}
-              className="absolute start-3.5 top-1/2 -translate-y-1/2 text-[#b0a39b]"
+              className="absolute inset-s-3.5 top-1/2 -translate-y-1/2 text-[#b0a39b]"
             />
             <input
               ref={mobileInputRef}

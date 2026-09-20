@@ -214,14 +214,14 @@ export default function SessionExpiryProvider({
         <div
           aria-hidden="true"
           data-level={alertLevel}
-          className="session-frame pointer-events-none fixed inset-0 z-[2000]"
+          className="session-frame pointer-events-none fixed inset-0 z-2000"
         />
       )}
 
       {showWarning && (
         <div
           className={[
-            "fixed inset-0 z-[1000] flex items-end justify-center px-4 pb-6 backdrop-blur-sm sm:items-center sm:pb-0",
+            "fixed inset-0 z-1000 flex items-end justify-center px-4 pb-6 backdrop-blur-sm sm:items-center sm:pb-0",
             isFinalWarning
               ? "bg-black/50"
               : "bg-black/30",
@@ -247,7 +247,7 @@ export default function SessionExpiryProvider({
                 type="button"
                 onClick={handleDismiss}
                 aria-label={t("common.sessionExpiry.dismiss")}
-                className="absolute end-3 top-3 flex h-8 w-8 items-center justify-center rounded-full text-[#8b7d74] transition hover:bg-[#f5eee9] hover:text-[#30251f]"
+                className="absolute inset-e-3 top-3 flex h-8 w-8 items-center justify-center rounded-full text-[#8b7d74] transition hover:bg-[#f5eee9] hover:text-[#30251f]"
               >
                 <X size={18} />
               </button>

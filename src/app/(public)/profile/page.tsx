@@ -139,7 +139,7 @@ function ActionCard({
       href={href}
       className="group relative overflow-hidden rounded-[26px] border border-[#eee5df] bg-white p-6 shadow-[0_8px_30px_rgba(48,37,31,0.035)] transition-all duration-300 hover:-translate-y-1 hover:border-[#dfd1c6] hover:shadow-[0_18px_45px_rgba(48,37,31,0.09)]"
     >
-      <div className="absolute end-0 top-0 h-24 w-24 translate-x-8 -translate-y-8 rtl:-translate-x-8 rounded-full bg-[#faf5ee] opacity-70 transition duration-500 group-hover:scale-150" />
+      <div className="absolute inset-e-0 top-0 h-24 w-24 translate-x-8 -translate-y-8 rtl:-translate-x-8 rounded-full bg-[#faf5ee] opacity-70 transition duration-500 group-hover:scale-150" />
 
       <div className="relative">
         <div className="flex items-start justify-between">
@@ -241,7 +241,7 @@ export default function ProfilePage() {
                     {initial}
                   </div>
 
-                  <div className="absolute -bottom-1 -end-1 flex h-7 w-7 items-center justify-center rounded-full border-4 border-white bg-[#b99a62] text-white">
+                  <div className="absolute -bottom-1 inset-e-1 flex h-7 w-7 items-center justify-center rounded-full border-4 border-white bg-[#b99a62] text-white">
                     <CheckCircle2 size={13} strokeWidth={2.5} />
                   </div>
                 </div>

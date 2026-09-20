@@ -165,7 +165,7 @@ const KPICard = ({
   badge?: string;
 }) => (
   <div className="group relative overflow-hidden rounded-2xl border border-[#e8dfd8] bg-white p-4 sm:p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
-    <div className="absolute -end-8 -top-8 h-20 w-20 sm:h-24 sm:w-24 rounded-full bg-[#f8f2ed] opacity-60 transition-transform duration-500 group-hover:scale-125" />
+    <div className="absolute inset-e-8 -top-8 h-20 w-20 sm:h-24 sm:w-24 rounded-full bg-[#f8f2ed] opacity-60 transition-transform duration-500 group-hover:scale-125" />
     
     <div className="relative">
       <div className="flex items-start justify-between gap-2">
