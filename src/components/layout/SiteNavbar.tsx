@@ -283,7 +283,7 @@ export default function SiteNavbar() {
             </Link>
           ))}
         </nav>
-
+ 
         <div className="hidden items-center gap-2 lg:flex">
           {/* SEARCH — pick Vendors or Services, same pattern as the admin
               dashboard's quick search. */}
