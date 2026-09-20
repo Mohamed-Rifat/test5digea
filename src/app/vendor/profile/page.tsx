@@ -92,6 +92,9 @@ export default function VendorProfilePage() {
     loading,
     actionLoading,
     actionError,
+    isPendingReview,
+    pendingSubmitted,
+    refreshSilently,
     update,
     resubmit,
     uploadProfileImage,
@@ -114,23 +117,50 @@ export default function VendorProfilePage() {
   useEffect(() => {
     if (!vendor) return;
 
+    // Edits now wait for admin approval, so show the vendor what they last
+    // submitted (if anything is pending) rather than the older live copy.
+    const source = vendor.pendingChanges ?? pendingSubmitted ?? vendor;
+
     setForm({
-      businessName: vendor.businessName || "",
-      slogan: vendor.slogan || "",
-      bio: vendor.bio || "",
-      location: vendor.location || "",
-      latitude: vendor.latitude || 0,
-      longitude: vendor.longitude || 0,
-      contactPhone: vendor.contactPhone || "",
-      contactEmail: vendor.contactEmail || "",
-      socialLinksJson: vendor.socialLinksJson || "",
-      workingHoursJson: vendor.workingHoursJson || "",
+      businessName: source.businessName || "",
+      slogan: source.slogan || "",
+      bio: source.bio || "",
+      location: source.location || "",
+      latitude: source.latitude || 0,
+      longitude: source.longitude || 0,
+      contactPhone: source.contactPhone || "",
+      contactEmail: source.contactEmail || "",
+      socialLinksJson: source.socialLinksJson || "",
+      workingHoursJson: source.workingHoursJson || "",
     });
-  }, [vendor]);
+  }, [vendor, pendingSubmitted]);
 
   // ==============================================================
   // COMPUTED
   // ==============================================================
+
+  // A submitted edit waits for an admin decision. Until then the vendor can't
+  // edit again: a second submit would silently replace the first one.
+  const isLocked = isPendingReview;
+
+  // While an edit is awaiting review, quietly re-check so the form unlocks
+  // by itself once the admin approves or rejects (no manual reload needed).
+  useEffect(() => {
+    if (!isLocked) return;
+
+    const check = () => {
+      if (document.visibilityState === "visible") refreshSilently();
+    };
+
+    const timer = window.setInterval(check, 45_000);
+    document.addEventListener("visibilitychange", check);
+
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", check);
+    };
+  }, [isLocked, refreshSilently]);
+  const isEditingActive = isEditing && !isLocked;
 
   const isSaving = actionLoading === "update";
   const isResubmitting = actionLoading === "resubmit";
@@ -359,17 +389,19 @@ export default function VendorProfilePage() {
   const handleCancel = useCallback(() => {
     if (!vendor) return;
 
+    const source = vendor.pendingChanges ?? pendingSubmitted ?? vendor;
+
     setForm({
-      businessName: vendor.businessName || "",
-      slogan: vendor.slogan || "",
-      bio: vendor.bio || "",
-      location: vendor.location || "",
-      latitude: vendor.latitude || 0,
-      longitude: vendor.longitude || 0,
-      contactPhone: vendor.contactPhone || "",
-      contactEmail: vendor.contactEmail || "",
-      socialLinksJson: vendor.socialLinksJson || "",
-      workingHoursJson: vendor.workingHoursJson || "",
+      businessName: source.businessName || "",
+      slogan: source.slogan || "",
+      bio: source.bio || "",
+      location: source.location || "",
+      latitude: source.latitude || 0,
+      longitude: source.longitude || 0,
+      contactPhone: source.contactPhone || "",
+      contactEmail: source.contactEmail || "",
+      socialLinksJson: source.socialLinksJson || "",
+      workingHoursJson: source.workingHoursJson || "",
     });
 
     setFormError("");
@@ -377,7 +409,7 @@ export default function VendorProfilePage() {
     setValidationErrors({});
     setTouchedFields({});
     setIsEditing(false);
-  }, [vendor]);
+  }, [vendor, pendingSubmitted]);
 
   const handleResubmit = useCallback(async () => {
     await resubmit();
@@ -482,7 +514,17 @@ export default function VendorProfilePage() {
               </button>
             )}
 
-            {!isEditing ? (
+            {isLocked ? (
+              <button
+                type="button"
+                disabled
+                title={t("vendor.profile.pending.buttonHint")}
+                className="inline-flex h-11 cursor-not-allowed items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-5 text-sm font-semibold text-amber-700 opacity-90"
+              >
+                <Clock3 className="h-4 w-4" />
+                {t("vendor.profile.pending.button")}
+              </button>
+            ) : !isEditing ? (
               <button
                 type="button"
                 onClick={() => setIsEditing(true)}
@@ -505,6 +547,20 @@ export default function VendorProfilePage() {
         </div>
 
         {/* =========================================================
+            PENDING REVIEW BANNER
+        ========================================================== */}
+        {isLocked && (
+          <div className="mb-6 flex gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+            <Clock3 className="mt-0.5 h-5 w-5 shrink-0" />
+
+            <div>
+              <p className="font-semibold">{t("vendor.profile.pending.title")}</p>
+              <p className="mt-1 leading-6">{t("vendor.profile.pending.text")}</p>
+            </div>
+          </div>
+        )}
+
+        {/* =========================================================
             REJECTED ALERT
         ========================================================== */}
         {vendor?.status === "Rejected" && vendor.rejectionReason && (
@@ -521,7 +577,7 @@ export default function VendorProfilePage() {
         {/* =========================================================
             IMAGE ACTION ERROR (shown outside the edit form)
         ========================================================== */}
-        {!isEditing && actionError && (
+        {!isEditingActive && actionError && (
           <div className="mb-6 flex items-center gap-3 rounded-2xl border border-red-100 bg-red-50 p-4 text-sm text-red-700">
             <AlertCircle className="h-5 w-5 shrink-0" />
             {actionError}
@@ -531,7 +587,7 @@ export default function VendorProfilePage() {
         {/* =========================================================
             EDIT MODE
         ========================================================== */}
-        {isEditing ? (
+        {isEditingActive ? (
           <form onSubmit={handleSubmit} className="space-y-6">
             {(formError || actionError) && (
               <div className="flex items-center gap-3 rounded-2xl border border-red-100 bg-red-50 p-4 text-sm text-red-700">
@@ -861,7 +917,8 @@ export default function VendorProfilePage() {
                       <button
                         type="button"
                         onClick={() => profileImageInputRef.current?.click()}
-                        disabled={isUploadingProfileImage}
+                        disabled={isUploadingProfileImage || isLocked}
+                        title={isLocked ? t("vendor.profile.pending.buttonHint") : undefined}
                         aria-label={t("vendor.profile.view.changePhoto")}
                         className="absolute -bottom-1 -end-1 flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-[#30251f] text-white shadow-md transition hover:bg-[#463831] disabled:cursor-not-allowed disabled:opacity-70"
                       >

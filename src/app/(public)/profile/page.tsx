@@ -10,6 +10,7 @@ import {
   KeyRound,
   LogOut,
   Mail,
+  Phone,
   ShieldCheck,
   Sparkles,
   Store,
@@ -20,6 +21,9 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import { useLanguage } from "@/context/LanguageContext";
 import { useFavorites } from "@/features/favorites/hooks/useFavorites";
+import { useCurrentUser } from "@/features/auth/hooks/useCurrentUser";
+import { calculateAge, formatCalendarDate } from "@/lib/format";
+import { LANGUAGE_DATE_LOCALE } from "@/locales/config";
 import { useRoadmap } from "@/features/roadmap/hooks/useRoadmap";
 import type { TranslationKey } from "@/locales";
 import { RoadmapItemStatus } from "@/types/roadmap";
@@ -171,7 +175,8 @@ export default function ProfilePage() {
   const { user, role, isAuthenticated, logout } = useAuth();
   const { favorites, loading: favoritesLoading } = useFavorites();
   const { roadmap, loading: roadmapLoading } = useRoadmap();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const { currentUser } = useCurrentUser(isAuthenticated);
 
   if (!isAuthenticated) return <SignedOutState />;
 
@@ -307,6 +312,66 @@ export default function ProfilePage() {
                 </p>
               </div>
             </div>
+
+            {/* Personal details (from GET /api/Auth/me) */}
+            {(currentUser?.phoneNumber ||
+              currentUser?.dateOfBirth ||
+              currentUser?.gender) && (
+              <div className="mt-4 grid gap-4 sm:grid-cols-3">
+                {currentUser?.phoneNumber && (
+                  <div className="rounded-2xl bg-[#faf8f6] p-4">
+                    <p className="text-[9px] font-bold uppercase tracking-[0.16em] rtl:tracking-normal text-[#a3958c]">
+                      {t("profile.hero.personal.phone")}
+                    </p>
+                    <p
+                      dir="ltr"
+                      className="mt-1.5 flex items-center gap-2 text-sm font-semibold text-[#30251f] rtl:justify-end"
+                    >
+                      <Phone size={14} className="shrink-0 text-[#a47e43]" />
+                      {currentUser.phoneNumber}
+                    </p>
+                  </div>
+                )}
+
+                {currentUser?.dateOfBirth && (
+                  <div className="rounded-2xl bg-[#faf8f6] p-4">
+                    <p className="text-[9px] font-bold uppercase tracking-[0.16em] rtl:tracking-normal text-[#a3958c]">
+                      {t("profile.hero.personal.dateOfBirth")}
+                    </p>
+                    <p className="mt-1.5 flex flex-wrap items-baseline gap-x-2 text-sm font-semibold text-[#30251f]">
+                      <span>
+                        {formatCalendarDate(
+                          currentUser.dateOfBirth,
+                          LANGUAGE_DATE_LOCALE[language]
+                        )}
+                      </span>
+                      {calculateAge(currentUser.dateOfBirth) !== null && (
+                        <span className="text-xs font-medium text-[#a3958c]">
+                          {t("profile.hero.personal.age", {
+                            age: calculateAge(currentUser.dateOfBirth) ?? 0,
+                          })}
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                )}
+
+                {currentUser?.gender && (
+                  <div className="rounded-2xl bg-[#faf8f6] p-4">
+                    <p className="text-[9px] font-bold uppercase tracking-[0.16em] rtl:tracking-normal text-[#a3958c]">
+                      {t("profile.hero.personal.gender")}
+                    </p>
+                    <p className="mt-1.5 text-sm font-semibold text-[#30251f]">
+                      {currentUser.gender.toLowerCase() === "male"
+                        ? t("profile.hero.personal.male")
+                        : currentUser.gender.toLowerCase() === "female"
+                          ? t("profile.hero.personal.female")
+                          : currentUser.gender}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </section>
 

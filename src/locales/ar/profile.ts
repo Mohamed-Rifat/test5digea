@@ -26,6 +26,15 @@ const profile = {
     notStarted: "لسه ما بدأتش",
     savedCollection: "المحفوظات",
     savedCount: "{count} محفوظ",
+    personal: {
+      title: "بياناتك الشخصية",
+      phone: "رقم الهاتف",
+      dateOfBirth: "تاريخ الميلاد",
+      age: "{age} سنة",
+      gender: "النوع",
+      male: "ذكر",
+      female: "أنثى",
+    },
   },
   overview: {
     eyebrow: "نظرة عامة",

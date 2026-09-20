@@ -1,4 +1,5 @@
 import api from "@/lib/axios";
+import { normalizeVendor } from "@/lib/vendor-normalizer";
 
 import type {
   Vendor,
@@ -11,6 +12,7 @@ import type {
   VendorSearchParams,
   VendorSearchResponse,
   CompareVendorsRequest,
+  VendorApiResponse,
 } from "@/types/vendor";
 
 // ================================
@@ -18,27 +20,35 @@ import type {
 // ================================
 
 export const getVendorDetails = async (id: string): Promise<Vendor> => {
-  const response = await api.get<Vendor>(`/api/Vendors/${id}`);
+  const response = await api.get<VendorApiResponse>(`/api/Vendors/${id}`);
 
-  return response.data;
+  return normalizeVendor(response.data);
 };
 
 export const searchVendorList = async (
   params?: VendorSearchParams
 ): Promise<VendorSearchResponse> => {
-  const response = await api.get<VendorSearchResponse>("/api/Vendors/search", {
+  const response = await api.get<
+    Omit<VendorSearchResponse, "items"> & { items: VendorApiResponse[] }
+  >("/api/Vendors/search", {
     params,
   });
 
-  return response.data;
+  return {
+    ...response.data,
+    items: response.data.items.map(normalizeVendor),
+  };
 };
 
 export const compareVendorList = async (
   data: CompareVendorsRequest
 ): Promise<Vendor[]> => {
-  const response = await api.post<Vendor[]>("/api/Vendors/compare", data);
+  const response = await api.post<VendorApiResponse[]>(
+    "/api/Vendors/compare",
+    data
+  );
 
-  return response.data;
+  return response.data.map(normalizeVendor);
 };
 
 // ================================
@@ -46,9 +56,9 @@ export const compareVendorList = async (
 // ================================
 
 export const getCurrentVendor = async (): Promise<Vendor> => {
-  const response = await api.get<Vendor>("/api/Vendors/me");
+  const response = await api.get<VendorApiResponse>("/api/Vendors/me");
 
-  return response.data;
+  return normalizeVendor(response.data);
 };
 
 export const createVendor = async (
@@ -140,17 +150,19 @@ export const deleteVendorGalleryImage = async (
 // instead of guessing this mapping. The param is exposed here so it can
 // be wired in later once the mapping is confirmed with the backend team.
 export const getAdminVendorsList = async (status?: number): Promise<Vendor[]> => {
-  const response = await api.get<Vendor[]>("/api/Vendors/admin/all", {
+  const response = await api.get<VendorApiResponse[]>("/api/Vendors/admin/all", {
     params: status !== undefined ? { status } : undefined,
   });
 
-  return response.data;
+  return response.data.map(normalizeVendor);
 };
 
 export const getAdminVendorDetails = async (id: string): Promise<Vendor> => {
-  const response = await api.get<Vendor>(`/api/Vendors/admin/${id}`);
+  // The admin payload nests the live profile under `profile` and adds
+  // `pendingChanges` (profile edits waiting for approval).
+  const response = await api.get<VendorApiResponse>(`/api/Vendors/admin/${id}`);
 
-  return response.data;
+  return normalizeVendor(response.data);
 };
 
 export const approveVendor = async (id: string): Promise<void> => {

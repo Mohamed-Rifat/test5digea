@@ -28,6 +28,15 @@ const profile: Translation["profile"] = {
     notStarted: "Not started",
     savedCollection: "Saved collection",
     savedCount: "{count} saved",
+    personal: {
+      title: "Personal details",
+      phone: "Phone number",
+      dateOfBirth: "Date of birth",
+      age: "{age} years old",
+      gender: "Gender",
+      male: "Male",
+      female: "Female",
+    },
   },
   overview: {
     eyebrow: "Overview",

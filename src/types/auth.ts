@@ -11,10 +11,26 @@ export interface LoginResponse {
   expiration: string;
 }
 
+export type Gender = "Male" | "Female";
+
 export interface RegisterRequest {
   email: string;
   password: string;
   fullName: string;
+  phoneNumber: string;
+  // ISO calendar date, e.g. "1995-03-15" (no time / timezone).
+  dateOfBirth: string;
+  gender: Gender;
+}
+
+// GET /api/Auth/me
+export interface CurrentUser {
+  id: string;
+  email: string;
+  fullName: string;
+  phoneNumber?: string | null;
+  dateOfBirth?: string | null;
+  gender?: string | null;
 }
 
 export interface ForgotPasswordRequest {

@@ -1,6 +1,7 @@
 import api from "@/lib/axios";
 import type {
   ChangePasswordRequest,
+  CurrentUser,
   ForgotPasswordRequest,
   LoginRequest,
   LoginResponse,
@@ -53,4 +54,10 @@ export const changePassword = async (
   data: ChangePasswordRequest
 ): Promise<void> => {
   await api.post("/api/Auth/change-password", data);
+};
+
+export const getCurrentUser = async (): Promise<CurrentUser> => {
+  const response = await api.get<CurrentUser>("/api/Auth/me");
+
+  return response.data;
 };

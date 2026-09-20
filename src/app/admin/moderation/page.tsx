@@ -22,6 +22,9 @@ import { useModerationQueue } from "@/features/moderation/hooks/useModerationQue
 import { approveServiceImage, rejectServiceImage } from "@/features/services/api";
 import { getApiErrorMessage } from "@/lib/error";
 import { formatDate } from "@/lib/format";
+import { useLanguage } from "@/context/LanguageContext";
+import { LANGUAGE_DATE_LOCALE } from "@/locales/config";
+import type { TranslationKey } from "@/locales";
 import {
   ModerationEntityType,
   ModerationStatus,
@@ -31,42 +34,27 @@ import type {
   ModerationQueueItem,
 } from "@/types/moderation";
 
-const entityTypeOptions = [
-  { value: "", label: "All types" },
-  { value: String(ModerationEntityType.Vendor), label: "Vendors" },
-  { value: String(ModerationEntityType.Service), label: "Services" },
-  { value: String(ModerationEntityType.Review), label: "Reviews" },
-  { value: String(ModerationEntityType.ServiceImage), label: "Images" },
-];
-
-const statusOptions = [
-  { value: "", label: "All statuses" },
-  { value: String(ModerationStatus.Pending), label: "Pending" },
-  { value: String(ModerationStatus.Approved), label: "Approved" },
-  { value: String(ModerationStatus.Rejected), label: "Rejected" },
-];
-
 const entityMeta: Record<
   ModerationEntityType,
-  { label: string; icon: typeof Store; className: string }
+  { labelKey: TranslationKey; icon: typeof Store; className: string }
 > = {
   [ModerationEntityType.Vendor]: {
-    label: "Vendor",
+    labelKey: "admin.moderation.entity.vendor",
     icon: Store,
     className: "bg-[#f0e9e0] text-[#a47e43]",
   },
   [ModerationEntityType.Service]: {
-    label: "Service",
+    labelKey: "admin.moderation.entity.service",
     icon: BriefcaseBusiness,
     className: "bg-[#eef2f7] text-[#4d6b8f]",
   },
   [ModerationEntityType.Review]: {
-    label: "Review",
+    labelKey: "admin.moderation.entity.review",
     icon: Star,
     className: "bg-[#f7f0e8] text-[#b99a62]",
   },
   [ModerationEntityType.ServiceImage]: {
-    label: "Image",
+    labelKey: "admin.moderation.entity.image",
     icon: ImageIcon,
     className: "bg-[#eaf2ee] text-[#4d8f6b]",
   },
@@ -78,10 +66,10 @@ const statusStyles: Record<ModerationStatus, string> = {
   [ModerationStatus.Rejected]: "bg-red-50 text-red-600",
 };
 
-const statusLabels: Record<ModerationStatus, string> = {
-  [ModerationStatus.Pending]: "Pending",
-  [ModerationStatus.Approved]: "Approved",
-  [ModerationStatus.Rejected]: "Rejected",
+const statusLabelKeys: Record<ModerationStatus, TranslationKey> = {
+  [ModerationStatus.Pending]: "admin.moderation.statuses.pending",
+  [ModerationStatus.Approved]: "admin.moderation.statuses.approved",
+  [ModerationStatus.Rejected]: "admin.moderation.statuses.rejected",
 };
 
 // Where "Review" should send the admin — for entity types without their
@@ -106,6 +94,24 @@ function reviewHref(item: ModerationQueueItem): string {
 }
 
 export default function AdminModerationPage() {
+  const { t, language } = useLanguage();
+  const dateLocale = LANGUAGE_DATE_LOCALE[language];
+
+  const entityTypeOptions = [
+    { value: "", label: t("admin.moderation.types.all") },
+    { value: String(ModerationEntityType.Vendor), label: t("admin.moderation.types.vendors") },
+    { value: String(ModerationEntityType.Service), label: t("admin.moderation.types.services") },
+    { value: String(ModerationEntityType.Review), label: t("admin.moderation.types.reviews") },
+    { value: String(ModerationEntityType.ServiceImage), label: t("admin.moderation.types.images") },
+  ];
+
+  const statusOptions = [
+    { value: "", label: t("admin.moderation.statuses.all") },
+    { value: String(ModerationStatus.Pending), label: t("admin.moderation.statuses.pending") },
+    { value: String(ModerationStatus.Approved), label: t("admin.moderation.statuses.approved") },
+    { value: String(ModerationStatus.Rejected), label: t("admin.moderation.statuses.rejected") },
+  ];
+
   const [vendorId, setVendorId] = useState("");
   const [entityType, setEntityType] = useState("");
   const [status, setStatus] = useState("");
@@ -155,11 +161,11 @@ export default function AdminModerationPage() {
       await refetch();
 
       setPreviewItem(null);
-      showMessage("success", "Image approved successfully.");
+      showMessage("success", t("admin.moderation.messages.imageApproved"));
     } catch (err) {
       showMessage(
         "error",
-        getApiErrorMessage(err, "Failed to approve image.")
+        getApiErrorMessage(err, t("admin.moderation.messages.approveFailed"))
       );
     } finally {
       setImageActionId(null);
@@ -185,7 +191,7 @@ export default function AdminModerationPage() {
     const reason = rejectReason.trim();
 
     if (!reason) {
-      showMessage("error", "Please enter a rejection reason.");
+      showMessage("error", t("admin.moderation.messages.reasonRequired"));
       return;
     }
 
@@ -198,11 +204,11 @@ export default function AdminModerationPage() {
       setRejectTarget(null);
       setRejectReason("");
 
-      showMessage("success", "Image rejected successfully.");
+      showMessage("success", t("admin.moderation.messages.imageRejected"));
     } catch (err) {
       showMessage(
         "error",
-        getApiErrorMessage(err, "Failed to reject image.")
+        getApiErrorMessage(err, t("admin.moderation.messages.rejectFailed"))
       );
     } finally {
       setImageActionId(null);
@@ -224,19 +230,17 @@ export default function AdminModerationPage() {
     <div className="mx-auto">
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="mb-1 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#a47e43]">
+          <p className="mb-1 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] rtl:tracking-normal text-[#a47e43]">
             <ClipboardList size={13} />
-            Everything awaiting a decision
+            {t("admin.moderation.eyebrow")}
           </p>
 
           <h1 className="font-serif text-2xl font-light text-[#30251f] sm:text-3xl">
-            Moderation Queue
+            {t("admin.moderation.title")}
           </h1>
 
           <p className="mt-1 text-sm text-[#958980]">
-            Vendors, services, reviews and images in one place — pick a
-            filter, approve or reject an image right here, or open an
-            item to review it.
+            {t("admin.moderation.subtitle")}
           </p>
         </div>
 
@@ -246,7 +250,7 @@ export default function AdminModerationPage() {
           className="flex shrink-0 items-center gap-2 rounded-full border border-[#e4dbd0] bg-white px-4 py-2 text-xs font-semibold text-[#30251f] transition hover:border-[#b99a62] hover:bg-[#faf7f4]"
         >
           <RotateCcw size={13} />
-          Refresh
+          {t("admin.moderation.refresh")}
         </button>
       </div>
 
@@ -265,21 +269,21 @@ export default function AdminModerationPage() {
       {/* Filters */}
       <div className="mb-6 grid gap-3 rounded-2xl border border-[#eee7e1] bg-white p-4 sm:grid-cols-2 lg:grid-cols-5">
         <div>
-          <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-[#9b8f86]">
-            Vendor ID
+          <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide rtl:tracking-normal text-[#9b8f86]">
+            {t("admin.moderation.filters.vendorId")}
           </label>
           <input
             type="text"
             value={vendorId}
             onChange={(e) => setVendorId(e.target.value)}
-            placeholder="Paste a vendor ID"
+            placeholder={t("admin.moderation.filters.vendorIdPlaceholder")}
             className="w-full rounded-xl border border-[#e3d9d1] bg-[#fcfaf8] px-3 py-2.5 text-sm text-[#30251f] outline-none transition placeholder:text-[#a99d94] focus:border-[#30251f]"
           />
         </div>
 
         <div>
-          <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-[#9b8f86]">
-            Type
+          <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide rtl:tracking-normal text-[#9b8f86]">
+            {t("admin.moderation.filters.type")}
           </label>
           <Select
             value={entityType}
@@ -289,8 +293,8 @@ export default function AdminModerationPage() {
         </div>
 
         <div>
-          <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-[#9b8f86]">
-            Status
+          <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide rtl:tracking-normal text-[#9b8f86]">
+            {t("admin.moderation.filters.status")}
           </label>
           <Select
             value={status}
@@ -300,8 +304,8 @@ export default function AdminModerationPage() {
         </div>
 
         <div>
-          <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-[#9b8f86]">
-            From
+          <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide rtl:tracking-normal text-[#9b8f86]">
+            {t("admin.moderation.filters.from")}
           </label>
           <input
             type="date"
@@ -312,8 +316,8 @@ export default function AdminModerationPage() {
         </div>
 
         <div>
-          <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-[#9b8f86]">
-            To
+          <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide rtl:tracking-normal text-[#9b8f86]">
+            {t("admin.moderation.filters.to")}
           </label>
           <input
             type="date"
@@ -330,7 +334,7 @@ export default function AdminModerationPage() {
           onClick={clearFilters}
           className="mb-4 text-xs font-semibold text-[#a47e43] hover:underline"
         >
-          Clear filters
+          {t("admin.moderation.filters.clear")}
         </button>
       )}
 
@@ -359,13 +363,13 @@ export default function AdminModerationPage() {
           </div>
 
           <p className="text-sm font-medium text-[#30251f]">
-            Nothing in the queue
+            {t("admin.moderation.empty.title")}
           </p>
 
           <p className="mx-auto mt-1.5 max-w-sm text-sm leading-6 text-[#9b8f86]">
             {hasFilters
-              ? "No items match these filters."
-              : "There's nothing waiting on a decision right now."}
+              ? t("admin.moderation.empty.filtered")
+              : t("admin.moderation.empty.none")}
           </p>
         </div>
       )}
@@ -374,7 +378,7 @@ export default function AdminModerationPage() {
         <div className="space-y-2.5">
           {items.map((item) => {
             const meta = entityMeta[item.entityType] ?? {
-              label: "Item",
+              labelKey: "admin.moderation.entity.item" as const,
               icon: ClipboardList,
               className: "bg-[#f0e9e0] text-[#a47e43]",
             };
@@ -399,7 +403,7 @@ export default function AdminModerationPage() {
                         e.stopPropagation();
                         setPreviewItem(item);
                       }}
-                      title="Click to view full size"
+                      title={t("admin.moderation.viewFullSize")}
                       className="group/thumb relative h-10 w-10 shrink-0 overflow-hidden rounded-xl"
                     >
                       <img
@@ -429,13 +433,13 @@ export default function AdminModerationPage() {
                       </p>
 
                       <span className="shrink-0 rounded-full bg-[#f4eee9] px-2 py-0.5 text-[10px] font-medium text-[#766d67]">
-                        {meta.label}
+                        {t(meta.labelKey)}
                       </span>
                     </div>
 
                     <p className="mt-0.5 truncate text-xs text-[#9b8f86]">
                       {item.vendorBusinessName} ·{" "}
-                      {formatDate(item.submittedAt)}
+                      {formatDate(item.submittedAt, dateLocale)}
                     </p>
                   </div>
                 </div>
@@ -447,7 +451,7 @@ export default function AdminModerationPage() {
                       "bg-[#f4eee9] text-[#766d67]"
                     }`}
                   >
-                    {statusLabels[item.status] ?? "Unknown"}
+                    {statusLabelKeys[item.status] ? t(statusLabelKeys[item.status]) : t("admin.moderation.statuses.unknown")}
                   </span>
 
                   {isPendingImage ? (
@@ -460,7 +464,7 @@ export default function AdminModerationPage() {
                           handleApproveImage(item);
                         }}
                         className="flex h-8 w-8 items-center justify-center rounded-full border border-emerald-200 bg-emerald-50 text-emerald-700 transition hover:bg-emerald-100 disabled:opacity-60"
-                        title="Approve image"
+                        title={t("admin.moderation.approveImage")}
                       >
                         {isActingOnThisImage ? (
                           <Loader2 size={14} className="animate-spin" />
@@ -477,13 +481,13 @@ export default function AdminModerationPage() {
                           openRejectModal(item);
                         }}
                         className="flex h-8 w-8 items-center justify-center rounded-full border border-red-200 bg-red-50 text-red-600 transition hover:bg-red-100 disabled:opacity-60"
-                        title="Reject image"
+                        title={t("admin.moderation.rejectImage")}
                       >
                         <X size={14} />
                       </button>
                     </div>
                   ) : (
-                    <ArrowUpRight size={15} className="text-[#a47e43]" />
+                    <ArrowUpRight size={15} className="text-[#a47e43] rtl:-scale-x-100" />
                   )}
                 </div>
               </>
@@ -518,18 +522,18 @@ export default function AdminModerationPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-xl">
             <h2 className="text-sm font-semibold text-[#30251f]">
-              Reject image
+              {t("admin.moderation.modal.title")}
             </h2>
 
             <p className="mt-1 text-xs text-[#958980]">
-              Provide a clear reason for rejecting “{rejectTarget.title}”.
+              {t("admin.moderation.modal.text", { title: rejectTarget.title })}
             </p>
 
             <textarea
               value={rejectReason}
               onChange={(e) => setRejectReason(e.target.value)}
               disabled={imageActionId === rejectTarget.entityId}
-              placeholder="Explain why this image is being rejected..."
+              placeholder={t("admin.moderation.modal.placeholder")}
               rows={4}
               className="mt-3 w-full rounded-xl border border-[#e3d9d1] bg-[#fcfaf8] px-3 py-2.5 text-sm text-[#30251f] outline-none transition placeholder:text-[#a99d94] focus:border-[#30251f]"
             />
@@ -541,7 +545,7 @@ export default function AdminModerationPage() {
                 disabled={imageActionId === rejectTarget.entityId}
                 className="rounded-full border border-[#e4dbd0] bg-white px-4 py-2 text-xs font-semibold text-[#30251f] transition hover:bg-[#faf7f4] disabled:opacity-60"
               >
-                Cancel
+                {t("admin.moderation.modal.cancel")}
               </button>
 
               <button
@@ -558,7 +562,7 @@ export default function AdminModerationPage() {
                 ) : (
                   <X size={13} />
                 )}
-                Reject image
+                {t("admin.moderation.modal.confirm")}
               </button>
             </div>
           </div>
@@ -577,7 +581,7 @@ export default function AdminModerationPage() {
 
           {previewItem.status === ModerationStatus.Pending && (
             <div className="fixed inset-x-0 bottom-0 z-[110] flex justify-center px-4 pb-6 sm:pb-8">
-              <div className="flex items-center gap-3 rounded-full bg-white/95 p-2 pl-4 shadow-2xl backdrop-blur">
+              <div className="flex items-center gap-3 rounded-full bg-white/95 p-2 ps-4 shadow-2xl backdrop-blur">
                 <span className="hidden text-xs font-medium text-[#30251f] sm:inline">
                   {previewItem.title}
                 </span>
@@ -593,7 +597,7 @@ export default function AdminModerationPage() {
                   ) : (
                     <Check size={14} />
                   )}
-                  Approve
+                  {t("admin.moderation.approve")}
                 </button>
 
                 <button
@@ -603,7 +607,7 @@ export default function AdminModerationPage() {
                   className="flex items-center gap-2 rounded-full bg-red-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-red-700 disabled:opacity-60"
                 >
                   <X size={14} />
-                  Reject
+                  {t("admin.moderation.reject")}
                 </button>
               </div>
             </div>

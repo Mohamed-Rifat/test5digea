@@ -10,6 +10,7 @@ import {
   BriefcaseBusiness,
   Star,
   ClipboardList,
+  FilePenLine,
   LogOut,
   X,
   Heart,
@@ -38,6 +39,7 @@ const navigation: {
     titleKey: "admin.sidebar.management",
     items: [
       { labelKey: "admin.sidebar.moderation", href: "/admin/moderation", icon: ClipboardList },
+      { labelKey: "admin.sidebar.vendorUpdates", href: "/admin/vendor-updates", icon: FilePenLine },
       { labelKey: "admin.sidebar.categories", href: "/admin/categories", icon: Tags },
       { labelKey: "admin.sidebar.vendors", href: "/admin/vendors", icon: Store },
       { labelKey: "admin.sidebar.services", href: "/admin/services", icon: BriefcaseBusiness },

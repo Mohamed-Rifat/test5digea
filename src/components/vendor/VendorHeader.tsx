@@ -38,7 +38,6 @@ import { useLanguage } from "@/context/LanguageContext";
 import { LANGUAGE_DATE_LOCALE } from "@/locales/config";
 import NotificationBell from "@/components/notifications/NotificationBell";
 import LanguageSwitcher from "@/components/layout/LanguageSwitcher";
-import SessionCountdownBadge from "@/components/shared/SessionCountdownBadge";
 
 interface VendorHeaderProps {
   onMenuClick: () => void;
@@ -275,9 +274,6 @@ export default function VendorHeader({ onMenuClick }: VendorHeaderProps) {
         >
           {mobileSearchOpen ? <X size={18} /> : <Search size={18} />}
         </button>
-
-        {/* Last-hour session countdown (blinks yellow -> orange -> red) */}
-        <SessionCountdownBadge />
 
         {/* Refresh */}
         <Tooltip title={t("vendor.header.refresh")} arrow>

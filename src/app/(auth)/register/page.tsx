@@ -9,6 +9,8 @@ import { register } from "@/features/auth/api";
 import { getApiErrorMessage } from "@/lib/error";
 import { useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
+import DateOfBirthField from "@/components/shared/DateOfBirthField";
+import type { Gender } from "@/types/auth";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -24,12 +26,25 @@ export default function RegisterPage() {
   const [touched, setTouched] = useState({
     fullName: false,
     email: false,
+    phoneNumber: false,
+    dateOfBirth: false,
+    gender: false,
     password: false,
     confirmPassword: false,
   });
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    fullName: string;
+    email: string;
+    phoneNumber: string;
+    dateOfBirth: string;
+    gender: Gender | "";
+    password: string;
+  }>({
     fullName: "",
     email: "",
+    phoneNumber: "",
+    dateOfBirth: "",
+    gender: "",
     password: "",
   });
 
@@ -45,6 +60,11 @@ export default function RegisterPage() {
     const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return regex.test(email);
   };
+
+  // Digits with an optional leading +, spaces, dashes and brackets.
+  const validatePhone = (phone: string) => /^\+?[\d\s\-()]{6,20}$/.test(phone.trim());
+
+  const isPhoneValid = validatePhone(formData.phoneNumber);
 
   const evaluatePasswordStrength = (password: string) => {
     const requirements = {
@@ -94,6 +114,23 @@ export default function RegisterPage() {
     }
   };
 
+  const handleDateOfBirthChange = (value: string) => {
+    setFormData((previous) => ({ ...previous, dateOfBirth: value }));
+
+    if (error) {
+      setError("");
+    }
+  };
+
+  const handleGenderChange = (value: Gender) => {
+    setFormData((previous) => ({ ...previous, gender: value }));
+    setTouched((previous) => ({ ...previous, gender: true }));
+
+    if (error) {
+      setError("");
+    }
+  };
+
   const handleConfirmPasswordChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setConfirmPassword(event.target.value);
     if (error) {
@@ -124,6 +161,26 @@ export default function RegisterPage() {
       return;
     }
 
+    if (!formData.phoneNumber.trim()) {
+      setError(t("auth.validation.phoneRequired"));
+      return;
+    }
+
+    if (!isPhoneValid) {
+      setError(t("auth.validation.phoneInvalid"));
+      return;
+    }
+
+    if (!formData.dateOfBirth) {
+      setError(t("auth.validation.dobRequired"));
+      return;
+    }
+
+    if (!formData.gender) {
+      setError(t("auth.validation.genderRequired"));
+      return;
+    }
+
     if (formData.password !== confirmPassword) {
       setError(t("auth.validation.passwordMismatch"));
       return;
@@ -140,6 +197,9 @@ export default function RegisterPage() {
       const data = await register({
         fullName: formData.fullName,
         email: formData.email,
+        phoneNumber: formData.phoneNumber.trim(),
+        dateOfBirth: formData.dateOfBirth,
+        gender: formData.gender,
         password: formData.password,
       });
 
@@ -307,6 +367,116 @@ export default function RegisterPage() {
                       </span>
                     </div>
                   )}
+                </div>
+
+                <div
+                  className="relative z-0 w-full animate-fade-in group"
+                  style={{ animationDelay: "0.22s" }}
+                >
+                  <input
+                    id="phoneNumber"
+                    type="tel"
+                    dir="ltr"
+                    inputMode="tel"
+                    value={formData.phoneNumber}
+                    onChange={handleChange}
+                    onBlur={() => handleBlur("phoneNumber")}
+                    placeholder=" "
+                    autoComplete="tel"
+                    disabled={loading}
+                    required
+                    aria-invalid={!!error || (!isPhoneValid && touched.phoneNumber && formData.phoneNumber.length > 0)}
+                    className={`peer block w-full border-0 border-b-2 bg-transparent px-0 py-3 text-[15px] text-[#30251f] appearance-none outline-none transition-all duration-300 placeholder:text-transparent focus:ring-0 ltr:text-left rtl:text-right ${error || (!isPhoneValid && touched.phoneNumber && formData.phoneNumber.length > 0)
+                      ? "border-red-300 focus:border-red-500"
+                      : "border-[#ded5ce] hover:border-[#cbbdb3] focus:border-[#9a8171]"
+                      } disabled:cursor-not-allowed disabled:opacity-60`}
+                  />
+
+                  <label
+                    htmlFor="phoneNumber"
+                    className={`pointer-events-none absolute start-0 top-3 -z-10 ltr:origin-left rtl:origin-right text-sm text-[#a59a92] transform transition-all duration-300 ${formData.phoneNumber
+                      ? "-translate-y-6 scale-75"
+                      : "peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-focus:-translate-y-6 peer-focus:scale-75"
+                      } ${error || (!isPhoneValid && touched.phoneNumber && formData.phoneNumber.length > 0)
+                        ? "text-red-500 peer-focus:text-red-500"
+                        : "peer-focus:text-[#9a8171]"
+                      }`}
+                  >
+                    {t("auth.phoneNumber")}
+                  </label>
+
+                  {touched.phoneNumber && formData.phoneNumber.length > 0 && (
+                    <div className="mt-1.5 flex items-center gap-1.5 text-xs">
+                      {isPhoneValid ? (
+                        <Check size={14} className="text-emerald-500" />
+                      ) : (
+                        <AlertCircle size={14} className="text-red-500" />
+                      )}
+
+                      <span
+                        className={
+                          isPhoneValid ? "text-emerald-600" : "text-red-500"
+                        }
+                      >
+                        {isPhoneValid ? t("auth.feedback.validPhone") : t("auth.feedback.invalidPhone")}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                <div
+                  className="relative z-0 w-full animate-fade-in"
+                  style={{ animationDelay: "0.23s" }}
+                >
+                  <DateOfBirthField
+                    id="dateOfBirth"
+                    label={t("auth.dateOfBirth")}
+                    value={formData.dateOfBirth}
+                    onChange={handleDateOfBirthChange}
+                    onBlur={() => handleBlur("dateOfBirth")}
+                    disabled={loading}
+                    invalid={!!error && !formData.dateOfBirth}
+                  />
+                </div>
+
+                <div
+                  className="relative z-0 w-full animate-fade-in text-start"
+                  style={{ animationDelay: "0.24s" }}
+                >
+                  <p
+                    id="gender-label"
+                    className={`mb-2 text-xs ${!!error && !formData.gender ? "text-red-500" : "text-[#a59a92]"}`}
+                  >
+                    {t("auth.gender")}
+                  </p>
+
+                  <div
+                    role="radiogroup"
+                    aria-labelledby="gender-label"
+                    className="grid grid-cols-2 gap-3"
+                  >
+                    {(["Male", "Female"] as const).map((option) => {
+                      const selected = formData.gender === option;
+
+                      return (
+                        <button
+                          key={option}
+                          type="button"
+                          role="radio"
+                          aria-checked={selected}
+                          disabled={loading}
+                          onClick={() => handleGenderChange(option)}
+                          className={`flex h-11 items-center justify-center gap-2 rounded-full border text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#9a8171]/25 disabled:cursor-not-allowed disabled:opacity-60 ${selected
+                            ? "border-[#30251f] bg-[#30251f] text-white shadow-[0_6px_18px_rgba(48,37,31,0.15)]"
+                            : "border-[#ded5ce] bg-transparent text-[#6f625b] hover:border-[#9a8171] hover:text-[#30251f]"
+                            }`}
+                        >
+                          {selected && <Check size={14} />}
+                          {option === "Male" ? t("auth.male") : t("auth.female")}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
 
                 <div
@@ -518,7 +688,14 @@ export default function RegisterPage() {
 
                 <button
                   type="submit"
-                  disabled={loading || !passwordsMatch || passwordStrength < 20}
+                  disabled={
+                    loading ||
+                    !passwordsMatch ||
+                    passwordStrength < 20 ||
+                    !formData.phoneNumber ||
+                    !formData.dateOfBirth ||
+                    !formData.gender
+                  }
                   className="group relative flex h-13.5 w-full items-center justify-center overflow-hidden bg-[#30251f] px-5 text-sm font-semibold text-white shadow-[0_8px_24px_rgba(48,37,31,0.12)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#43352d] hover:shadow-[0_12px_30px_rgba(48,37,31,0.18)] focus:outline-none focus:ring-4 focus:ring-[#30251f]/15 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:translate-y-0 animate-fade-in"
                   style={{ animationDelay: "0.4s" }}
                 >
