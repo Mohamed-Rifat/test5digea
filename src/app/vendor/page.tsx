@@ -37,6 +37,7 @@ import {
   UserPlus,
   Gift,
   Crown,
+  ExternalLink,
 } from "lucide-react";
 
 import {
@@ -54,6 +55,8 @@ import { useVendorReviews } from "@/features/reviews/hooks/useVendorReviews";
 import { ReviewStatus } from "@/types/review";
 import { useLanguage } from "@/context/LanguageContext";
 import { LANGUAGE_DATE_LOCALE } from "@/locales/config";
+import AttentionPanel from "@/components/vendor/dashboard/AttentionPanel";
+import ProfileCompleteness from "@/components/vendor/dashboard/ProfileCompleteness";
 
 // ✅ استيراد recharts
 import {
@@ -599,6 +602,26 @@ export default function VendorDashboardPage() {
     };
   }, [services, reviews]);
 
+  // "Recent" lists should really be the newest first, whatever order the
+  // API returns them in.
+  const recentReviews = useMemo(
+    () =>
+      [...reviews].sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      ),
+    [reviews]
+  );
+
+  const recentServices = useMemo(
+    () =>
+      [...services].sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      ),
+    [services]
+  );
+
   const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
     await Promise.all([refetchVendor(), refetchServices(), refetchReviews()]);
@@ -651,6 +674,16 @@ export default function VendorDashboardPage() {
               >
                 <RefreshCw size={13} className={isRefreshing ? "animate-spin" : "sm:h-5 sm:w-5"} />
               </button>
+
+              <Link
+                href={`/vendors/${vendor.id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-[#e3d9d1] bg-white px-3 py-1.5 text-[10px] font-medium text-[#665950] transition-all hover:border-[#cfc1b7] hover:bg-[#faf8f6] sm:gap-2 sm:px-3.5 sm:py-2 sm:text-sm"
+              >
+                <ExternalLink size={13} className="sm:h-4 sm:w-4" />
+                <span>{t("vendor.dashboard.viewPublicPage")}</span>
+              </Link>
 
               <Link
                 href="/vendor/services/new"
@@ -706,7 +739,13 @@ export default function VendorDashboardPage() {
             icon={Star}
             subtitle={t("vendor.dashboard.kpi.reviewsCount", { count: stats.totalReviews })}
             color="#f59e0b"
-            badge={stats.fiveStarRate > 50 ? t("vendor.dashboard.kpi.topRated") : t("vendor.dashboard.kpi.good")}
+            badge={
+              stats.approvedReviews === 0
+                ? undefined
+                : stats.fiveStarRate > 50
+                  ? t("vendor.dashboard.kpi.topRated")
+                  : t("vendor.dashboard.kpi.good")
+            }
           />
 
           <KPICard
@@ -727,6 +766,15 @@ export default function VendorDashboardPage() {
             color="#f59e0b"
             badge={stats.pendingReviews > 0 ? t("vendor.dashboard.kpi.actionRequired") : t("vendor.dashboard.kpi.allClear")}
           />
+        </div>
+
+        {/* =================================================
+            NEEDS ATTENTION + PROFILE COMPLETENESS
+        ================================================= */}
+
+        <div className="mb-6 grid gap-6 lg:grid-cols-3">
+          <AttentionPanel services={services} />
+          <ProfileCompleteness vendor={vendor} />
         </div>
 
         {/* =================================================
@@ -822,7 +870,7 @@ export default function VendorDashboardPage() {
               </div>
             ) : (
               <div className="space-y-3">
-                {reviews.slice(0, 4).map((review) => (
+                {recentReviews.slice(0, 4).map((review) => (
                   <div
                     key={review.id}
                     className="flex flex-col gap-2 rounded-xl border border-[#f0eae5] bg-[#fcfaf8] p-3 transition hover:border-[#e3d9d1] sm:flex-row sm:items-center sm:justify-between"
@@ -872,7 +920,7 @@ export default function VendorDashboardPage() {
                     <p className="text-sm font-semibold text-[#30251f]">{stats.approvedServices}</p>
                   </div>
                 </div>
-                <span className="text-xs text-emerald-600 font-medium">+{stats.approvedServices > 0 ? Math.round(stats.approvalRate) : 0}%</span>
+                <span className="text-xs text-emerald-600 font-medium">{Math.round(stats.approvalRate)}%</span>
               </div>
 
               <div className="flex items-center justify-between rounded-xl bg-[#fcfaf8] p-3">
@@ -936,12 +984,24 @@ export default function VendorDashboardPage() {
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {services.slice(0, 4).map((service) => (
+              {recentServices.slice(0, 4).map((service) => (
                 <Link
                   key={service.id}
                   href={`/vendor/services/${service.id}`}
                   className="group rounded-xl border border-[#f0eae5] bg-[#fcfaf8] p-4 transition hover:border-[#a47e43] hover:shadow-md"
                 >
+                  {service.images && service.images.length > 0 && (
+                    <img
+                      src={
+                        [...service.images].sort(
+                          (a, b) => a.displayOrder - b.displayOrder
+                        )[0].url
+                      }
+                      alt={service.name}
+                      loading="lazy"
+                      className="mb-3 h-28 w-full rounded-lg object-cover"
+                    />
+                  )}
                   <div className="flex items-start justify-between">
                     <div className="min-w-0 flex-1">
                       <h4 className="truncate text-sm font-semibold text-[#30251f]">{service.name}</h4>
