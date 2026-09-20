@@ -50,6 +50,13 @@ const common: Translation["common"] = {
     },
   },
   viewAllNotifications: "View all notifications",
+  sessionCountdown: {
+    ariaLabel: "Time left before your session expires: {time}",
+    tooltipTitle: "Your session expires in {time}",
+    notice: "Less than an hour left before your session expires. Save your work as you go.",
+    warning: "Less than 30 minutes left. Finish what you're doing and save your changes.",
+    danger: "Your session is about to expire! Save your data now before it closes automatically.",
+  },
 };
 
 export default common;

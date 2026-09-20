@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import {
   AlertTriangle,
@@ -12,6 +12,11 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import { useSessionCountdown } from "@/lib/useSessionCountdown";
 import { useToast } from "@/components/providers/ToastProvider";
+import { SessionExpiryContext } from "@/context/SessionExpiryContext";
+import {
+  SESSION_DANGER_SECONDS,
+  getSessionAlertLevel,
+} from "@/lib/session-warning";
 
 /**
  * Session warning thresholds
@@ -25,7 +30,7 @@ import { useToast } from "@/components/providers/ToastProvider";
  * 30 seconds:
  * Show a mandatory final warning that cannot be dismissed.
  */
-const WARNING_THRESHOLD_SECONDS = 600;
+const WARNING_THRESHOLD_SECONDS = SESSION_DANGER_SECONDS;
 const CRITICAL_THRESHOLD_SECONDS = 120;
 const FINAL_THRESHOLD_SECONDS = 30;
 
@@ -43,6 +48,24 @@ export default function SessionExpiryProvider({
   const secondsLeft = useSessionCountdown(
     isAuthenticated ? user?.expiration : null
   );
+
+  /**
+   * Last-hour warning level (yellow -> orange -> red), shared with the
+   * Admin/Vendor header countdown through context.
+   */
+  const alertLevel = getSessionAlertLevel(
+    isAuthenticated ? secondsLeft : null
+  );
+
+  const sessionExpiryValue = useMemo(
+    () => ({ secondsLeft, level: alertLevel }),
+    [secondsLeft, alertLevel]
+  );
+
+  /**
+   * Blinking screen border for every signed-in role (User, Vendor, Admin).
+   */
+  const showFrame = alertLevel !== null;
 
   /**
    * Prevent multiple automatic logout calls.
@@ -181,8 +204,17 @@ export default function SessionExpiryProvider({
   const isCriticalWarning = warningStage === "critical";
 
   return (
-    <>
+    <SessionExpiryContext.Provider value={sessionExpiryValue}>
       {children}
+
+      {/* Blinking full-screen border during the last hour of any session */}
+      {showFrame && (
+        <div
+          aria-hidden="true"
+          data-level={alertLevel}
+          className="session-frame pointer-events-none fixed inset-0 z-[2000]"
+        />
+      )}
 
       {showWarning && (
         <div
@@ -361,7 +393,7 @@ export default function SessionExpiryProvider({
           </div>
         </div>
       )}
-    </>
+    </SessionExpiryContext.Provider>
   );
 }
 

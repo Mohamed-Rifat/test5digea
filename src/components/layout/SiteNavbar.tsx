@@ -27,6 +27,7 @@ import { useAuth } from "@/context/AuthContext";
 import { getHomePath } from "@/lib/auth-utils";
 import { useCategories } from "@/features/categories/hooks/useCategories";
 import LanguageSwitcher from "@/components/layout/LanguageSwitcher";
+import SessionCountdownBadge from "@/components/shared/SessionCountdownBadge";
 import { useLanguage } from "@/context/LanguageContext";
 import type { TranslationKey } from "@/locales";
 
@@ -358,6 +359,9 @@ export default function SiteNavbar() {
             </>
           )}
 
+          {/* Last-hour session countdown (blinks yellow -> orange -> red) */}
+          <SessionCountdownBadge />
+
           <LanguageSwitcher />
 
           {!isAuthenticated ? (
@@ -563,6 +567,10 @@ export default function SiteNavbar() {
               </div>
             </>
           )}
+
+          {/* Last-hour session countdown (hidden below 360px so the row
+              never overflows; the screen border still blinks there). */}
+          <SessionCountdownBadge compact className="max-[359px]:hidden" />
 
           {/* Language switcher (hidden on very narrow phones, where it lives
               in the drawer instead so the header row never overflows). */}

@@ -9,6 +9,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import type { TranslationKey } from "@/locales";
 import NotificationBell from "@/components/notifications/NotificationBell";
 import LanguageSwitcher from "@/components/layout/LanguageSwitcher";
+import SessionCountdownBadge from "@/components/shared/SessionCountdownBadge";
 
 interface AdminHeaderProps {
   onMenuClick: () => void;
@@ -163,6 +164,9 @@ export default function AdminHeader({ onMenuClick }: AdminHeaderProps) {
           >
             {mobileSearchOpen ? <X size={18} /> : <Search size={18} />}
           </button>
+
+          {/* Last-hour session countdown (blinks yellow -> orange -> red) */}
+          <SessionCountdownBadge />
 
           {/* Language switcher: compact code on phones, globe + name from sm up */}
           <LanguageSwitcher variant="compact" className="sm:hidden" />
