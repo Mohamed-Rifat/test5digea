@@ -15,6 +15,7 @@ import favorites from "./favorites";
 import compare from "./compare";
 import profile from "./profile";
 import support from "./support";
+import notFound from "./notFound";
 
 const ar = {
   common,
@@ -34,6 +35,7 @@ const ar = {
   compare,
   profile,
   support,
+  notFound,
 };
 
 export default ar;

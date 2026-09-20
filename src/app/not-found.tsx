@@ -13,7 +13,11 @@ import {
     Sparkles,
 } from "lucide-react";
 
+import { useLanguage } from "@/context/LanguageContext";
+
 export default function NotFound() {
+    const { t } = useLanguage();
+
     return (
         <main className=" relative min-h-screen overflow-hidden bg-[#f8f5ef] px-4 py-4 text-[#30251f] sm:px-6 sm:py-6">
             <div className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -68,8 +72,8 @@ export default function NotFound() {
                     <div className="mb-6 flex items-center justify-center gap-4">
                         <span className="h-px w-8 bg-[#b99a62]/50 sm:w-12" />
 
-                        <span className="text-[9px] font-medium uppercase tracking-[0.45em] text-[#9b8367] sm:text-[10px]">
-                            Page Not Found
+                        <span className="text-[9px] font-medium uppercase tracking-[0.45em] rtl:tracking-normal text-[#9b8367] sm:text-[10px]">
+                            {t("notFound.eyebrow")}
                         </span>
 
                         <span className="h-px w-8 bg-[#b99a62]/50 sm:w-12" />
@@ -158,7 +162,7 @@ export default function NotFound() {
                             </svg>
                         </div>
 
-                        <div className="flex items-center font-serif text-[clamp(7rem,23vw,15rem)] font-light leading-[0.72] tracking-[-0.09em] text-[#30251f]">
+                        <div className="flex items-center font-serif text-[clamp(7rem,23vw,15rem)] font-light leading-[0.72] tracking-[-0.09em] rtl:tracking-normal text-[#30251f]">
                             <span>4</span>
                             <span className="relative mx-[-0.02em] inline-flex h-[0.9em] w-[0.68em] items-center justify-center">
                                 <span className="absolute inset-[5%] rounded-[50%] border border-[#b99a62]/70" />
@@ -221,10 +225,10 @@ export default function NotFound() {
                     </div>
 
                     <div className="max-w-3xl">
-                        <h1 className="font-serif text-3xl font-light leading-[1.1] tracking-tight text-[#30251f] sm:text-4xl md:text-5xl lg:text-[3.5rem]">
-                            Oops! This Page Got{" "}
-                            <span className="relative inline-block italic text-[#a47e43]">
-                                Lost
+                        <h1 className="font-serif text-3xl font-light leading-[1.1] rtl:leading-[1.35] tracking-tight rtl:tracking-normal text-[#30251f] sm:text-4xl md:text-5xl lg:text-[3.5rem]">
+                            {t("notFound.title")}{" "}
+                            <span className="relative inline-block italic rtl:not-italic text-[#a47e43]">
+                                {t("notFound.titleHighlight")}
                                 <svg
                                     viewBox="0 0 170 18"
                                     className="absolute -bottom-3 left-0 w-full"
@@ -242,9 +246,7 @@ export default function NotFound() {
                         </h1>
 
                         <p className="mx-auto mt-6 max-w-xl text-sm leading-7 text-[#766d67] sm:text-base">
-                            Looks like this page took a different path — just like a
-                            couple finding their perfect match. Let&apos;s get you back
-                            on track.
+                            {t("notFound.description")}
                         </p>
                     </div>
                     <div className="mt-8 flex w-full flex-col items-center justify-center gap-3 sm:w-auto sm:flex-row sm:gap-4">
@@ -254,7 +256,7 @@ export default function NotFound() {
                         >
                             <Home className="h-4 w-4" />
 
-                            <span>Go to Homepage</span>
+                            <span>{t("notFound.goHome")}</span>
                         </Link>
 
                         <Link
@@ -263,7 +265,7 @@ export default function NotFound() {
                         >
                             <Search className="h-4 w-4 text-[#a47e43]" />
 
-                            <span>Browse Services</span>
+                            <span>{t("notFound.browseServices")}</span>
                         </Link>
                     </div>
                 </section>
@@ -275,8 +277,8 @@ export default function NotFound() {
                         <div className="flex items-center gap-2">
                             <span className="h-1.5 w-1.5 rotate-45 border border-[#b99a62]" />
 
-                            <span className="text-[8px] font-medium uppercase tracking-[0.4em] text-[#9b8367] sm:text-[9px]">
-                                You Might Be Looking For
+                            <span className="text-[8px] font-medium uppercase tracking-[0.4em] rtl:tracking-normal text-[#9b8367] sm:text-[9px]">
+                                {t("notFound.lookingFor")}
                             </span>
 
                             <span className="h-1.5 w-1.5 rotate-45 border border-[#b99a62]" />
@@ -288,7 +290,7 @@ export default function NotFound() {
                     <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
                         <Link
                             href="/"
-                            className="group flex items-center gap-3 rounded-xl border border-[#b99a62]/20 bg-white/35 px-3 py-3 text-left backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:border-[#b99a62]/45 hover:bg-white/70 hover:shadow-[0_10px_30px_rgba(80,60,40,0.07)] sm:px-4"
+                            className="group flex items-center gap-3 rounded-xl border border-[#b99a62]/20 bg-white/35 px-3 py-3 text-start backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:border-[#b99a62]/45 hover:bg-white/70 hover:shadow-[0_10px_30px_rgba(80,60,40,0.07)] sm:px-4"
                         >
                             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#b99a62]/30 bg-[#f8f1e4] text-[#a47e43]">
                                 <Sparkles className="h-4 w-4" />
@@ -296,18 +298,18 @@ export default function NotFound() {
 
                             <div className="min-w-0 flex-1">
                                 <p className="truncate text-xs font-medium text-[#493b32]">
-                                    Wedding Ideas
+                                    {t("notFound.ideas.title")}
                                 </p>
 
                                 <p className="mt-0.5 hidden truncate text-[10px] text-[#978a80] sm:block">
-                                    Inspiration &amp; tips
+                                    {t("notFound.ideas.text")}
                                 </p>
                             </div>
                         </Link>
 
                         <Link
                             href="/vendors"
-                            className="group flex items-center gap-3 rounded-xl border border-[#b99a62]/20 bg-white/35 px-3 py-3 text-left backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:border-[#b99a62]/45 hover:bg-white/70 hover:shadow-[0_10px_30px_rgba(80,60,40,0.07)] sm:px-4"
+                            className="group flex items-center gap-3 rounded-xl border border-[#b99a62]/20 bg-white/35 px-3 py-3 text-start backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:border-[#b99a62]/45 hover:bg-white/70 hover:shadow-[0_10px_30px_rgba(80,60,40,0.07)] sm:px-4"
                         >
                             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#b99a62]/30 bg-[#f8f1e4] text-[#a47e43]">
                                 <Heart className="h-4 w-4" />
@@ -315,18 +317,18 @@ export default function NotFound() {
 
                             <div className="min-w-0 flex-1">
                                 <p className="truncate text-xs font-medium text-[#493b32]">
-                                    Find a Vendor
+                                    {t("notFound.vendor.title")}
                                 </p>
 
                                 <p className="mt-0.5 hidden truncate text-[10px] text-[#978a80] sm:block">
-                                    Photographers, planners & more
+                                    {t("notFound.vendor.text")}
                                 </p>
                             </div>
                         </Link>
 
                         <Link
                             href="/services"
-                            className="group flex items-center gap-3 rounded-xl border border-[#b99a62]/20 bg-white/35 px-3 py-3 text-left backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:border-[#b99a62]/45 hover:bg-white/70 hover:shadow-[0_10px_30px_rgba(80,60,40,0.07)] sm:px-4"
+                            className="group flex items-center gap-3 rounded-xl border border-[#b99a62]/20 bg-white/35 px-3 py-3 text-start backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:border-[#b99a62]/45 hover:bg-white/70 hover:shadow-[0_10px_30px_rgba(80,60,40,0.07)] sm:px-4"
                         >
                             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#b99a62]/30 bg-[#f8f1e4] text-[#a47e43]">
                                 <CalendarDays className="h-4 w-4" />
@@ -334,18 +336,18 @@ export default function NotFound() {
 
                             <div className="min-w-0 flex-1">
                                 <p className="truncate text-xs font-medium text-[#493b32]">
-                                    Explore Services
+                                    {t("notFound.services.title")}
                                 </p>
 
                                 <p className="mt-0.5 hidden truncate text-[10px] text-[#978a80] sm:block">
-                                    Make your day special
+                                    {t("notFound.services.text")}
                                 </p>
                             </div>
                         </Link>
 
                         <Link
                             href="/contact"
-                            className="group flex items-center gap-3 rounded-xl border border-[#b99a62]/20 bg-white/35 px-3 py-3 text-left backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:border-[#b99a62]/45 hover:bg-white/70 hover:shadow-[0_10px_30px_rgba(80,60,40,0.07)] sm:px-4"
+                            className="group flex items-center gap-3 rounded-xl border border-[#b99a62]/20 bg-white/35 px-3 py-3 text-start backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:border-[#b99a62]/45 hover:bg-white/70 hover:shadow-[0_10px_30px_rgba(80,60,40,0.07)] sm:px-4"
                         >
                             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#b99a62]/30 bg-[#f8f1e4] text-[#a47e43]">
                                 <MessageCircle className="h-4 w-4" />
@@ -353,11 +355,11 @@ export default function NotFound() {
 
                             <div className="min-w-0 flex-1">
                                 <p className="truncate text-xs font-medium text-[#493b32]">
-                                    Contact Us
+                                    {t("notFound.contact.title")}
                                 </p>
 
                                 <p className="mt-0.5 hidden truncate text-[10px] text-[#978a80] sm:block">
-                                    We&apos;re here to help
+                                    {t("notFound.contact.text")}
                                 </p>
                             </div>
                         </Link>

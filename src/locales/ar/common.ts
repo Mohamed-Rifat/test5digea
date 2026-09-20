@@ -48,6 +48,44 @@ const common = {
     },
   },
   viewAllNotifications: "عرض كل الإشعارات",
+  sessionCountdown: {
+    tooltipTitle: "الجلسة هتنتهي بعد {time}",
+    ariaLabel: "الجلسة بتنتهي بعد {time}",
+    notice: "فاضل أقل من ساعة على انتهاء جلستك.",
+    warning: "فاضل أقل من 30 دقيقة. احفظ شغلك.",
+    danger: "فاضل أقل من 10 دقايق. احفظ شغلك دلوقتي.",
+  },
+  sessionExpiry: {
+    titleFinal: "جلستك على وشك الانتهاء",
+    titleCritical: "جلستك هتنتهي قريب",
+    titleWarning: "جلستك على وشك الانتهاء",
+    finalText: "جلستك هتتقفل تلقائي بعد {time}.",
+    criticalText: "جلستك هتتقفل تلقائي بعد {time}.",
+    warningText: "جلستك هتنتهي بعد {time}.",
+    saveData: "من فضلك احفظ أي بيانات بتشتغل عليها دلوقتي.",
+    canContinue: "تقدر تكمّل شغلك وتقفل التنبيه ده.",
+    logoutNow: "تسجيل الخروج دلوقتي",
+    dismiss: "إغلاق التنبيه",
+    finalNote: "مش هينفع تقفل النافذة دي أثناء العد التنازلي الأخير.",
+    escHint: "اضغط {key} أو إلغاء للمتابعة.",
+  },
+  duration: {
+    minute: {
+      one: "دقيقة",
+      two: "دقيقتين",
+      few: "{count} دقايق",
+      many: "{count} دقيقة",
+      other: "{count} دقيقة",
+    },
+    second: {
+      one: "ثانية",
+      two: "ثانيتين",
+      few: "{count} ثواني",
+      many: "{count} ثانية",
+      other: "{count} ثانية",
+    },
+    join: "{first} و{second}",
+  },
 };
 
 export default common;

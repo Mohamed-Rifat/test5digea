@@ -50,6 +50,44 @@ const common: Translation["common"] = {
     },
   },
   viewAllNotifications: "View all notifications",
+  sessionCountdown: {
+    tooltipTitle: "Session ends in {time}",
+    ariaLabel: "Session expires in {time}",
+    notice: "Less than an hour left in your session.",
+    warning: "Less than 30 minutes left. Save your work.",
+    danger: "Less than 10 minutes left. Save your work now.",
+  },
+  sessionExpiry: {
+    titleFinal: "Your session is about to expire",
+    titleCritical: "Your session will expire soon",
+    titleWarning: "Your session is about to expire",
+    finalText: "Your session will be closed automatically in {time}.",
+    criticalText: "Your session will be automatically closed in {time}.",
+    warningText: "Your session is going to expire in {time}.",
+    saveData: "Please save any data you are working on now.",
+    canContinue: "You can continue working and close this warning.",
+    logoutNow: "Log out now",
+    dismiss: "Dismiss warning",
+    finalNote: "This window cannot be closed during the final countdown.",
+    escHint: "Press {key} or Cancel to continue.",
+  },
+  duration: {
+    minute: {
+      one: "{count} minute",
+      two: "{count} minutes",
+      few: "{count} minutes",
+      many: "{count} minutes",
+      other: "{count} minutes",
+    },
+    second: {
+      one: "{count} second",
+      two: "{count} seconds",
+      few: "{count} seconds",
+      many: "{count} seconds",
+      other: "{count} seconds",
+    },
+    join: "{first} {second}",
+  },
 };
 
 export default common;

@@ -10,6 +10,9 @@ import {
 } from "lucide-react";
 
 import { useAuth } from "@/context/AuthContext";
+import { useLanguage } from "@/context/LanguageContext";
+import TextWithSlots from "@/components/shared/TextWithSlots";
+import type { TranslationKey } from "@/locales";
 import { useSessionCountdown } from "@/lib/useSessionCountdown";
 import { useToast } from "@/components/providers/ToastProvider";
 import { SessionExpiryContext } from "@/context/SessionExpiryContext";
@@ -44,6 +47,7 @@ export default function SessionExpiryProvider({
   const { user, isAuthenticated, logout } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
+  const { t, language } = useLanguage();
 
   const secondsLeft = useSessionCountdown(
     isAuthenticated ? user?.expiration : null
@@ -103,10 +107,7 @@ export default function SessionExpiryProvider({
 
       logout();
 
-      toast(
-        "Your session has expired. Please log in again.",
-        "error"
-      );
+      toast(t("auth.sessionExpired"), "error");
 
       router.replace("/login");
     }
@@ -116,6 +117,7 @@ export default function SessionExpiryProvider({
     logout,
     router,
     toast,
+    t,
   ]);
 
   /**
@@ -244,8 +246,8 @@ export default function SessionExpiryProvider({
               <button
                 type="button"
                 onClick={handleDismiss}
-                aria-label="Dismiss warning"
-                className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full text-[#8b7d74] transition hover:bg-[#f5eee9] hover:text-[#30251f]"
+                aria-label={t("common.sessionExpiry.dismiss")}
+                className="absolute end-3 top-3 flex h-8 w-8 items-center justify-center rounded-full text-[#8b7d74] transition hover:bg-[#f5eee9] hover:text-[#30251f]"
               >
                 <X size={18} />
               </button>
@@ -280,43 +282,58 @@ export default function SessionExpiryProvider({
               ].join(" ")}
             >
               {isFinalWarning
-                ? "Your session is about to expire"
+                ? t("common.sessionExpiry.titleFinal")
                 : isCriticalWarning
-                  ? "Your session will expire soon"
-                  : "Your session is about to expire"}
+                  ? t("common.sessionExpiry.titleCritical")
+                  : t("common.sessionExpiry.titleWarning")}
             </h2>
 
             {/* Description */}
             <p className="mt-2 text-sm leading-6 text-[#6b5f57]">
               {isFinalWarning ? (
                 <>
-                  Your session will be closed automatically in
-                  <span className="mx-1 font-bold text-red-600">
-                    {secondsLeft}
-                  </span>
-                  seconds.
+                  <TextWithSlots
+                    text={t("common.sessionExpiry.finalText")}
+                    slots={{
+                      time: (
+                        <span className="font-bold text-red-600">
+                          {formatRemainingTime(secondsLeft, t, language)}
+                        </span>
+                      ),
+                    }}
+                  />
                   <br />
-                  Please save any data you are working on now.
+                  {t("common.sessionExpiry.saveData")}
                 </>
               ) : isCriticalWarning ? (
                 <>
-                  Your session will be automatically closed in
-                  <span className="mx-1 font-bold text-[#a47e43]">
-                    {formatRemainingTime(secondsLeft)}
-                  </span>
-                  .
+                  <TextWithSlots
+                    text={t("common.sessionExpiry.criticalText")}
+                    slots={{
+                      time: (
+                        <span className="font-bold text-[#a47e43]">
+                          {formatRemainingTime(secondsLeft, t, language)}
+                        </span>
+                      ),
+                    }}
+                  />
                   <br />
-                  Please save any data you are working on now.
+                  {t("common.sessionExpiry.saveData")}
                 </>
               ) : (
                 <>
-                  Your session is going to expire in
-                  <span className="mx-1 font-bold text-[#a47e43]">
-                    {formatRemainingTime(secondsLeft)}
-                  </span>
-                  .
+                  <TextWithSlots
+                    text={t("common.sessionExpiry.warningText")}
+                    slots={{
+                      time: (
+                        <span className="font-bold text-[#a47e43]">
+                          {formatRemainingTime(secondsLeft, t, language)}
+                        </span>
+                      ),
+                    }}
+                  />
                   <br />
-                  You can continue working and close this warning.
+                  {t("common.sessionExpiry.canContinue")}
                 </>
               )}
             </p>
@@ -351,12 +368,11 @@ export default function SessionExpiryProvider({
                   className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#a47e43] py-3 text-sm font-semibold text-white transition hover:bg-[#8f6c37] focus:outline-none focus:ring-2 focus:ring-[#a47e43]/30"
                 >
                   <LogOut size={17} />
-                  Log out now
+                  {t("common.sessionExpiry.logoutNow")}
                 </button>
 
                 <p className="mt-3 text-xs text-[#8b7d74]">
-                  This window cannot be closed during the final
-                  countdown.
+                  {t("common.sessionExpiry.finalNote")}
                 </p>
               </div>
             ) : (
@@ -367,7 +383,7 @@ export default function SessionExpiryProvider({
                   onClick={handleDismiss}
                   className="flex-1 rounded-xl border border-[#e5ddd7] bg-white py-2.5 text-sm font-semibold text-[#6b5f57] transition hover:bg-[#faf8f6] hover:text-[#30251f]"
                 >
-                  Cancel
+                  {t("common.cancel")}
                 </button>
 
                 <button
@@ -375,7 +391,7 @@ export default function SessionExpiryProvider({
                   onClick={handleLogoutNow}
                   className="flex-1 rounded-xl bg-[#a47e43] py-2.5 text-sm font-semibold text-white transition hover:bg-[#8f6c37]"
                 >
-                  Log out now
+                  {t("common.sessionExpiry.logoutNow")}
                 </button>
               </div>
             )}
@@ -383,11 +399,16 @@ export default function SessionExpiryProvider({
             {/* ESC hint */}
             {!isFinalWarning && (
               <p className="mt-3 text-xs text-[#9a8d84]">
-                Press{" "}
-                <kbd className="rounded border border-[#ddd3cc] bg-[#faf8f6] px-1.5 py-0.5 font-medium">
-                  Esc
-                </kbd>{" "}
-                or Cancel to continue.
+                <TextWithSlots
+                  text={t("common.sessionExpiry.escHint")}
+                  slots={{
+                    key: (
+                      <kbd className="rounded border border-[#ddd3cc] bg-[#faf8f6] px-1.5 py-0.5 font-medium">
+                        Esc
+                      </kbd>
+                    ),
+                  }}
+                />
               </p>
             )}
           </div>
@@ -397,41 +418,61 @@ export default function SessionExpiryProvider({
   );
 }
 
+type Translate = (
+  key: TranslationKey,
+  params?: Record<string, string | number>
+) => string;
+
+type PluralCategory = "one" | "two" | "few" | "many" | "other";
+
+/**
+ * "1 minute" / "دقيقتين" / "5 دقايق" — picks the right plural form for the
+ * active language (Arabic has one / two / few / many, English one / other).
+ */
+function formatUnit(
+  unit: "minute" | "second",
+  count: number,
+  t: Translate,
+  language: string
+): string {
+  const raw = new Intl.PluralRules(language).select(count);
+  const category: PluralCategory = raw === "zero" ? "other" : raw;
+
+  return t(`common.duration.${unit}.${category}` as const, { count });
+}
+
 /**
  * Format a duration like:
  *
- * 600  -> "10 minutes"
- * 120  -> "2 minutes"
- * 90   -> "1 minute 30 seconds"
- * 30   -> "30 seconds"
+ * 600  -> "10 minutes"          / "10 دقايق"
+ * 120  -> "2 minutes"           / "دقيقتين"
+ * 90   -> "1 minute 30 seconds" / "دقيقة و30 ثانية"
+ * 30   -> "30 seconds"          / "30 ثانية"
  */
 function formatRemainingTime(
-  seconds: number | null
+  seconds: number | null,
+  t: Translate,
+  language: string
 ): string {
   if (seconds === null || seconds <= 0) {
-    return "0 seconds";
+    return formatUnit("second", 0, t, language);
   }
 
   const minutes = Math.floor(seconds / 60);
   const remainingSeconds = seconds % 60;
 
   if (minutes === 0) {
-    return `${remainingSeconds} second${
-      remainingSeconds === 1 ? "" : "s"
-    }`;
+    return formatUnit("second", remainingSeconds, t, language);
   }
 
   if (remainingSeconds === 0) {
-    return `${minutes} minute${
-      minutes === 1 ? "" : "s"
-    }`;
+    return formatUnit("minute", minutes, t, language);
   }
 
-  return `${minutes} minute${
-    minutes === 1 ? "" : "s"
-  } ${remainingSeconds} second${
-    remainingSeconds === 1 ? "" : "s"
-  }`;
+  return t("common.duration.join", {
+    first: formatUnit("minute", minutes, t, language),
+    second: formatUnit("second", remainingSeconds, t, language),
+  });
 }
 
 /**
