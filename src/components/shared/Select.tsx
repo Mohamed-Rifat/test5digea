@@ -73,7 +73,7 @@ export default function Select({
         onClick={() => setOpen((prev) => !prev)}
         aria-haspopup="listbox"
         aria-expanded={open}
-        className={`flex w-full items-center justify-between gap-3 rounded-xl border bg-[#fcfaf8] px-4 py-3 text-left text-sm outline-none transition ${
+        className={`flex w-full items-center justify-between gap-3 rounded-xl border bg-[#fcfaf8] px-4 py-3 text-start text-sm outline-none transition ${
           open
             ? "border-[#30251f] ring-2 ring-[#30251f]/10"
             : "border-[#e3d9d1] hover:border-[#c9bcaf]"
@@ -126,7 +126,7 @@ export default function Select({
                       onChange(option.value);
                       setOpen(false);
                     }}
-                    className={`flex w-full items-center justify-between gap-3 px-4 py-2.5 text-left text-sm transition ${
+                    className={`flex w-full items-center justify-between gap-3 px-4 py-2.5 text-start text-sm transition ${
                       isSelected
                         ? "bg-[#f7f1ea] text-[#30251f]"
                         : "text-[#4c423b] hover:bg-[#faf7f4]"

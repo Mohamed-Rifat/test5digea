@@ -16,25 +16,32 @@ import {
 } from "lucide-react";
 
 import { useAuth } from "@/context/AuthContext";
+import { useLanguage } from "@/context/LanguageContext";
+import type { TranslationKey } from "@/locales";
 
 interface AdminSidebarProps {
   mobileOpen: boolean;
   onClose: () => void;
 }
 
-const navigation = [
+const navigation: {
+  titleKey: TranslationKey;
+  items: { labelKey: TranslationKey; href: string; icon: typeof Tags }[];
+}[] = [
   {
-    title: "Overview",
-    items: [{ label: "Dashboard", href: "/admin", icon: LayoutDashboard }],
+    titleKey: "admin.sidebar.overview",
+    items: [
+      { labelKey: "admin.sidebar.dashboard", href: "/admin", icon: LayoutDashboard },
+    ],
   },
   {
-    title: "Management",
+    titleKey: "admin.sidebar.management",
     items: [
-      { label: "Moderation", href: "/admin/moderation", icon: ClipboardList },
-      { label: "Categories", href: "/admin/categories", icon: Tags },
-      { label: "Vendors", href: "/admin/vendors", icon: Store },
-      { label: "Services", href: "/admin/services", icon: BriefcaseBusiness },
-      { label: "Reviews", href: "/admin/reviews", icon: Star },
+      { labelKey: "admin.sidebar.moderation", href: "/admin/moderation", icon: ClipboardList },
+      { labelKey: "admin.sidebar.categories", href: "/admin/categories", icon: Tags },
+      { labelKey: "admin.sidebar.vendors", href: "/admin/vendors", icon: Store },
+      { labelKey: "admin.sidebar.services", href: "/admin/services", icon: BriefcaseBusiness },
+      { labelKey: "admin.sidebar.reviews", href: "/admin/reviews", icon: Star },
     ],
   },
 ];
@@ -43,6 +50,7 @@ export default function AdminSidebar({ mobileOpen, onClose }: AdminSidebarProps)
   const pathname = usePathname();
   const router = useRouter();
   const { logout } = useAuth();
+  const { t } = useLanguage();
 
   const handleLogout = () => {
     logout();
@@ -59,15 +67,17 @@ export default function AdminSidebar({ mobileOpen, onClose }: AdminSidebarProps)
       {mobileOpen && (
         <button
           type="button"
-          aria-label="Close sidebar"
+          aria-label={t("admin.sidebar.close")}
           onClick={onClose}
           className="fixed inset-0 z-40 bg-black/30 backdrop-blur-[2px] lg:hidden"
         />
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-67.5 flex-col border-r border-[#eee5df] bg-white transition-transform duration-300 lg:translate-x-0 ${
-          mobileOpen ? "translate-x-0" : "-translate-x-full"
+        className={`fixed inset-y-0 start-0 z-50 flex w-67.5 flex-col border-e border-[#eee5df] bg-white transition-transform duration-300 lg:translate-x-0 lg:rtl:translate-x-0 ${
+          mobileOpen
+            ? "translate-x-0"
+            : "-translate-x-full rtl:translate-x-full"
         }`}
       >
         <div className="flex h-20.5 items-center justify-between border-b border-[#f0e9e4] px-6">
@@ -85,8 +95,8 @@ export default function AdminSidebar({ mobileOpen, onClose }: AdminSidebarProps)
               <h1 className="text-lg font-semibold tracking-wide text-[#30251f]">
                 5Digea
               </h1>
-              <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-[#a28d7e]">
-                Administration
+              <p className="text-[10px] font-medium uppercase tracking-[0.2em] rtl:tracking-normal text-[#a28d7e]">
+                {t("admin.sidebar.administration")}
               </p>
             </div>
           </Link>
@@ -95,7 +105,7 @@ export default function AdminSidebar({ mobileOpen, onClose }: AdminSidebarProps)
             type="button"
             onClick={onClose}
             className="rounded-lg p-2 text-[#8d8179] hover:bg-[#faf7f4] lg:hidden"
-            aria-label="Close sidebar"
+            aria-label={t("admin.sidebar.close")}
           >
             <X size={20} />
           </button>
@@ -103,9 +113,9 @@ export default function AdminSidebar({ mobileOpen, onClose }: AdminSidebarProps)
 
         <div className="flex-1 overflow-y-auto px-4 py-6">
           {navigation.map((section) => (
-            <div key={section.title} className="mb-7">
-              <p className="mb-3 px-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#b0a198]">
-                {section.title}
+            <div key={section.titleKey} className="mb-7">
+              <p className="mb-3 px-3 text-[10px] font-semibold uppercase tracking-[0.18em] rtl:tracking-normal text-[#b0a198]">
+                {t(section.titleKey)}
               </p>
 
               <nav className="space-y-1">
@@ -129,7 +139,7 @@ export default function AdminSidebar({ mobileOpen, onClose }: AdminSidebarProps)
                         strokeWidth={active ? 2 : 1.8}
                         className={active ? "text-white" : "text-[#a08e82] group-hover:text-[#30251f]"}
                       />
-                      <span>{item.label}</span>
+                      <span>{t(item.labelKey)}</span>
                     </Link>
                   );
                 })}
@@ -140,9 +150,11 @@ export default function AdminSidebar({ mobileOpen, onClose }: AdminSidebarProps)
 
         <div className="border-t border-[#f0e9e4] p-4">
           <div className="mb-3 rounded-xl bg-[#faf7f4] p-3">
-            <p className="text-xs font-semibold text-[#55483f]">Admin Portal</p>
+            <p className="text-xs font-semibold text-[#55483f]">
+              {t("admin.sidebar.portalTitle")}
+            </p>
             <p className="mt-1 text-[11px] leading-5 text-[#9b8d84]">
-              Manage your 5Digea marketplace from one place.
+              {t("admin.sidebar.portalDescription")}
             </p>
           </div>
 
@@ -152,7 +164,7 @@ export default function AdminSidebar({ mobileOpen, onClose }: AdminSidebarProps)
             className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-[#8a7770] transition hover:bg-[#fff5f3] hover:text-[#9c5e59]"
           >
             <LogOut size={18} strokeWidth={1.8} />
-            <span>Logout</span>
+            <span>{t("admin.sidebar.logout")}</span>
           </button>
         </div>
       </aside>

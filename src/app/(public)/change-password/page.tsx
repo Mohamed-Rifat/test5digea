@@ -19,8 +19,11 @@ import {
 import { changePassword } from "@/features/auth/api";
 import { useAuth } from "@/context/AuthContext";
 import { getApiErrorMessage } from "@/lib/error";
+import { useLanguage } from "@/context/LanguageContext";
 
 function SignedOutState() {
+  const { t } = useLanguage();
+
   return (
     <main className="flex min-h-screen items-center justify-center bg-[#faf8f6] px-4 py-20">
       <div className="w-full max-w-md overflow-hidden rounded-4xl border border-[#eee5df] bg-white shadow-[0_20px_60px_rgba(48,37,31,0.08)]">
@@ -31,24 +34,24 @@ function SignedOutState() {
             <KeyRound size={26} strokeWidth={1.7} />
           </div>
 
-          <p className="mt-6 text-[10px] font-bold uppercase tracking-[0.24em] text-[#a47e43]">
-            Account Security
+          <p className="mt-6 text-[10px] font-bold uppercase tracking-[0.24em] rtl:tracking-normal text-[#a47e43]">
+            {t("auth.changePasswordPage.signedOutEyebrow")}
           </p>
 
           <h1 className="mt-3 font-serif text-3xl font-light text-[#30251f]">
-            Change your password
+            {t("auth.changePasswordPage.signedOutTitle")}
           </h1>
 
           <p className="mx-auto mt-3 max-w-sm text-sm leading-7 text-[#81746d]">
-            Sign in to update your password and keep your Digea account secure.
+            {t("auth.changePasswordPage.signedOutText")}
           </p>
 
           <Link
             href="/login"
             className="mt-8 inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-[#30251f] px-6 text-sm font-semibold text-white transition hover:bg-[#45362d]"
           >
-            Sign in
-            <ArrowLeft size={15} className="rotate-180" />
+            {t("auth.signIn")}
+            <ArrowLeft size={15} className="rotate-180 rtl:rotate-0" />
           </Link>
         </div>
       </div>
@@ -65,6 +68,7 @@ function PasswordField({
   onToggle,
   disabled,
   status,
+  placeholder,
 }: {
   id: string;
   label: string;
@@ -74,7 +78,10 @@ function PasswordField({
   onToggle: () => void;
   disabled: boolean;
   status?: "success" | "error";
+  placeholder: string;
 }) {
+  const { t } = useLanguage();
+
   const borderClass =
     status === "error"
       ? "border-red-300 focus-within:border-red-500"
@@ -86,7 +93,7 @@ function PasswordField({
     <div className="group">
       <label
         htmlFor={id}
-        className="mb-2.5 block text-[11px] font-bold uppercase tracking-[0.14em] text-[#81746d]"
+        className="mb-2.5 block text-[11px] font-bold uppercase tracking-[0.14em] rtl:tracking-normal text-[#81746d]"
       >
         {label}
       </label>
@@ -97,7 +104,7 @@ function PasswordField({
         <LockKeyhole
           size={17}
           strokeWidth={1.8}
-          className="mr-3 shrink-0 text-[#a3978f] transition-colors group-focus-within:text-[#a47e43]"
+          className="me-3 shrink-0 text-[#a3978f] transition-colors group-focus-within:text-[#a47e43]"
         />
 
         <input
@@ -111,16 +118,20 @@ function PasswordField({
               : "new-password"
           }
           disabled={disabled}
-          className="min-w-0 flex-1 bg-transparent text-[14px] text-[#30251f] outline-none placeholder:text-[#b6aaa1] disabled:cursor-not-allowed disabled:opacity-60"
-          placeholder={`Enter ${label.toLowerCase()}`}
+          className="min-w-0 flex-1 bg-transparent [unicode-bidi:plaintext] ltr:text-left rtl:text-right text-[14px] text-[#30251f] outline-none placeholder:text-[#b6aaa1] disabled:cursor-not-allowed disabled:opacity-60"
+          placeholder={placeholder}
         />
 
         <button
           type="button"
           onClick={onToggle}
           disabled={disabled}
-          aria-label={visible ? `Hide ${label}` : `Show ${label}`}
-          className="ml-2 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-[#91847b] transition hover:bg-[#f3eee9] hover:text-[#30251f] disabled:cursor-not-allowed disabled:opacity-40"
+          aria-label={
+            visible
+              ? t("auth.changePasswordPage.hideField", { label })
+              : t("auth.changePasswordPage.showField", { label })
+          }
+          className="ms-2 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-[#91847b] transition hover:bg-[#f3eee9] hover:text-[#30251f] disabled:cursor-not-allowed disabled:opacity-40"
         >
           {visible ? (
             <EyeOff size={17} strokeWidth={1.8} />
@@ -135,6 +146,7 @@ function PasswordField({
 
 export default function ChangePasswordPage() {
   const { isAuthenticated } = useAuth();
+  const { t } = useLanguage();
 
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -186,7 +198,7 @@ export default function ChangePasswordPage() {
 
     if (strength <= 20) {
       return {
-        text: "Weak",
+        text: t("auth.passwordStrength.weak"),
         width: "20%",
         level: "weak",
       };
@@ -194,7 +206,7 @@ export default function ChangePasswordPage() {
 
     if (strength <= 40) {
       return {
-        text: "Fair",
+        text: t("auth.passwordStrength.fair"),
         width: "40%",
         level: "fair",
       };
@@ -202,7 +214,7 @@ export default function ChangePasswordPage() {
 
     if (strength <= 60) {
       return {
-        text: "Good",
+        text: t("auth.passwordStrength.good"),
         width: "60%",
         level: "good",
       };
@@ -210,14 +222,14 @@ export default function ChangePasswordPage() {
 
     if (strength <= 80) {
       return {
-        text: "Strong",
+        text: t("auth.passwordStrength.strong"),
         width: "80%",
         level: "strong",
       };
     }
 
     return {
-      text: "Very Strong",
+      text: t("auth.passwordStrength.veryStrong"),
       width: "100%",
       level: "veryStrong",
     };
@@ -259,23 +271,23 @@ export default function ChangePasswordPage() {
     event.preventDefault();
 
     if (!currentPassword) {
-      setError("Please enter your current password.");
+      setError(t("auth.changePasswordPage.errors.currentRequired"));
       return;
     }
 
     if (newPassword.length < 8) {
-      setError("New password must be at least 8 characters.");
+      setError(t("auth.changePasswordPage.errors.tooShort"));
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      setError("New passwords do not match.");
+      setError(t("auth.changePasswordPage.errors.mismatch"));
       return;
     }
 
     if (newPassword === currentPassword) {
       setError(
-        "New password must be different from your current password."
+        t("auth.changePasswordPage.errors.sameAsCurrent")
       );
       return;
     }
@@ -296,7 +308,7 @@ export default function ChangePasswordPage() {
       setError(
         getApiErrorMessage(
           err,
-          "We couldn't update your password. Please check your current password and try again."
+          t("auth.changePasswordPage.errors.failed")
         )
       );
     } finally {
@@ -309,23 +321,23 @@ export default function ChangePasswordPage() {
   const requirementItems = [
     {
       key: "minLength",
-      label: "At least 8 characters",
+      label: t("auth.passwordRequirements.minLength"),
     },
     {
       key: "hasUpperCase",
-      label: "Uppercase letter",
+      label: t("auth.passwordRequirements.hasUpperCase"),
     },
     {
       key: "hasLowerCase",
-      label: "Lowercase letter",
+      label: t("auth.passwordRequirements.hasLowerCase"),
     },
     {
       key: "hasNumber",
-      label: "Number",
+      label: t("auth.passwordRequirements.hasNumber"),
     },
     {
       key: "hasSpecialChar",
-      label: "Special character",
+      label: t("auth.passwordRequirements.hasSpecialChar"),
     },
   ] as const;
 
@@ -338,24 +350,24 @@ export default function ChangePasswordPage() {
           className="group mb-7 inline-flex items-center gap-2 text-xs font-semibold text-[#8e7c72] transition hover:text-[#30251f]"
         >
           <span className="flex h-8 w-8 items-center justify-center rounded-full border border-[#e6ddd6] bg-white transition group-hover:border-[#cfc0b5]">
-            <ArrowLeft size={14} />
+            <ArrowLeft size={14} className="rtl:rotate-180" />
           </span>
 
-          Back to account
+          {t("auth.changePasswordPage.backToAccount")}
         </Link>
 
         {/* Header */}
         <div className="mb-8 lg:mb-10">
-          <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-[#a47e43]">
-            Security settings
+          <p className="text-[10px] font-bold uppercase tracking-[0.24em] rtl:tracking-normal text-[#a47e43]">
+            {t("auth.changePasswordPage.eyebrow")}
           </p>
 
-          <h1 className="mt-2 font-serif text-3xl font-light tracking-tight text-[#30251f] sm:text-4xl lg:text-[44px]">
-            Protect your account
+          <h1 className="mt-2 font-serif text-3xl font-light tracking-tight rtl:tracking-normal text-[#30251f] sm:text-4xl lg:text-[44px]">
+            {t("auth.changePasswordPage.title")}
           </h1>
 
           <p className="mt-2 max-w-2xl text-sm leading-7 text-[#81746d]">
-            Keep your Digea account secure with a strong, unique password.
+            {t("auth.changePasswordPage.subtitle")}
           </p>
         </div>
 
@@ -372,19 +384,18 @@ export default function ChangePasswordPage() {
                   <ShieldCheck size={26} strokeWidth={1.5} />
                 </div>
 
-                <p className="mt-8 text-[10px] font-bold uppercase tracking-[0.22em] text-[#cdb58d]">
-                  Account security
+                <p className="mt-8 text-[10px] font-bold uppercase tracking-[0.22em] rtl:tracking-normal text-[#cdb58d]">
+                  {t("auth.changePasswordPage.asideEyebrow")}
                 </p>
 
-                <h2 className="mt-2 font-serif text-3xl font-light leading-tight">
-                  A stronger password,
+                <h2 className="mt-2 font-serif text-3xl font-light leading-tight rtl:leading-snug">
+                  {t("auth.changePasswordPage.asideTitleLine1")}
                   <br />
-                  a safer account.
+                  {t("auth.changePasswordPage.asideTitleLine2")}
                 </h2>
 
                 <p className="mt-5 text-sm leading-7 text-white/60">
-                  Your password protects your personal information, saved
-                  vendors, favorites, and wedding planning journey.
+                  {t("auth.changePasswordPage.asideText")}
                 </p>
 
                 <div className="mt-8 space-y-4">
@@ -395,10 +406,10 @@ export default function ChangePasswordPage() {
 
                     <div>
                       <p className="text-xs font-semibold text-white">
-                        Use a unique password
+                        {t("auth.changePasswordPage.tipUniqueTitle")}
                       </p>
                       <p className="mt-1 text-[11px] leading-5 text-white/45">
-                        Avoid reusing passwords from other websites.
+                        {t("auth.changePasswordPage.tipUniqueText")}
                       </p>
                     </div>
                   </div>
@@ -410,10 +421,10 @@ export default function ChangePasswordPage() {
 
                     <div>
                       <p className="text-xs font-semibold text-white">
-                        Mix different characters
+                        {t("auth.changePasswordPage.tipMixTitle")}
                       </p>
                       <p className="mt-1 text-[11px] leading-5 text-white/45">
-                        Combine letters, numbers, and symbols.
+                        {t("auth.changePasswordPage.tipMixText")}
                       </p>
                     </div>
                   </div>
@@ -425,19 +436,19 @@ export default function ChangePasswordPage() {
 
                     <div>
                       <p className="text-xs font-semibold text-white">
-                        Keep it private
+                        {t("auth.changePasswordPage.tipPrivateTitle")}
                       </p>
                       <p className="mt-1 text-[11px] leading-5 text-white/45">
-                        Never share your password with anyone.
+                        {t("auth.changePasswordPage.tipPrivateText")}
                       </p>
                     </div>
                   </div>
                 </div>
 
                 <div className="mt-9 border-t border-white/10 pt-6">
-                  <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.16em] text-white/40">
+                  <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.16em] rtl:tracking-normal text-white/40">
                     <Sparkles size={13} className="text-[#cdb58d]" />
-                    Digea security
+                    {t("auth.changePasswordPage.asideBadge")}
                   </div>
                 </div>
               </div>
@@ -453,11 +464,11 @@ export default function ChangePasswordPage() {
 
               <div>
                 <h2 className="text-xl font-semibold text-[#30251f]">
-                  Change password
+                  {t("auth.changePasswordPage.formTitle")}
                 </h2>
 
                 <p className="mt-1 text-sm leading-6 text-[#8a7d74]">
-                  Enter your current password and choose a new one.
+                  {t("auth.changePasswordPage.formSubtitle")}
                 </p>
               </div>
             </div>
@@ -473,9 +484,9 @@ export default function ChangePasswordPage() {
                 </div>
 
                 <div>
-                  <p className="font-semibold">Password updated successfully</p>
+                  <p className="font-semibold">{t("auth.changePasswordPage.successTitle")}</p>
                   <p className="mt-0.5 text-xs text-emerald-600/80">
-                    Your account password has been changed securely.
+                    {t("auth.changePasswordPage.successText")}
                   </p>
                 </div>
               </div>
@@ -488,7 +499,8 @@ export default function ChangePasswordPage() {
             >
               <PasswordField
                 id="currentPassword"
-                label="Current password"
+                label={t("auth.changePasswordPage.currentPassword")}
+                placeholder={t("auth.changePasswordPage.currentPasswordPlaceholder")}
                 value={currentPassword}
                 onChange={(value) => {
                   setCurrentPassword(value);
@@ -505,7 +517,8 @@ export default function ChangePasswordPage() {
               <div>
                 <PasswordField
                   id="newPassword"
-                  label="New password"
+                  label={t("auth.newPassword")}
+                  placeholder={t("auth.changePasswordPage.newPasswordPlaceholder")}
                   value={newPassword}
                   onChange={handleNewPasswordChange}
                   visible={showNew}
@@ -524,8 +537,8 @@ export default function ChangePasswordPage() {
                 {newPassword.length > 0 && (
                   <div className="mt-4 rounded-2xl bg-[#faf8f6] p-4">
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#8d7f76]">
-                        Password strength
+                      <span className="text-[10px] font-bold uppercase tracking-[0.14em] rtl:tracking-normal text-[#8d7f76]">
+                        {t("auth.changePasswordPage.strengthLabel")}
                       </span>
 
                       <span
@@ -608,7 +621,8 @@ export default function ChangePasswordPage() {
 
               <PasswordField
                 id="confirmPassword"
-                label="Confirm new password"
+                label={t("auth.confirmNewPassword")}
+                placeholder={t("auth.changePasswordPage.confirmPasswordPlaceholder")}
                 value={confirmPassword}
                 onChange={(value) => {
                   setConfirmPassword(value);
@@ -650,8 +664,8 @@ export default function ChangePasswordPage() {
                   </span>
 
                   {passwordsMatch
-                    ? "Passwords match"
-                    : "Passwords do not match"}
+                    ? t("auth.feedback.passwordsMatch")
+                    : t("auth.feedback.passwordsDoNotMatch")}
                 </div>
               )}
 
@@ -666,7 +680,7 @@ export default function ChangePasswordPage() {
                   </div>
 
                   <div>
-                    <p className="font-semibold">Unable to update password</p>
+                    <p className="font-semibold">{t("auth.changePasswordPage.errorTitle")}</p>
                     <p className="mt-0.5 text-xs leading-5 text-red-600/80">
                       {error}
                     </p>
@@ -685,23 +699,23 @@ export default function ChangePasswordPage() {
                   }
                   className="group relative flex h-13.5 w-full items-center justify-center overflow-hidden rounded-2xl bg-[#30251f] px-5 text-sm font-semibold text-white shadow-[0_8px_25px_rgba(48,37,31,0.13)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#45362d] hover:shadow-[0_12px_30px_rgba(48,37,31,0.18)] focus:outline-none focus:ring-4 focus:ring-[#30251f]/10 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0"
                 >
-                  <span className="absolute inset-0 -translate-x-full bg-linear-to-r from-transparent via-white/10 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
+                  <span className="absolute inset-0 ltr:-translate-x-full rtl:translate-x-full bg-linear-to-r from-transparent via-white/10 to-transparent transition-transform duration-700 ltr:group-hover:translate-x-full rtl:group-hover:-translate-x-full" />
 
                   {loading ? (
                     <span className="relative flex items-center gap-2">
                       <Loader2 size={18} className="animate-spin" />
-                      Updating password...
+                      {t("auth.changePasswordPage.submitting")}
                     </span>
                   ) : (
                     <span className="relative flex items-center gap-2">
                       <ShieldCheck size={17} />
-                      Update password
+                      {t("auth.changePasswordPage.submit")}
                     </span>
                   )}
                 </button>
 
                 <p className="mt-3 text-center text-[10px] leading-5 text-[#aaa099]">
-                  You&apos;ll need your current password to make this change.
+                  {t("auth.changePasswordPage.note")}
                 </p>
               </div>
             </form>
@@ -709,9 +723,9 @@ export default function ChangePasswordPage() {
         </div>
 
         {/* Bottom reassurance */}
-        <div className="mt-7 flex items-center justify-center gap-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#aaa099]">
+        <div className="mt-7 flex items-center justify-center gap-2 text-[10px] font-semibold uppercase tracking-[0.14em] rtl:tracking-normal text-[#aaa099]">
           <ShieldCheck size={13} />
-          Your account security matters
+          {t("auth.changePasswordPage.reassurance")}
         </div>
       </div>
     </main>

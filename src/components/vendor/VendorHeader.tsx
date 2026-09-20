@@ -34,7 +34,10 @@ import {
 
 import { useVendor } from "@/features/vendors/hooks/useVendor";
 import { useAuth } from "@/context/AuthContext";
+import { useLanguage } from "@/context/LanguageContext";
+import { LANGUAGE_DATE_LOCALE } from "@/locales/config";
 import NotificationBell from "@/components/notifications/NotificationBell";
+import LanguageSwitcher from "@/components/layout/LanguageSwitcher";
 
 interface VendorHeaderProps {
   onMenuClick: () => void;
@@ -43,6 +46,7 @@ interface VendorHeaderProps {
 export default function VendorHeader({ onMenuClick }: VendorHeaderProps) {
   const router = useRouter();
   const { logout } = useAuth();
+  const { t, language, isArabic } = useLanguage();
   const { vendor, loading, refetch } = useVendor();
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -121,25 +125,25 @@ export default function VendorHeader({ onMenuClick }: VendorHeaderProps) {
 
   const statusConfig = {
     Approved: {
-      label: "Active",
+      labelKey: "vendor.status.approved" as const,
       icon: CheckCircle2,
       className: "text-emerald-600 bg-emerald-50",
       dotColor: "bg-emerald-500",
     },
     Pending: {
-      label: "Under Review",
+      labelKey: "vendor.status.pending" as const,
       icon: Clock3,
       className: "text-amber-600 bg-amber-50",
       dotColor: "bg-amber-500",
     },
     Rejected: {
-      label: "Rejected",
+      labelKey: "vendor.status.rejected" as const,
       icon: XCircle,
       className: "text-red-600 bg-red-50",
       dotColor: "bg-red-500",
     },
     Inactive: {
-      label: "Inactive",
+      labelKey: "vendor.status.inactive" as const,
       icon: XCircle,
       className: "text-gray-600 bg-gray-50",
       dotColor: "bg-gray-500",
@@ -152,12 +156,12 @@ export default function VendorHeader({ onMenuClick }: VendorHeaderProps) {
 
   const StatusIcon = status?.icon || Clock3;
 
-  const formattedTime = currentTime.toLocaleTimeString("en-US", {
+  const formattedTime = currentTime.toLocaleTimeString(LANGUAGE_DATE_LOCALE[language], {
     hour: "2-digit",
     minute: "2-digit",
   });
 
-  const formattedDate = currentTime.toLocaleDateString("en-US", {
+  const formattedDate = currentTime.toLocaleDateString(LANGUAGE_DATE_LOCALE[language], {
     weekday: "short",
     month: "short",
     day: "numeric",
@@ -174,7 +178,7 @@ export default function VendorHeader({ onMenuClick }: VendorHeaderProps) {
         <button
           type="button"
           onClick={onMenuClick}
-          aria-label="Open sidebar"
+          aria-label={t("vendor.header.openSidebar")}
           className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#eee7e1] text-[#5f544d] transition hover:border-[#d5c8be] hover:bg-[#faf7f4] lg:hidden"
         >
           <Menu size={18} />
@@ -192,18 +196,18 @@ export default function VendorHeader({ onMenuClick }: VendorHeaderProps) {
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-sm font-semibold text-[#30251f] sm:text-base">
-                Dashboard
+                {t("vendor.header.dashboard")}
               </h1>
 
               <span
                 className={`hidden items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-medium ${status?.className || ""} sm:inline-flex`}
               >
                 <StatusIcon size={10} />
-                {status?.label}
+                {status ? t(status.labelKey) : ""}
               </span>
             </div>
-            <p className="text-[9px] font-semibold uppercase tracking-[0.15em] text-[#a99d94] sm:text-[10px]">
-              Vendor Portal
+            <p className="text-[9px] font-semibold uppercase tracking-[0.15em] rtl:tracking-normal text-[#a99d94] sm:text-[10px]">
+              {t("vendor.header.portal")}
             </p>
 
 
@@ -219,14 +223,14 @@ export default function VendorHeader({ onMenuClick }: VendorHeaderProps) {
         <form onSubmit={runSearch} className="relative">
           <Search
             size={16}
-            className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[#a89c92]"
+            className="pointer-events-none absolute start-3.5 top-1/2 -translate-y-1/2 text-[#a89c92]"
           />
           <input
             type="text"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search your services…"
-            className="h-10 w-full rounded-xl border border-[#eee7e1] bg-[#faf7f4] pl-10 pr-4 text-sm text-[#30251f] outline-none transition placeholder:text-[#b2a59d] focus:border-[#c8b4a6] focus:bg-white"
+            placeholder={t("vendor.header.searchPlaceholder")}
+            className="h-10 w-full rounded-xl border border-[#eee7e1] bg-[#faf7f4] ps-10 pe-4 text-sm text-[#30251f] outline-none transition placeholder:text-[#b2a59d] focus:border-[#c8b4a6] focus:bg-white"
           />
         </form>
       </div>
@@ -265,14 +269,14 @@ export default function VendorHeader({ onMenuClick }: VendorHeaderProps) {
           type="button"
           onClick={() => setMobileSearchOpen((prev) => !prev)}
           className="flex h-9 w-9 items-center justify-center rounded-full border border-[#eee7e1] text-[#756860] transition hover:bg-[#faf7f4] hover:text-[#30251f] md:hidden"
-          aria-label="Search your services"
+          aria-label={t("vendor.header.searchLabel")}
           aria-expanded={mobileSearchOpen}
         >
           {mobileSearchOpen ? <X size={18} /> : <Search size={18} />}
         </button>
 
         {/* Refresh */}
-        <Tooltip title="Refresh data" arrow>
+        <Tooltip title={t("vendor.header.refresh")} arrow>
           <button
             type="button"
             onClick={handleRefresh}
@@ -286,6 +290,10 @@ export default function VendorHeader({ onMenuClick }: VendorHeaderProps) {
             />
           </button>
         </Tooltip>
+
+        {/* Language switcher: compact code on phones, globe + name from sm up */}
+        <LanguageSwitcher variant="compact" className="sm:hidden" />
+        <LanguageSwitcher className="hidden sm:block" />
 
         {/* Notifications */}
         <NotificationBell viewAllHref="/vendor/notifications" />
@@ -311,7 +319,7 @@ export default function VendorHeader({ onMenuClick }: VendorHeaderProps) {
               ) : vendor?.profileImageUrl ? (
                 <img
                   src={vendor.profileImageUrl}
-                  alt={vendor.businessName || "Vendor"}
+                  alt={vendor.businessName || t("vendor.header.vendor")}
                   className="h-full w-full object-cover"
                 />
               ) : (
@@ -326,13 +334,13 @@ export default function VendorHeader({ onMenuClick }: VendorHeaderProps) {
             <div className="hidden min-w-0 max-w-37.5 sm:block">
               <p className="truncate text-sm font-semibold text-[#30251f]">
                 {loading
-                  ? "Loading..."
-                  : vendor?.businessName || "Vendor"}
+                  ? t("vendor.header.loading")
+                  : vendor?.businessName || t("vendor.header.vendor")}
               </p>
 
               <div className="flex items-center gap-1.5">
                 <span className="inline-flex h-1 w-1 rounded-full bg-emerald-500" />
-                <p className="text-[10px] text-[#9a8d84]">Online</p>
+                <p className="text-[10px] text-[#9a8d84]">{t("vendor.header.online")}</p>
               </div>
             </div>
 
@@ -352,11 +360,11 @@ export default function VendorHeader({ onMenuClick }: VendorHeaderProps) {
             open={open}
             onClose={handleClose}
             transformOrigin={{
-              horizontal: "right",
+              horizontal: isArabic ? "left" : "right",
               vertical: "top",
             }}
             anchorOrigin={{
-              horizontal: "right",
+              horizontal: isArabic ? "left" : "right",
               vertical: "bottom",
             }}
             slotProps={{
@@ -380,7 +388,7 @@ export default function VendorHeader({ onMenuClick }: VendorHeaderProps) {
                   {vendor?.profileImageUrl ? (
                     <img
                       src={vendor.profileImageUrl}
-                      alt={vendor.businessName || "Vendor"}
+                      alt={vendor.businessName || t("vendor.header.vendor")}
                       className="h-full w-full rounded-xl object-cover"
                     />
                   ) : (
@@ -393,11 +401,11 @@ export default function VendorHeader({ onMenuClick }: VendorHeaderProps) {
 
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold text-[#30251f]">
-                    {vendor?.businessName || "Vendor"}
+                    {vendor?.businessName || t("vendor.header.vendor")}
                   </p>
 
                   <p className="truncate text-xs text-[#9a8d84]">
-                    {vendor?.contactEmail || "No email"}
+                    {vendor?.contactEmail || t("vendor.header.noEmail")}
                   </p>
                 </div>
               </div>
@@ -416,7 +424,7 @@ export default function VendorHeader({ onMenuClick }: VendorHeaderProps) {
 
               <ListItemText>
                 <span className="text-sm font-medium text-[#30251f]">
-                  Profile
+                  {t("vendor.header.profile")}
                 </span>
               </ListItemText>
             </MenuItem>
@@ -434,7 +442,7 @@ export default function VendorHeader({ onMenuClick }: VendorHeaderProps) {
 
               <ListItemText>
                 <span className="text-sm font-medium text-[#30251f]">
-                  Subscriptions
+                  {t("vendor.header.subscriptions")}
                 </span>
               </ListItemText>
             </MenuItem>
@@ -450,7 +458,7 @@ export default function VendorHeader({ onMenuClick }: VendorHeaderProps) {
 
               <ListItemText>
                 <span className="text-sm font-medium text-[#30251f]">
-                  Settings
+                  {t("vendor.header.settings")}
                 </span>
               </ListItemText>
             </MenuItem>
@@ -467,7 +475,7 @@ export default function VendorHeader({ onMenuClick }: VendorHeaderProps) {
 
               <ListItemText>
                 <span className="text-sm font-medium text-[#30251f]">
-                  Security
+                  {t("vendor.header.security")}
                 </span>
               </ListItemText>
             </MenuItem>
@@ -485,7 +493,7 @@ export default function VendorHeader({ onMenuClick }: VendorHeaderProps) {
 
               <ListItemText>
                 <span className="text-sm font-medium text-[#30251f]">
-                  Help Center
+                  {t("vendor.header.helpCenter")}
                 </span>
               </ListItemText>
             </MenuItem>
@@ -513,7 +521,7 @@ export default function VendorHeader({ onMenuClick }: VendorHeaderProps) {
 
               <ListItemText>
                 <span className="text-sm font-medium text-red-600">
-                  Logout
+                  {t("vendor.header.logout")}
                 </span>
               </ListItemText>
             </MenuItem>
@@ -530,7 +538,7 @@ export default function VendorHeader({ onMenuClick }: VendorHeaderProps) {
           <form onSubmit={runSearch} className="relative">
             <Search
               size={16}
-              className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[#a89c92]"
+              className="pointer-events-none absolute start-3.5 top-1/2 -translate-y-1/2 text-[#a89c92]"
             />
 
             <input
@@ -538,8 +546,8 @@ export default function VendorHeader({ onMenuClick }: VendorHeaderProps) {
               type="text"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search your services…"
-              className="h-11 w-full rounded-xl border border-[#eee7e1] bg-[#faf8f6] pl-10 pr-4 text-sm text-[#30251f] outline-none transition placeholder:text-[#b2a59d] focus:border-[#c8b4a6] focus:bg-white"
+              placeholder={t("vendor.header.searchPlaceholder")}
+              className="h-11 w-full rounded-xl border border-[#eee7e1] bg-[#faf8f6] ps-10 pe-4 text-sm text-[#30251f] outline-none transition placeholder:text-[#b2a59d] focus:border-[#c8b4a6] focus:bg-white"
             />
           </form>
         </div>

@@ -25,7 +25,6 @@ import {
   Users,
   Eye,
   Calendar,
-  DollarSign,
   TrendingDown,
   Target,
   Zap,
@@ -53,6 +52,8 @@ import { useVendor } from "@/features/vendors/hooks/useVendor";
 import { useVendorServices } from "@/features/services/hooks/useVendorServices";
 import { useVendorReviews } from "@/features/reviews/hooks/useVendorReviews";
 import { ReviewStatus } from "@/types/review";
+import { useLanguage } from "@/context/LanguageContext";
+import { LANGUAGE_DATE_LOCALE } from "@/locales/config";
 
 // ✅ استيراد recharts
 import {
@@ -87,28 +88,24 @@ import {
 
 const statusConfig: Record<
   string,
-  { label: string; icon: React.ElementType; className: string; color: string }
+  { icon: React.ElementType; className: string; color: string }
 > = {
   Approved: {
-    label: "Approved",
     icon: CheckCircle2,
     className: "bg-emerald-50 text-emerald-700 border border-emerald-200",
     color: "#10b981",
   },
   Pending: {
-    label: "Pending Review",
     icon: Clock3,
     className: "bg-amber-50 text-amber-700 border border-amber-200",
     color: "#f59e0b",
   },
   Rejected: {
-    label: "Rejected",
     icon: XCircle,
     className: "bg-red-50 text-red-700 border border-red-200",
     color: "#ef4444",
   },
   Inactive: {
-    label: "Inactive",
     icon: XCircle,
     className: "bg-gray-100 text-gray-700 border border-gray-200",
     color: "#6b7280",
@@ -121,7 +118,9 @@ const COLORS = ["#a47e43", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#06b6d4"
 // Custom Tooltips - محسن للموبايل
 // =========================================================
 
-const CustomTooltip = ({ active, payload, label, unit = "reviews", prefix = "" }: any) => {
+const CustomTooltip = ({ active, payload, label, unit = "", prefix = "" }: any) => {
+  const { t } = useLanguage();
+
   if (active && payload && payload.length) {
     return (
       <div className="rounded-xl border border-[#e8dfd8] bg-white px-3 py-2 shadow-lg max-w-50 sm:max-w-none">
@@ -133,7 +132,7 @@ const CustomTooltip = ({ active, payload, label, unit = "reviews", prefix = "" }
         </p>
         {payload[0]?.payload?.percentage && (
           <p className="text-[10px] sm:text-xs text-[#a47e43] font-medium">
-            {payload[0].payload.percentage}% of total
+            {t("vendor.dashboard.charts.percentOfTotal", { percent: payload[0].payload.percentage })}
           </p>
         )}
       </div>
@@ -166,7 +165,7 @@ const KPICard = ({
   badge?: string;
 }) => (
   <div className="group relative overflow-hidden rounded-2xl border border-[#e8dfd8] bg-white p-4 sm:p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
-    <div className="absolute -right-8 -top-8 h-20 w-20 sm:h-24 sm:w-24 rounded-full bg-[#f8f2ed] opacity-60 transition-transform duration-500 group-hover:scale-125" />
+    <div className="absolute -end-8 -top-8 h-20 w-20 sm:h-24 sm:w-24 rounded-full bg-[#f8f2ed] opacity-60 transition-transform duration-500 group-hover:scale-125" />
     
     <div className="relative">
       <div className="flex items-start justify-between gap-2">
@@ -227,6 +226,7 @@ const KPICard = ({
 
 // ✅ Rating Distribution Chart
 const RatingDistribution = ({ reviews }: { reviews: any[] }) => {
+  const { t } = useLanguage();
   const data = useMemo(() => {
     const counts = [0, 0, 0, 0, 0];
     const approvedReviews = reviews.filter(r => r.status === ReviewStatus.Approved);
@@ -246,7 +246,7 @@ const RatingDistribution = ({ reviews }: { reviews: any[] }) => {
   if (data.every(d => d.value === 0)) {
     return (
       <div className="flex h-52 items-center justify-center text-sm text-[#9b8f86]">
-        No ratings data available
+        {t("vendor.dashboard.charts.noRatings")}
       </div>
     );
   }
@@ -258,7 +258,7 @@ const RatingDistribution = ({ reviews }: { reviews: any[] }) => {
           <CartesianGrid strokeDasharray="3 3" stroke="#f0eae5" vertical={false} />
           <XAxis dataKey="name" tick={{ fill: "#9a8d85", fontSize: 11 }} axisLine={false} />
           <YAxis tick={{ fill: "#9a8d85", fontSize: 11 }} axisLine={false} />
-          <ReTooltip content={<CustomTooltip unit="reviews" />} />
+          <ReTooltip content={<CustomTooltip unit={t("vendor.dashboard.charts.unitReviews")} />} />
           <Bar dataKey="value" radius={[4, 4, 0, 0]} animationDuration={1500}>
             {data.map((entry, index) => (
               <Cell 
@@ -276,17 +276,19 @@ const RatingDistribution = ({ reviews }: { reviews: any[] }) => {
 
 // ✅ Monthly Activity Chart - كلها خطوط
 const MonthlyActivity = ({ reviews }: { reviews: any[] }) => {
+  const { t, language } = useLanguage();
+  const dateLocale = LANGUAGE_DATE_LOCALE[language];
   const data = useMemo(() => {
     const months: Record<string, { total: number; approved: number; pending: number; rejected: number }> = {};
     const now = new Date();
     for (let i = 5; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const key = d.toLocaleString("default", { month: "short" });
+      const key = d.toLocaleString(dateLocale, { month: "short" });
       months[key] = { total: 0, approved: 0, pending: 0, rejected: 0 };
     }
     reviews.forEach((r) => {
       const d = new Date(r.createdAt);
-      const key = d.toLocaleString("default", { month: "short" });
+      const key = d.toLocaleString(dateLocale, { month: "short" });
       if (months[key]) {
         months[key].total++;
         if (r.status === ReviewStatus.Approved) months[key].approved++;
@@ -298,12 +300,12 @@ const MonthlyActivity = ({ reviews }: { reviews: any[] }) => {
       month,
       ...data,
     }));
-  }, [reviews]);
+  }, [reviews, dateLocale]);
 
   if (data.every(d => d.total === 0)) {
     return (
       <div className="flex h-52 items-center justify-center text-sm text-[#9b8f86]">
-        No activity data available
+        {t("vendor.dashboard.charts.noActivity")}
       </div>
     );
   }
@@ -333,7 +335,7 @@ const MonthlyActivity = ({ reviews }: { reviews: any[] }) => {
           <CartesianGrid strokeDasharray="3 3" stroke="#f0eae5" vertical={false} />
           <XAxis dataKey="month" tick={{ fill: "#9a8d85", fontSize: 11 }} axisLine={false} />
           <YAxis tick={{ fill: "#9a8d85", fontSize: 11 }} axisLine={false} />
-          <ReTooltip content={<CustomTooltip unit="reviews" />} />
+          <ReTooltip content={<CustomTooltip unit={t("vendor.dashboard.charts.unitReviews")} />} />
           <Legend wrapperStyle={{ fontSize: "11px", color: "#9a8d85" }} />
           {/* ✅ Total - Area Chart (خط مع تعبئة) */}
           <Area
@@ -342,7 +344,7 @@ const MonthlyActivity = ({ reviews }: { reviews: any[] }) => {
             stroke="#a47e43"
             strokeWidth={3}
             fill="url(#gradientTotal)"
-            name="Total"
+            name={t("vendor.dashboard.charts.total")}
           />
           {/* ✅ Approved - Line Chart (خط بس) */}
           <Line
@@ -351,7 +353,7 @@ const MonthlyActivity = ({ reviews }: { reviews: any[] }) => {
             stroke="#10b981"
             strokeWidth={2.5}
             dot={{ fill: "#10b981", r: 4 }}
-            name="Approved"
+            name={t("vendor.dashboard.charts.approved")}
           />
           {/* ✅ Pending - Line Chart (خط بس) */}
           <Line
@@ -360,7 +362,7 @@ const MonthlyActivity = ({ reviews }: { reviews: any[] }) => {
             stroke="#f59e0b"
             strokeWidth={2.5}
             dot={{ fill: "#f59e0b", r: 4 }}
-            name="Pending"
+            name={t("vendor.dashboard.charts.pending")}
           />
           {/* ✅ Rejected - Line Chart (خط بس) */}
           <Line
@@ -369,7 +371,7 @@ const MonthlyActivity = ({ reviews }: { reviews: any[] }) => {
             stroke="#ef4444"
             strokeWidth={2.5}
             dot={{ fill: "#ef4444", r: 4 }}
-            name="Rejected"
+            name={t("vendor.dashboard.charts.rejected")}
           />
         </ComposedChart>
       </ResponsiveContainer>
@@ -379,21 +381,28 @@ const MonthlyActivity = ({ reviews }: { reviews: any[] }) => {
 
 // ✅ Service Status Pie Chart
 const StatusDistribution = ({ services }: { services: any[] }) => {
+  const { t } = useLanguage();
   const data = useMemo(() => {
     const counts: Record<string, number> = {};
     services.forEach((s) => {
       counts[s.status] = (counts[s.status] || 0) + 1;
     });
+    const statusLabels: Record<string, string> = {
+      Approved: t("vendor.dashboard.itemStatus.approved"),
+      Pending: t("vendor.dashboard.itemStatus.pending"),
+      Rejected: t("vendor.dashboard.itemStatus.rejected"),
+      Inactive: t("vendor.dashboard.itemStatus.inactive"),
+    };
     return Object.entries(counts).map(([name, value]) => ({
-      name: name,
+      name: statusLabels[name] ?? name,
       value,
     }));
-  }, [services]);
+  }, [services, t]);
 
   if (data.length === 0) {
     return (
       <div className="flex h-52 items-center justify-center text-sm text-[#9b8f86]">
-        No services data available
+        {t("vendor.dashboard.charts.noServices")}
       </div>
     );
   }
@@ -421,7 +430,7 @@ const StatusDistribution = ({ services }: { services: any[] }) => {
               />
             ))}
           </Pie>
-          <ReTooltip content={<CustomTooltip unit="services" />} />
+          <ReTooltip content={<CustomTooltip unit={t("vendor.dashboard.charts.unitServices")} />} />
           <Legend 
             wrapperStyle={{ fontSize: "11px", color: "#9a8d85" }}
             iconType="circle"
@@ -434,6 +443,7 @@ const StatusDistribution = ({ services }: { services: any[] }) => {
 
 // ✅ Performance Radar Chart
 const PerformanceRadar = ({ reviews, services }: { reviews: any[]; services: any[] }) => {
+  const { t } = useLanguage();
   const data = useMemo(() => {
     const totalReviews = reviews.length;
     const approvedReviews = reviews.filter(r => r.status === ReviewStatus.Approved).length;
@@ -444,18 +454,18 @@ const PerformanceRadar = ({ reviews, services }: { reviews: any[]; services: any
     const approvedServices = services.filter(s => s.status === "Approved").length;
     
     return [
-      { category: "Quality", value: avgRating > 0 ? (avgRating / 5) * 100 : 0, fullMark: 100 },
-      { category: "Approval Rate", value: totalServices > 0 ? (approvedServices / totalServices) * 100 : 0, fullMark: 100 },
-      { category: "Customer Trust", value: totalReviews > 0 ? Math.min((approvedReviews / totalReviews) * 100, 100) : 0, fullMark: 100 },
-      { category: "Service Diversity", value: Math.min((totalServices / 10) * 100, 100), fullMark: 100 },
-      { category: "Engagement", value: Math.min((totalReviews / 20) * 100, 100), fullMark: 100 },
+      { category: t("vendor.dashboard.charts.quality"), value: avgRating > 0 ? (avgRating / 5) * 100 : 0, fullMark: 100 },
+      { category: t("vendor.dashboard.charts.approvalRate"), value: totalServices > 0 ? (approvedServices / totalServices) * 100 : 0, fullMark: 100 },
+      { category: t("vendor.dashboard.charts.customerTrust"), value: totalReviews > 0 ? Math.min((approvedReviews / totalReviews) * 100, 100) : 0, fullMark: 100 },
+      { category: t("vendor.dashboard.charts.serviceDiversity"), value: Math.min((totalServices / 10) * 100, 100), fullMark: 100 },
+      { category: t("vendor.dashboard.charts.engagement"), value: Math.min((totalReviews / 20) * 100, 100), fullMark: 100 },
     ];
-  }, [reviews, services]);
+  }, [reviews, services, t]);
 
   if (data.every(d => d.value === 0)) {
     return (
       <div className="flex h-52 items-center justify-center text-sm text-[#9b8f86]">
-        No performance data available
+        {t("vendor.dashboard.charts.noPerformance")}
       </div>
     );
   }
@@ -468,7 +478,7 @@ const PerformanceRadar = ({ reviews, services }: { reviews: any[]; services: any
           <PolarAngleAxis dataKey="category" tick={{ fill: "#9a8d85", fontSize: 10 }} />
           <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fill: "#9a8d85", fontSize: 9 }} />
           <Radar
-            name="Performance"
+            name={t("vendor.dashboard.charts.performanceSeries")}
             dataKey="value"
             stroke="#a47e43"
             fill="#a47e43"
@@ -500,11 +510,13 @@ const PerformanceRadar = ({ reviews, services }: { reviews: any[]; services: any
 // =========================================================
 
 const ServiceStatus = ({ status }: { status: string }) => {
+  const { t } = useLanguage();
+
   const config: Record<string, { label: string; className: string }> = {
-    Approved: { label: "✅ Approved", className: "bg-emerald-50 text-emerald-700" },
-    Pending: { label: "⏳ Pending", className: "bg-amber-50 text-amber-700" },
-    Rejected: { label: "❌ Rejected", className: "bg-red-50 text-red-700" },
-    Inactive: { label: "⚪ Inactive", className: "bg-gray-100 text-gray-700" },
+    Approved: { label: `✅ ${t("vendor.dashboard.itemStatus.approved")}`, className: "bg-emerald-50 text-emerald-700" },
+    Pending: { label: `⏳ ${t("vendor.dashboard.itemStatus.pending")}`, className: "bg-amber-50 text-amber-700" },
+    Rejected: { label: `❌ ${t("vendor.dashboard.itemStatus.rejected")}`, className: "bg-red-50 text-red-700" },
+    Inactive: { label: `⚪ ${t("vendor.dashboard.itemStatus.inactive")}`, className: "bg-gray-100 text-gray-700" },
   };
 
   const current = config[status] ?? config.Pending;
@@ -517,10 +529,12 @@ const ServiceStatus = ({ status }: { status: string }) => {
 };
 
 const ReviewStatusBadge = ({ status }: { status: ReviewStatus }) => {
+  const { t } = useLanguage();
+
   const config = {
-    [ReviewStatus.Approved]: { label: "✅ Approved", className: "bg-emerald-50 text-emerald-700" },
-    [ReviewStatus.Pending]: { label: "⏳ Pending", className: "bg-amber-50 text-amber-700" },
-    [ReviewStatus.Rejected]: { label: "❌ Rejected", className: "bg-red-50 text-red-700" },
+    [ReviewStatus.Approved]: { label: `✅ ${t("vendor.dashboard.itemStatus.approved")}`, className: "bg-emerald-50 text-emerald-700" },
+    [ReviewStatus.Pending]: { label: `⏳ ${t("vendor.dashboard.itemStatus.pending")}`, className: "bg-amber-50 text-amber-700" },
+    [ReviewStatus.Rejected]: { label: `❌ ${t("vendor.dashboard.itemStatus.rejected")}`, className: "bg-red-50 text-red-700" },
   };
 
   const current = config[status] ?? config[ReviewStatus.Pending];
@@ -537,6 +551,7 @@ const ReviewStatusBadge = ({ status }: { status: ReviewStatus }) => {
 // =========================================================
 
 export default function VendorDashboardPage() {
+  const { t, language } = useLanguage();
   const { vendor, loading: vendorLoading, error: vendorError, refetch: refetchVendor } = useVendor();
   const { services, loading: servicesLoading, error: servicesError, refetch: refetchServices } = useVendorServices();
   const { reviews, loading: reviewsLoading, error: reviewsError, refetch: refetchReviews } = useVendorReviews();
@@ -614,19 +629,15 @@ export default function VendorDashboardPage() {
                 </div>
                 <div>
                   <h1 className="text-xl font-semibold tracking-tight text-[#30251f] sm:text-2xl lg:text-3xl">
-                    Welcome back, {vendor.businessName}
+                    {t("vendor.dashboard.welcome", { name: vendor.businessName })}
                   </h1>
                 </div>
               </div>
 
               <div className="mt-1.5 flex flex-wrap items-center gap-3 sm:mt-2">
                 <p className="text-xs text-[#756b65] sm:text-sm">
-                  Here's what's happening with your business today
+                  {t("vendor.dashboard.subtitle")}
                 </p>
-                <span className="flex items-center gap-1 text-[10px] text-emerald-600 sm:text-xs">
-                  <span className="inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  All systems operational
-                </span>
               </div>
             </div>
 
@@ -635,6 +646,7 @@ export default function VendorDashboardPage() {
                 type="button"
                 onClick={handleRefresh}
                 disabled={isRefreshing}
+                aria-label={t("vendor.dashboard.refresh")}
                 className="inline-flex items-center gap-1.5 rounded-xl border border-[#e3d9d1] bg-white px-2.5 py-1.5 text-[10px] font-medium text-[#665950] transition-all hover:border-[#cfc1b7] hover:bg-[#faf8f6] disabled:opacity-50 sm:gap-2 sm:px-3.5 sm:py-2 sm:text-sm"
               >
                 <RefreshCw size={13} className={isRefreshing ? "animate-spin" : "sm:h-5 sm:w-5"} />
@@ -644,7 +656,7 @@ export default function VendorDashboardPage() {
                 href="/vendor/services/new"
                 className="inline-flex items-center gap-1.5 rounded-xl bg-[#30251f] px-3 py-1.5 text-[10px] font-semibold text-white transition hover:bg-[#463831] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
               >
-                <Plus size={13} className="sm:h-4 sm:w-4" /> <span> Add Services </span>
+                <Plus size={13} className="sm:h-4 sm:w-4" /> <span>{t("vendor.dashboard.addServices")}</span>
               </Link>
             </div>
           </div>
@@ -662,12 +674,12 @@ export default function VendorDashboardPage() {
               </div>
               <div className="min-w-0 flex-1">
                 <h2 className="text-sm font-semibold text-[#30251f] sm:text-base">
-                  {vendor.status === "Rejected" ? "⚠️ Vendor account rejected" : "⏳ Account under review"}
+                  {vendor.status === "Rejected" ? t("vendor.dashboard.alert.rejectedTitle") : t("vendor.dashboard.alert.pendingTitle")}
                 </h2>
                 <p className="mt-0.5 text-xs leading-5 text-[#756b65] sm:mt-1 sm:text-sm sm:leading-6">
                   {vendor.status === "Rejected"
-                    ? vendor.rejectionReason || "Please review your information and resubmit your vendor profile."
-                    : "Your account is being reviewed by the administration team. You'll be notified once approved."}
+                    ? vendor.rejectionReason || t("vendor.dashboard.alert.rejectedDefault")
+                    : t("vendor.dashboard.alert.pendingText")}
                 </p>
               </div>
             </div>
@@ -680,40 +692,40 @@ export default function VendorDashboardPage() {
 
         <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
           <KPICard
-            title="Total Services"
+            title={t("vendor.dashboard.kpi.totalServices")}
             value={stats.totalServices}
             icon={BriefcaseBusiness}
-            subtitle={`${stats.approvedServices} active`}
+            subtitle={t("vendor.dashboard.kpi.activeCount", { count: stats.approvedServices })}
             color="#a47e43"
-            badge="Active"
+            badge={t("vendor.dashboard.kpi.active")}
           />
 
           <KPICard
-            title="Average Rating"
+            title={t("vendor.dashboard.kpi.avgRating")}
             value={stats.avgRating > 0 ? stats.avgRating.toFixed(1) : "—"}
             icon={Star}
-            subtitle={`${stats.totalReviews} reviews`}
+            subtitle={t("vendor.dashboard.kpi.reviewsCount", { count: stats.totalReviews })}
             color="#f59e0b"
-            badge={stats.fiveStarRate > 50 ? "⭐ Top Rated" : "Good"}
+            badge={stats.fiveStarRate > 50 ? t("vendor.dashboard.kpi.topRated") : t("vendor.dashboard.kpi.good")}
           />
 
           <KPICard
-            title="Approval Rate"
+            title={t("vendor.dashboard.kpi.approvalRate")}
             value={`${stats.approvalRate.toFixed(0)}%`}
             icon={TrendingUp}
-            subtitle={`${stats.approvedServices} of ${stats.totalServices}`}
+            subtitle={t("vendor.dashboard.kpi.ofTotal", { approved: stats.approvedServices, total: stats.totalServices })}
             progress={stats.approvalRate}
             color="#10b981"
-            badge={stats.approvalRate > 70 ? "Excellent" : "Needs Work"}
+            badge={stats.approvalRate > 70 ? t("vendor.dashboard.kpi.excellent") : t("vendor.dashboard.kpi.needsWork")}
           />
 
           <KPICard
-            title="Pending Reviews"
+            title={t("vendor.dashboard.kpi.pendingReviews")}
             value={stats.pendingReviews}
             icon={Clock}
-            subtitle={`${stats.rejectedReviews} rejected`}
+            subtitle={t("vendor.dashboard.kpi.rejectedCount", { count: stats.rejectedReviews })}
             color="#f59e0b"
-            badge={stats.pendingReviews > 0 ? "Action Required" : "All Clear"}
+            badge={stats.pendingReviews > 0 ? t("vendor.dashboard.kpi.actionRequired") : t("vendor.dashboard.kpi.allClear")}
           />
         </div>
 
@@ -725,8 +737,8 @@ export default function VendorDashboardPage() {
           <div className="rounded-3xl border border-[#e8dfd8] bg-white p-5 shadow-sm">
             <div className="mb-4 flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-semibold text-[#30251f]">Service Status</h3>
-                <p className="text-xs text-[#9b8f86]">Distribution of your services</p>
+                <h3 className="text-sm font-semibold text-[#30251f]">{t("vendor.dashboard.charts.serviceStatus")}</h3>
+                <p className="text-xs text-[#9b8f86]">{t("vendor.dashboard.charts.serviceStatusSub")}</p>
               </div>
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#f5eee9]">
                 <PieChart size={16} className="text-[#a47e43]" />
@@ -738,8 +750,8 @@ export default function VendorDashboardPage() {
           <div className="rounded-3xl border border-[#e8dfd8] bg-white p-5 shadow-sm">
             <div className="mb-4 flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-semibold text-[#30251f]">Rating Distribution</h3>
-                <p className="text-xs text-[#9b8f86]">Customer ratings breakdown</p>
+                <h3 className="text-sm font-semibold text-[#30251f]">{t("vendor.dashboard.charts.ratingDistribution")}</h3>
+                <p className="text-xs text-[#9b8f86]">{t("vendor.dashboard.charts.ratingDistributionSub")}</p>
               </div>
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#f5eee9]">
                 <BarChart3 size={16} className="text-[#a47e43]" />
@@ -757,8 +769,8 @@ export default function VendorDashboardPage() {
           <div className="rounded-3xl border border-[#e8dfd8] bg-white p-5 shadow-sm lg:col-span-2">
             <div className="mb-4 flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-semibold text-[#30251f]">Monthly Activity</h3>
-                <p className="text-xs text-[#9b8f86]">Reviews received over the last 6 months</p>
+                <h3 className="text-sm font-semibold text-[#30251f]">{t("vendor.dashboard.charts.monthlyActivity")}</h3>
+                <p className="text-xs text-[#9b8f86]">{t("vendor.dashboard.charts.monthlyActivitySub")}</p>
               </div>
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#f5eee9]">
                 <LineChart size={16} className="text-[#a47e43]" />
@@ -770,8 +782,8 @@ export default function VendorDashboardPage() {
           <div className="rounded-3xl border border-[#e8dfd8] bg-white p-5 shadow-sm">
             <div className="mb-4 flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-semibold text-[#30251f]">Performance</h3>
-                <p className="text-xs text-[#9b8f86]">Business health score</p>
+                <h3 className="text-sm font-semibold text-[#30251f]">{t("vendor.dashboard.charts.performance")}</h3>
+                <p className="text-xs text-[#9b8f86]">{t("vendor.dashboard.charts.performanceSub")}</p>
               </div>
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#f5eee9]">
                 <Activity size={16} className="text-[#a47e43]" />
@@ -789,14 +801,14 @@ export default function VendorDashboardPage() {
           <div className="rounded-3xl border border-[#e8dfd8] bg-white p-5 shadow-sm lg:col-span-2">
             <div className="mb-4 flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-semibold text-[#30251f]">Recent Reviews</h3>
-                <p className="text-xs text-[#9b8f86]">Latest customer feedback</p>
+                <h3 className="text-sm font-semibold text-[#30251f]">{t("vendor.dashboard.reviews.title")}</h3>
+                <p className="text-xs text-[#9b8f86]">{t("vendor.dashboard.reviews.subtitle")}</p>
               </div>
               <Link
                 href="/vendor/reviews"
                 className="inline-flex items-center gap-1 text-xs font-medium text-[#a47e43] hover:text-[#8b6d55]"
               >
-                View all <ChevronRight size={14} />
+                {t("vendor.dashboard.reviews.viewAll")} <ChevronRight size={14} className="rtl:rotate-180" />
               </Link>
             </div>
 
@@ -805,8 +817,8 @@ export default function VendorDashboardPage() {
                 <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#f3ebe6]">
                   <Star className="h-5 w-5 text-[#806b5e]" />
                 </div>
-                <h3 className="mt-3 text-sm font-semibold text-[#40352f]">No reviews yet</h3>
-                <p className="mx-auto mt-1 max-w-md text-xs text-[#81746d]">Reviews will appear here once customers start reviewing your services.</p>
+                <h3 className="mt-3 text-sm font-semibold text-[#40352f]">{t("vendor.dashboard.reviews.emptyTitle")}</h3>
+                <p className="mx-auto mt-1 max-w-md text-xs text-[#81746d]">{t("vendor.dashboard.reviews.emptyText")}</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -818,10 +830,10 @@ export default function VendorDashboardPage() {
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="font-medium text-[#30251f] text-sm">
-                          {review.userFullName || "Anonymous"}
+                          {review.userFullName || t("vendor.dashboard.reviews.anonymous")}
                         </span>
                         <span className="text-[10px] text-[#9b8f86]">
-                          {new Date(review.createdAt).toLocaleDateString()}
+                          {new Date(review.createdAt).toLocaleDateString(LANGUAGE_DATE_LOCALE[language])}
                         </span>
                         <ReviewStatusBadge status={review.status} />
                       </div>
@@ -839,7 +851,7 @@ export default function VendorDashboardPage() {
                       href={`/vendor/services/${review.serviceId}`}
                       className="text-xs font-medium text-[#a47e43] hover:text-[#8b6d55] whitespace-nowrap"
                     >
-                      View →
+                      {t("vendor.dashboard.reviews.view")}
                     </Link>
                   </div>
                 ))}
@@ -848,7 +860,7 @@ export default function VendorDashboardPage() {
           </div>
 
           <div className="rounded-3xl border border-[#e8dfd8] bg-white p-5 shadow-sm">
-            <h3 className="mb-4 text-sm font-semibold text-[#30251f]">Quick Stats</h3>
+            <h3 className="mb-4 text-sm font-semibold text-[#30251f]">{t("vendor.dashboard.quickStats.title")}</h3>
             <div className="space-y-3">
               <div className="flex items-center justify-between rounded-xl bg-[#fcfaf8] p-3">
                 <div className="flex items-center gap-2">
@@ -856,7 +868,7 @@ export default function VendorDashboardPage() {
                     <CheckCircle2 size={14} className="text-emerald-600" />
                   </div>
                   <div>
-                    <p className="text-xs text-[#9a8d85]">Approved</p>
+                    <p className="text-xs text-[#9a8d85]">{t("vendor.dashboard.quickStats.approved")}</p>
                     <p className="text-sm font-semibold text-[#30251f]">{stats.approvedServices}</p>
                   </div>
                 </div>
@@ -869,11 +881,11 @@ export default function VendorDashboardPage() {
                     <Clock3 size={14} className="text-amber-600" />
                   </div>
                   <div>
-                    <p className="text-xs text-[#9a8d85]">Pending</p>
+                    <p className="text-xs text-[#9a8d85]">{t("vendor.dashboard.quickStats.pending")}</p>
                     <p className="text-sm font-semibold text-[#30251f]">{stats.pendingServices}</p>
                   </div>
                 </div>
-                <span className="text-xs text-amber-600 font-medium">Awaiting</span>
+                <span className="text-xs text-amber-600 font-medium">{t("vendor.dashboard.quickStats.awaiting")}</span>
               </div>
 
               <div className="flex items-center justify-between rounded-xl bg-[#fcfaf8] p-3">
@@ -882,11 +894,11 @@ export default function VendorDashboardPage() {
                     <XCircle size={14} className="text-red-600" />
                   </div>
                   <div>
-                    <p className="text-xs text-[#9a8d85]">Rejected</p>
+                    <p className="text-xs text-[#9a8d85]">{t("vendor.dashboard.quickStats.rejected")}</p>
                     <p className="text-sm font-semibold text-[#30251f]">{stats.rejectedServices}</p>
                   </div>
                 </div>
-                <span className="text-xs text-red-600 font-medium">Needs review</span>
+                <span className="text-xs text-red-600 font-medium">{t("vendor.dashboard.quickStats.needsReview")}</span>
               </div>
 
               <div className="flex items-center justify-between rounded-xl bg-[#fcfaf8] p-3">
@@ -895,11 +907,10 @@ export default function VendorDashboardPage() {
                     <Star size={14} className="text-purple-600" />
                   </div>
                   <div>
-                    <p className="text-xs text-[#9a8d85]">5-Star Rate</p>
+                    <p className="text-xs text-[#9a8d85]">{t("vendor.dashboard.quickStats.fiveStar")}</p>
                     <p className="text-sm font-semibold text-[#30251f]">{stats.fiveStarRate.toFixed(0)}%</p>
                   </div>
                 </div>
-                <span className="text-xs text-purple-600 font-medium">Excellent</span>
               </div>
             </div>
           </div>
@@ -913,14 +924,14 @@ export default function VendorDashboardPage() {
           <div className="rounded-3xl border border-[#e8dfd8] bg-white p-5 shadow-sm">
             <div className="mb-4 flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-semibold text-[#30251f]">Recent Services</h3>
-                <p className="text-xs text-[#9b8f86]">Your latest offerings</p>
+                <h3 className="text-sm font-semibold text-[#30251f]">{t("vendor.dashboard.services.title")}</h3>
+                <p className="text-xs text-[#9b8f86]">{t("vendor.dashboard.services.subtitle")}</p>
               </div>
               <Link
                 href="/vendor/services"
                 className="inline-flex items-center gap-1 text-xs font-medium text-[#a47e43] hover:text-[#8b6d55]"
               >
-                View all <ChevronRight size={14} />
+                {t("vendor.dashboard.reviews.viewAll")} <ChevronRight size={14} className="rtl:rotate-180" />
               </Link>
             </div>
 
@@ -934,13 +945,13 @@ export default function VendorDashboardPage() {
                   <div className="flex items-start justify-between">
                     <div className="min-w-0 flex-1">
                       <h4 className="truncate text-sm font-semibold text-[#30251f]">{service.name}</h4>
-                      <p className="mt-0.5 text-xs text-[#9a8d85]">{service.categoryName || "Uncategorized"}</p>
+                      <p className="mt-0.5 text-xs text-[#9a8d85]">{service.categoryName || t("vendor.dashboard.services.uncategorized")}</p>
                     </div>
                     <ServiceStatus status={service.status} />
                   </div>
                   {service.prices.length > 0 && (
                     <p className="mt-2 text-xs text-[#a47e43] font-medium">
-                      From ${Math.min(...service.prices.map(p => p.price))}
+                      {t("vendor.dashboard.services.from", { price: `${Math.min(...service.prices.map(p => p.price))} ${t("common.currency")}` })}
                     </p>
                   )}
                 </Link>
@@ -981,21 +992,23 @@ function LoadingSkeleton() {
 }
 
 function ErrorState({ onRefresh }: { onRefresh: () => void }) {
+  const { t } = useLanguage();
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#faf8f6] px-4">
       <div className="w-full max-w-md rounded-3xl border border-red-100 bg-white p-6 text-center shadow-sm sm:p-8">
         <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-50 sm:mb-5 sm:h-16 sm:w-16">
           <XCircle className="h-7 w-7 text-red-500 sm:h-8 sm:w-8" />
         </div>
-        <h1 className="text-lg font-semibold text-[#30251f] sm:text-xl">Unable to load dashboard</h1>
-        <p className="mt-2 text-sm leading-6 text-[#756b65]">Something went wrong while loading your vendor information.</p>
+        <h1 className="text-lg font-semibold text-[#30251f] sm:text-xl">{t("vendor.dashboard.error.title")}</h1>
+        <p className="mt-2 text-sm leading-6 text-[#756b65]">{t("vendor.dashboard.error.text")}</p>
         <button
           type="button"
           onClick={onRefresh}
           className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[#30251f] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#463831] sm:mt-6 sm:px-5 sm:py-3"
         >
           <RefreshCw className="h-4 w-4" />
-          Try Again
+          {t("vendor.dashboard.error.retry")}
         </button>
       </div>
     </div>

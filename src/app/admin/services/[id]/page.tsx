@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useLanguage } from "@/context/LanguageContext";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
@@ -139,6 +140,8 @@ const getStatusStyles = (status: string) => {
 ========================= */
 
 export default function AdminServiceDetailsPage() {
+  const { t } = useLanguage();
+  const money = (value: number) => `${formatPrice(value)} ${t("common.currency")}`;
   const params = useParams();
   const router = useRouter();
 
@@ -900,9 +903,7 @@ export default function AdminServiceDetailsPage() {
                             </td>
 
                             <td className="px-4 py-4 text-right text-sm font-semibold text-gray-900">
-                              {formatPrice(
-                                price.price
-                              )}
+                              {money(price.price)}
                             </td>
                           </tr>
                         )

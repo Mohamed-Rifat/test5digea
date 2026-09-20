@@ -1,18 +1,35 @@
 "use client";
 
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { AlertTriangle } from "lucide-react";
+import {
+  AlertTriangle,
+  Clock3,
+  LogOut,
+  X,
+} from "lucide-react";
+
 import { useAuth } from "@/context/AuthContext";
 import { useSessionCountdown } from "@/lib/useSessionCountdown";
 import { useToast } from "@/components/providers/ToastProvider";
 
 /**
- * Number of seconds before the session expires when the warning appears.
- * Change this value if you want the warning to appear earlier or later
- * (for example, 300 for five minutes).
+ * Session warning thresholds
+ *
+ * 10 minutes:
+ * Show a normal warning that can be dismissed.
+ *
+ * 2 minutes:
+ * Show a stronger warning that can still be dismissed.
+ *
+ * 30 seconds:
+ * Show a mandatory final warning that cannot be dismissed.
  */
-const WARNING_THRESHOLD_SECONDS = 60;
+const WARNING_THRESHOLD_SECONDS = 600;
+const CRITICAL_THRESHOLD_SECONDS = 120;
+const FINAL_THRESHOLD_SECONDS = 30;
+
+type SessionWarningStage = "warning" | "critical" | "final" | null;
 
 export default function SessionExpiryProvider({
   children,
@@ -27,35 +44,141 @@ export default function SessionExpiryProvider({
     isAuthenticated ? user?.expiration : null
   );
 
+  /**
+   * Prevent multiple automatic logout calls.
+   */
   const hasLoggedOutRef = useRef(false);
 
+  /**
+   * Whether the user dismissed the 10-minute warning.
+   */
+  const [warningDismissed, setWarningDismissed] = useState(false);
+
+  /**
+   * Whether the user dismissed the 2-minute critical warning.
+   */
+  const [criticalDismissed, setCriticalDismissed] = useState(false);
+
+  /**
+   * Reset everything whenever a new session/token is created.
+   */
   useEffect(() => {
     hasLoggedOutRef.current = false;
+    setWarningDismissed(false);
+    setCriticalDismissed(false);
   }, [user?.token]);
 
+  /**
+   * Automatically logout when the session expires.
+   */
   useEffect(() => {
     if (!isAuthenticated) return;
     if (secondsLeft === null) return;
 
     if (secondsLeft <= 0 && !hasLoggedOutRef.current) {
       hasLoggedOutRef.current = true;
+
       logout();
-      toast("Your session has expired. Please log in again.", "error");
+
+      toast(
+        "Your session has expired. Please log in again.",
+        "error"
+      );
+
       router.replace("/login");
     }
-  }, [secondsLeft, isAuthenticated, logout, router, toast]);
+  }, [
+    secondsLeft,
+    isAuthenticated,
+    logout,
+    router,
+    toast,
+  ]);
 
-  const showWarning =
+  /**
+   * Determine which warning stage should be active.
+   */
+  const warningStage: SessionWarningStage =
     isAuthenticated &&
     secondsLeft !== null &&
-    secondsLeft > 0 &&
-    secondsLeft <= WARNING_THRESHOLD_SECONDS;
+    secondsLeft > 0
+      ? secondsLeft <= FINAL_THRESHOLD_SECONDS
+        ? "final"
+        : secondsLeft <= CRITICAL_THRESHOLD_SECONDS
+          ? criticalDismissed
+            ? null
+            : "critical"
+          : secondsLeft <= WARNING_THRESHOLD_SECONDS
+            ? warningDismissed
+              ? null
+              : "warning"
+            : null
+      : null;
 
-  const handleLoginNow = () => {
+  /**
+   * Close the current dismissible warning.
+   *
+   * The final 30-second warning cannot be dismissed,
+   * so this function does nothing during the final stage.
+   */
+  const handleDismiss = () => {
+    if (warningStage === "warning") {
+      setWarningDismissed(true);
+      return;
+    }
+
+    if (warningStage === "critical") {
+      setCriticalDismissed(true);
+    }
+  };
+
+  /**
+   * Logout immediately.
+   */
+  const handleLogoutNow = () => {
+    if (hasLoggedOutRef.current) return;
+
     hasLoggedOutRef.current = true;
+
     logout();
     router.replace("/login");
   };
+
+  /**
+   * Handle Escape key.
+   *
+   * Escape works for the 10-minute and 2-minute warnings.
+   * It is intentionally disabled during the final 30 seconds.
+   */
+  useEffect(() => {
+    if (
+      warningStage !== "warning" &&
+      warningStage !== "critical"
+    ) {
+      return;
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+
+      event.preventDefault();
+      handleDismiss();
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [warningStage]);
+
+  /**
+   * Don't render anything if there is no active warning.
+   */
+  const showWarning = warningStage !== null;
+
+  const isFinalWarning = warningStage === "final";
+  const isCriticalWarning = warningStage === "critical";
 
   return (
     <>
@@ -63,41 +186,235 @@ export default function SessionExpiryProvider({
 
       {showWarning && (
         <div
-          className="fixed inset-0 z-1000 flex items-end justify-center bg-black/30 px-4 pb-6 backdrop-blur-sm sm:items-center sm:pb-0"
+          className={[
+            "fixed inset-0 z-[1000] flex items-end justify-center px-4 pb-6 backdrop-blur-sm sm:items-center sm:pb-0",
+            isFinalWarning
+              ? "bg-black/50"
+              : "bg-black/30",
+          ].join(" ")}
           role="alertdialog"
+          aria-modal="true"
           aria-live="assertive"
           aria-labelledby="session-expiry-title"
         >
-          <div className="w-full max-w-sm rounded-2xl border border-white/70 bg-white p-6 text-center shadow-[0_18px_55px_rgba(48,37,31,0.25)]">
-            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-amber-50 text-amber-500">
-              <AlertTriangle size={24} />
+          <div
+            className={[
+              "relative w-full max-w-sm rounded-2xl border bg-white p-6 text-center shadow-[0_18px_55px_rgba(48,37,31,0.25)]",
+              isFinalWarning
+                ? "border-red-200"
+                : isCriticalWarning
+                  ? "border-amber-200"
+                  : "border-white/70",
+            ].join(" ")}
+          >
+            {/* Close button for 10-minute and 2-minute warnings */}
+            {!isFinalWarning && (
+              <button
+                type="button"
+                onClick={handleDismiss}
+                aria-label="Dismiss warning"
+                className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full text-[#8b7d74] transition hover:bg-[#f5eee9] hover:text-[#30251f]"
+              >
+                <X size={18} />
+              </button>
+            )}
+
+            {/* Icon */}
+            <div
+              className={[
+                "mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full",
+                isFinalWarning
+                  ? "bg-red-50 text-red-500"
+                  : isCriticalWarning
+                    ? "bg-amber-50 text-amber-500"
+                    : "bg-amber-50 text-amber-500",
+              ].join(" ")}
+            >
+              {isFinalWarning ? (
+                <Clock3 size={27} />
+              ) : (
+                <AlertTriangle size={26} />
+              )}
             </div>
 
+            {/* Title */}
             <h2
               id="session-expiry-title"
-              className="text-base font-semibold text-[#30251f]"
+              className={[
+                "text-base font-semibold",
+                isFinalWarning
+                  ? "text-red-700"
+                  : "text-[#30251f]",
+              ].join(" ")}
             >
-              Your session is about to expire
+              {isFinalWarning
+                ? "Your session is about to expire"
+                : isCriticalWarning
+                  ? "Your session will expire soon"
+                  : "Your session is about to expire"}
             </h2>
 
+            {/* Description */}
             <p className="mt-2 text-sm leading-6 text-[#6b5f57]">
-              You will be automatically logged out in{" "}
-              <span className="font-bold text-[#a47e43]">
-                {secondsLeft}
-              </span>{" "}
-              seconds because your session is about to expire.
+              {isFinalWarning ? (
+                <>
+                  Your session will be closed automatically in
+                  <span className="mx-1 font-bold text-red-600">
+                    {secondsLeft}
+                  </span>
+                  seconds.
+                  <br />
+                  Please save any data you are working on now.
+                </>
+              ) : isCriticalWarning ? (
+                <>
+                  Your session will be automatically closed in
+                  <span className="mx-1 font-bold text-[#a47e43]">
+                    {formatRemainingTime(secondsLeft)}
+                  </span>
+                  .
+                  <br />
+                  Please save any data you are working on now.
+                </>
+              ) : (
+                <>
+                  Your session is going to expire in
+                  <span className="mx-1 font-bold text-[#a47e43]">
+                    {formatRemainingTime(secondsLeft)}
+                  </span>
+                  .
+                  <br />
+                  You can continue working and close this warning.
+                </>
+              )}
             </p>
 
-            <button
-              type="button"
-              onClick={handleLoginNow}
-              className="mt-5 w-full rounded-xl bg-[#a47e43] py-2.5 text-sm font-semibold text-white transition hover:bg-[#8f6c37]"
+            {/* Countdown */}
+            <div
+              className={[
+                "mx-auto mt-5 flex w-fit min-w-24 items-center justify-center rounded-xl px-5 py-3",
+                isFinalWarning
+                  ? "bg-red-50"
+                  : "bg-[#f5eee9]",
+              ].join(" ")}
             >
-              Log in again now
-            </button>
+              <span
+                className={[
+                  "text-2xl font-bold tabular-nums",
+                  isFinalWarning
+                    ? "text-red-600"
+                    : "text-[#a47e43]",
+                ].join(" ")}
+              >
+                {formatCountdown(secondsLeft)}
+              </span>
+            </div>
+
+            {/* Final warning */}
+            {isFinalWarning ? (
+              <div className="mt-5">
+                <button
+                  type="button"
+                  onClick={handleLogoutNow}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#a47e43] py-3 text-sm font-semibold text-white transition hover:bg-[#8f6c37] focus:outline-none focus:ring-2 focus:ring-[#a47e43]/30"
+                >
+                  <LogOut size={17} />
+                  Log out now
+                </button>
+
+                <p className="mt-3 text-xs text-[#8b7d74]">
+                  This window cannot be closed during the final
+                  countdown.
+                </p>
+              </div>
+            ) : (
+              /* Dismissible warnings */
+              <div className="mt-5 flex gap-3">
+                <button
+                  type="button"
+                  onClick={handleDismiss}
+                  className="flex-1 rounded-xl border border-[#e5ddd7] bg-white py-2.5 text-sm font-semibold text-[#6b5f57] transition hover:bg-[#faf8f6] hover:text-[#30251f]"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleLogoutNow}
+                  className="flex-1 rounded-xl bg-[#a47e43] py-2.5 text-sm font-semibold text-white transition hover:bg-[#8f6c37]"
+                >
+                  Log out now
+                </button>
+              </div>
+            )}
+
+            {/* ESC hint */}
+            {!isFinalWarning && (
+              <p className="mt-3 text-xs text-[#9a8d84]">
+                Press{" "}
+                <kbd className="rounded border border-[#ddd3cc] bg-[#faf8f6] px-1.5 py-0.5 font-medium">
+                  Esc
+                </kbd>{" "}
+                or Cancel to continue.
+              </p>
+            )}
           </div>
         </div>
       )}
     </>
   );
+}
+
+/**
+ * Format a duration like:
+ *
+ * 600  -> "10 minutes"
+ * 120  -> "2 minutes"
+ * 90   -> "1 minute 30 seconds"
+ * 30   -> "30 seconds"
+ */
+function formatRemainingTime(
+  seconds: number | null
+): string {
+  if (seconds === null || seconds <= 0) {
+    return "0 seconds";
+  }
+
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+
+  if (minutes === 0) {
+    return `${remainingSeconds} second${
+      remainingSeconds === 1 ? "" : "s"
+    }`;
+  }
+
+  if (remainingSeconds === 0) {
+    return `${minutes} minute${
+      minutes === 1 ? "" : "s"
+    }`;
+  }
+
+  return `${minutes} minute${
+    minutes === 1 ? "" : "s"
+  } ${remainingSeconds} second${
+    remainingSeconds === 1 ? "" : "s"
+  }`;
+}
+
+/**
+ * Format the final countdown:
+ *
+ * 30 -> "30"
+ * 9  -> "09"
+ * 0  -> "00"
+ */
+function formatCountdown(
+  seconds: number | null
+): string {
+  if (seconds === null || seconds <= 0) {
+    return "00";
+  }
+
+  return String(seconds).padStart(2, "0");
 }

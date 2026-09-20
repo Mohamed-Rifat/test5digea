@@ -39,6 +39,8 @@ import {
 } from "@mui/material";
 
 import { useAuth } from "@/context/AuthContext";
+import { useLanguage } from "@/context/LanguageContext";
+import type { TranslationKey } from "@/locales";
 import { useVendor } from "@/features/vendors/hooks/useVendor";
 import { useVendorServices } from "@/features/services/hooks/useVendorServices";
 import { useVendorReviews } from "@/features/reviews/hooks/useVendorReviews";
@@ -49,54 +51,30 @@ interface VendorSidebarProps {
   onClose: () => void;
 }
 
-// ✅ Navigation items (بدون بيانات وهمية)
-const navigationItems = [
-  {
-    label: "Dashboard",
-    href: "/vendor",
-    icon: LayoutDashboard,
-  },
-  {
-    label: "Company Profile",
-    href: "/vendor/profile",
-    icon: Building2,
-  },
-  {
-    label: "Categories",
-    href: "/vendor/categories",
-    icon: Tags,
-  },
-  {
-    label: "My Services",
-    href: "/vendor/services",
-    icon: BriefcaseBusiness,
-  },
-  {
-    label: "Reviews",
-    href: "/vendor/reviews",
-    icon: MessageSquareText,
-  },
-  {
-    label: "Security",
-    href: "/vendor/security",
-    icon: Shield,
-  },
-  {
-    label: "User Mode",
-    href: "/",
-    icon: Users,
-  },
-  {
-    label: "Subscriptions",
-    href: "/vendor/subscriptions",
-    icon: Crown,
-  },
+// Navigation items
+const navigationItems: {
+  labelKey: TranslationKey;
+  href: string;
+  icon: typeof LayoutDashboard;
+}[] = [
+  { labelKey: "vendor.sidebar.dashboard", href: "/vendor", icon: LayoutDashboard },
+  { labelKey: "vendor.sidebar.companyProfile", href: "/vendor/profile", icon: Building2 },
+  { labelKey: "vendor.sidebar.categories", href: "/vendor/categories", icon: Tags },
+  { labelKey: "vendor.sidebar.myServices", href: "/vendor/services", icon: BriefcaseBusiness },
+  { labelKey: "vendor.sidebar.reviews", href: "/vendor/reviews", icon: MessageSquareText },
+  { labelKey: "vendor.sidebar.security", href: "/vendor/security", icon: Shield },
+  { labelKey: "vendor.sidebar.userMode", href: "/", icon: Users },
+  { labelKey: "vendor.sidebar.subscriptions", href: "/vendor/subscriptions", icon: Crown },
 ];
 
-// ✅ Quick actions
-const quickActions = [
-  { label: "Help Center", icon: HelpCircle, href: "/vendor/support" },
-  { label: "Settings", icon: Settings, href: "/vendor/profile" },
+// Quick actions
+const quickActions: {
+  labelKey: TranslationKey;
+  icon: typeof LayoutDashboard;
+  href: string;
+}[] = [
+  { labelKey: "vendor.sidebar.helpCenter", icon: HelpCircle, href: "/vendor/support" },
+  { labelKey: "vendor.sidebar.settings", icon: Settings, href: "/vendor/profile" },
 ];
 
 export default function VendorSidebar({
@@ -106,6 +84,7 @@ export default function VendorSidebar({
   const pathname = usePathname();
   const router = useRouter();
   const { logout } = useAuth();
+  const { t } = useLanguage();
   const { vendor, loading: vendorLoading } = useVendor();
   const { services, loading: servicesLoading } = useVendorServices();
   const { reviews, loading: reviewsLoading } = useVendorReviews();
@@ -133,22 +112,22 @@ export default function VendorSidebar({
   // ✅ Vendor status config
   const statusConfig = {
     Approved: {
-      label: "Active",
+      labelKey: "vendor.status.approved" as const,
       className: "bg-emerald-50 text-emerald-700 border-emerald-200",
       dotColor: "bg-emerald-500",
     },
     Pending: {
-      label: "Under Review",
+      labelKey: "vendor.status.pending" as const,
       className: "bg-amber-50 text-amber-700 border-amber-200",
       dotColor: "bg-amber-500",
     },
     Rejected: {
-      label: "Rejected",
+      labelKey: "vendor.status.rejected" as const,
       className: "bg-red-50 text-red-700 border-red-200",
       dotColor: "bg-red-500",
     },
     Inactive: {
-      label: "Inactive",
+      labelKey: "vendor.status.inactive" as const,
       className: "bg-gray-100 text-gray-600 border-gray-200",
       dotColor: "bg-gray-500",
     },
@@ -166,7 +145,7 @@ export default function VendorSidebar({
       {mobileOpen && (
         <button
           type="button"
-          aria-label="Close sidebar"
+          aria-label={t("vendor.sidebar.close")}
           onClick={onClose}
           className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm transition-opacity duration-300 lg:hidden"
         />
@@ -174,11 +153,11 @@ export default function VendorSidebar({
 
       <aside
         className={`
-          fixed inset-y-0 left-0 z-50 flex w-70 flex-col
-          border-r border-[#eee7e1] bg-white
+          fixed inset-y-0 start-0 z-50 flex w-70 flex-col
+          border-e border-[#eee7e1] bg-white
           transition-transform duration-300 ease-in-out
-          lg:static lg:z-auto lg:translate-x-0
-          ${mobileOpen ? "translate-x-0" : "-translate-x-full"}
+          lg:static lg:z-auto lg:translate-x-0 lg:rtl:translate-x-0
+          ${mobileOpen ? "translate-x-0" : "-translate-x-full rtl:translate-x-full"}
         `}
       >
         {/* =================================================
@@ -202,7 +181,7 @@ export default function VendorSidebar({
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close sidebar"
+            aria-label={t("vendor.sidebar.close")}
             className="flex h-9 w-9 items-center justify-center rounded-xl text-[#7d7169] transition hover:bg-[#faf7f4] hover:text-[#30251f] lg:hidden"
           >
             <X size={18} />
@@ -241,14 +220,14 @@ export default function VendorSidebar({
               ) : (
                 <>
                   <p className="truncate text-sm font-semibold text-[#30251f]">
-                    {vendor?.businessName || "Vendor Account"}
+                    {vendor?.businessName || t("vendor.sidebar.vendorAccount")}
                   </p>
 
                   <div className="mt-1 flex items-center gap-2">
                     <span className={`inline-flex h-1.5 w-1.5 rounded-full ${status.dotColor} animate-pulse`} />
                     <span className={`text-[10px] font-medium ${vendor?.status === "Approved" ? "text-emerald-700" : "text-amber-700"
                       }`}>
-                      {status?.label || "Loading"}
+                      {status ? t(status.labelKey) : t("vendor.status.loading")}
                     </span>
                   </div>
                 </>
@@ -260,17 +239,17 @@ export default function VendorSidebar({
             <div className="mt-3 grid grid-cols-3 gap-1.5">
               <div className="rounded-lg bg-[#faf7f4] px-2 py-1.5 text-center">
                 <p className="text-xs font-semibold text-[#30251f]">{totalServices}</p>
-                <p className="text-[8px] text-[#9a8d84]">Services</p>
+                <p className="text-[8px] text-[#9a8d84]">{t("vendor.sidebar.statServices")}</p>
               </div>
               <div className="rounded-lg bg-[#faf7f4] px-2 py-1.5 text-center">
                 <p className="text-xs font-semibold text-[#30251f]">{totalReviews}</p>
-                <p className="text-[8px] text-[#9a8d84]">Reviews</p>
+                <p className="text-[8px] text-[#9a8d84]">{t("vendor.sidebar.statReviews")}</p>
               </div>
               <div className="rounded-lg bg-[#faf7f4] px-2 py-1.5 text-center">
                 <p className={`text-xs font-semibold ${pendingReviews > 0 ? "text-amber-600" : "text-[#30251f]"}`}>
                   {pendingReviews}
                 </p>
-                <p className="text-[8px] text-[#9a8d84]">Pending</p>
+                <p className="text-[8px] text-[#9a8d84]">{t("vendor.sidebar.statPending")}</p>
               </div>
             </div>
           )}
@@ -281,8 +260,8 @@ export default function VendorSidebar({
         ================================================= */}
 
         <nav className="flex-1 overflow-y-auto px-3 py-4">
-          <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#a99d94]">
-            Main Menu
+          <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.18em] rtl:tracking-normal text-[#a99d94]">
+            {t("vendor.sidebar.mainMenu")}
           </p>
 
           <div className="space-y-1">
@@ -306,7 +285,7 @@ export default function VendorSidebar({
                 >
                   {/* Active indicator */}
                   {active && (
-                    <span className="absolute left-0 top-1/2 h-6 w-0.5 -translate-y-1/2 rounded-r-full bg-[#a47e43]" />
+                    <span className="absolute start-0 top-1/2 h-6 w-0.5 -translate-y-1/2 rounded-e-full bg-[#a47e43]" />
                   )}
 
                   <Icon
@@ -315,7 +294,7 @@ export default function VendorSidebar({
                     className={active ? "text-white" : "text-[#9a8d84] group-hover:text-[#30251f]"}
                   />
 
-                  <span className="flex-1">{item.label}</span>
+                  <span className="flex-1">{t(item.labelKey)}</span>
 
                   {/* ✅ Badge حقيقي للمراجعات */}
                   {item.href === "/vendor/reviews" && pendingReviews > 0 && (
@@ -337,10 +316,10 @@ export default function VendorSidebar({
                   <ChevronRight
                     size={14}
                     className={`
-                      transition-all duration-200
+                      transition-all duration-200 rtl:rotate-180
                       ${active
                         ? "translate-x-0 opacity-100 text-white"
-                        : "-translate-x-1 opacity-0 group-hover:translate-x-0 group-hover:opacity-60"
+                        : "-translate-x-1 rtl:translate-x-1 opacity-0 group-hover:translate-x-0 group-hover:opacity-60"
                       }
                     `}
                   />
@@ -353,8 +332,8 @@ export default function VendorSidebar({
           <div className="my-4 border-t border-[#f0eae5]" />
 
           {/* Quick Actions */}
-          <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#a99d94]">
-            Support
+          <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.18em] rtl:tracking-normal text-[#a99d94]">
+            {t("vendor.sidebar.support")}
           </p>
 
           <div className="space-y-1">
@@ -368,7 +347,7 @@ export default function VendorSidebar({
                   className="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium text-[#665a52] transition hover:bg-[#faf7f4] hover:text-[#30251f]"
                 >
                   <Icon size={18} strokeWidth={1.8} className="text-[#9a8d84]" />
-                  <span>{item.label}</span>
+                  <span>{t(item.labelKey)}</span>
                 </Link>
               );
             })}
@@ -392,9 +371,9 @@ export default function VendorSidebar({
               strokeWidth={1.8}
               className="transition-colors group-hover:text-red-500"
             />
-            <span>{isLoggingOut ? "Logging out..." : "Logout"}</span>
+            <span>{isLoggingOut ? t("vendor.sidebar.loggingOut") : t("vendor.sidebar.logout")}</span>
             {isLoggingOut && (
-              <span className="ml-auto inline-flex h-4 w-4 animate-spin rounded-full border-2 border-red-600 border-t-transparent" />
+              <span className="ms-auto inline-flex h-4 w-4 animate-spin rounded-full border-2 border-red-600 border-t-transparent" />
             )}
           </button>
 

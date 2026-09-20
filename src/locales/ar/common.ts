@@ -27,6 +27,27 @@ const common = {
   nextImage: "الصورة التالية",
   imageNumber: "صورة {number}",
   titleImageNumber: "{title} — صورة {number}",
+  notifications: "الإشعارات",
+  markAllRead: "تعليم الكل كمقروء",
+  noNotifications: "مفيش إشعارات لحد دلوقتي.",
+  notificationsPage: {
+    title: "الإشعارات",
+    total: "{count} إجمالي",
+    markAllAsRead: "تعليم الكل كمقروء",
+    emptyTitle: "مفيش إشعارات لحد دلوقتي",
+    emptyText: "هتلاقي هنا آخر التحديثات عن الاعتمادات والتقييمات وأي نشاط تاني.",
+    page: "صفحة {page} من {total}",
+    types: {
+      vendorApproved: "تم اعتماد مقدم الخدمة",
+      vendorRejected: "تم رفض مقدم الخدمة",
+      serviceApproved: "تم اعتماد الخدمة",
+      serviceRejected: "تم رفض الخدمة",
+      newReview: "تقييم جديد",
+      system: "النظام",
+      update: "تحديث",
+    },
+  },
+  viewAllNotifications: "عرض كل الإشعارات",
 };
 
 export default common;

@@ -449,6 +449,14 @@ export default function SiteNavbar() {
                           <Map size={16} />
                           {t("navbar.weddingRoadmap")}
                         </Link>
+                        <Link
+                          href="/change-password"
+                          onClick={() => setMenuOpen(false)}
+                          className="flex items-center gap-2 px-4 py-2.5 text-sm text-[#5f544d] hover:bg-[#faf7f4] hover:text-[#30251f]"
+                        >
+                          <KeyRound size={16} />
+                          {t("navbar.security")}
+                        </Link>
                       </>
                     )}
 

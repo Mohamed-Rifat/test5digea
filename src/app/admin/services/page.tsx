@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useLanguage } from "@/context/LanguageContext";
 import { useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import {
@@ -114,6 +115,8 @@ const getStartingPrice = (service: Service) => {
 ========================= */
 
 export default function AdminServicesPage() {
+  const { t } = useLanguage();
+  const money = (value: number) => `${formatPrice(value)} ${t("common.currency")}`;
   const {
     services,
     loading,
@@ -749,7 +752,7 @@ export default function AdminServicesPage() {
 
                   <span>
                     {startingPrice !== null
-                      ? `${formatPrice(startingPrice)}${
+                      ? `${money(startingPrice)}${
                           service.prices?.length > 1
                             ? ` · ${service.prices.length} options`
                             : ""
@@ -1035,9 +1038,7 @@ export default function AdminServicesPage() {
                         {startingPrice !== null ? (
                           <div>
                             <p className="text-sm font-semibold text-gray-900">
-                              {formatPrice(
-                                startingPrice
-                              )}
+                              {money(startingPrice)}
                             </p>
 
                             {service.prices

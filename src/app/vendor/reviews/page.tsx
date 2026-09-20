@@ -48,6 +48,9 @@ import { useVendorReviews } from "@/features/reviews/hooks/useVendorReviews";
 import { useVendorServices } from "@/features/services/hooks/useVendorServices";
 import { useVendor } from "@/features/vendors/hooks/useVendor";
 import { formatDate } from "@/lib/format";
+import { useLanguage } from "@/context/LanguageContext";
+import { LANGUAGE_DATE_LOCALE } from "@/locales/config";
+import type { Language, TranslationKey } from "@/locales";
 import { ReviewStatus } from "@/types/review";
 import type { Review } from "@/types/review";
 
@@ -57,26 +60,35 @@ import * as XLSX from 'xlsx';
    Constants
 ========================================================= */
 
-const STATUS_FILTERS = [
-  { value: "all", label: "All statuses", icon: Filter },
-  { value: String(ReviewStatus.Approved), label: "Approved", icon: CheckCircle2 },
-  { value: String(ReviewStatus.Pending), label: "Pending", icon: Clock3 },
-  { value: String(ReviewStatus.Rejected), label: "Rejected", icon: XCircle },
-] as const;
+const STATUS_FILTERS: {
+  value: string;
+  labelKey: TranslationKey;
+  icon: React.ElementType;
+}[] = [
+  { value: "all", labelKey: "vendor.reviews.filters.statusAll", icon: Filter },
+  { value: String(ReviewStatus.Approved), labelKey: "vendor.reviews.status.approved", icon: CheckCircle2 },
+  { value: String(ReviewStatus.Pending), labelKey: "vendor.reviews.status.pending", icon: Clock3 },
+  { value: String(ReviewStatus.Rejected), labelKey: "vendor.reviews.status.rejected", icon: XCircle },
+];
 
-// ✅ فلتر جديد للـ Visibility
-const VISIBILITY_FILTERS = [
-  { value: "all", label: "All visibility", icon: Filter },
-  { value: "visible", label: "Visible only", icon: Eye },
-  { value: "hidden", label: "Hidden only", icon: EyeOff },
-] as const;
+const VISIBILITY_FILTERS: {
+  value: string;
+  labelKey: TranslationKey;
+  icon: React.ElementType;
+}[] = [
+  { value: "all", labelKey: "vendor.reviews.filters.visAll", icon: Filter },
+  { value: "visible", labelKey: "vendor.reviews.filters.visVisible", icon: Eye },
+  { value: "hidden", labelKey: "vendor.reviews.filters.visHidden", icon: EyeOff },
+];
 
-const SORT_OPTIONS = [
-  { value: "newest", label: "Newest first" },
-  { value: "oldest", label: "Oldest first" },
-  { value: "highest", label: "Highest rating" },
-  { value: "lowest", label: "Lowest rating" },
-] as const;
+const SORT_OPTIONS: { value: string; labelKey: TranslationKey }[] = [
+  { value: "newest", labelKey: "vendor.reviews.filters.sortNewest" },
+  { value: "oldest", labelKey: "vendor.reviews.filters.sortOldest" },
+  { value: "highest", labelKey: "vendor.reviews.filters.sortHighest" },
+  { value: "lowest", labelKey: "vendor.reviews.filters.sortLowest" },
+];
+
+type TFn = (key: TranslationKey, params?: Record<string, string | number>) => string;
 
 const PAGE_SIZE = 5;
 
@@ -87,19 +99,19 @@ const PAGE_SIZE = 5;
 function getStatusMeta(status: ReviewStatus) {
   const configs = {
     [ReviewStatus.Approved]: {
-      label: "Approved",
+      labelKey: "vendor.reviews.status.approved" as const,
       icon: CheckCircle2,
       className: "bg-emerald-50 text-emerald-700 border-emerald-100",
       dotClassName: "bg-emerald-500",
     },
     [ReviewStatus.Rejected]: {
-      label: "Rejected",
+      labelKey: "vendor.reviews.status.rejected" as const,
       icon: AlertCircle,
       className: "bg-red-50 text-red-700 border-red-100",
       dotClassName: "bg-red-500",
     },
     [ReviewStatus.Pending]: {
-      label: "Pending",
+      labelKey: "vendor.reviews.status.pending" as const,
       icon: Clock3,
       className: "bg-amber-50 text-amber-700 border-amber-100",
       dotClassName: "bg-amber-500",
@@ -108,37 +120,48 @@ function getStatusMeta(status: ReviewStatus) {
   return configs[status] || configs[ReviewStatus.Pending];
 }
 
-function getRatingLabel(rating: number): string {
-  const labels = {
-    5: "Excellent",
-    4: "Very Good",
-    3: "Average",
-    2: "Below Average",
-    1: "Poor",
+function getRatingLabelKey(rating: number): TranslationKey {
+  const keys: Record<number, TranslationKey> = {
+    5: "vendor.reviews.rating.excellent",
+    4: "vendor.reviews.rating.veryGood",
+    3: "vendor.reviews.rating.average",
+    2: "vendor.reviews.rating.belowAverage",
+    1: "vendor.reviews.rating.poor",
   };
-  return labels[rating as keyof typeof labels] || "Not rated";
+
+  return keys[rating] ?? "vendor.reviews.rating.notRated";
 }
 
-function getTimeAgo(date: string): string {
+function getTimeAgo(date: string, t: TFn, language: Language): string {
   const diff = Date.now() - new Date(date).getTime();
   const minutes = Math.floor(diff / 60000);
   const hours = Math.floor(diff / 3600000);
   const days = Math.floor(diff / 86400000);
 
-  if (minutes < 1) return "Just now";
-  if (minutes < 60) return `${minutes}m ago`;
-  if (hours < 24) return `${hours}h ago`;
-  if (days < 7) return `${days}d ago`;
-  return formatDate(date);
+  if (minutes < 1) return t("vendor.reviews.timeAgo.justNow");
+  if (minutes < 60) return t("vendor.reviews.timeAgo.minutes", { count: minutes });
+  if (hours < 24) return t("vendor.reviews.timeAgo.hours", { count: hours });
+  if (days < 7) return t("vendor.reviews.timeAgo.days", { count: days });
+
+  return formatDate(date, LANGUAGE_DATE_LOCALE[language]);
 }
 
 /* =========================================================
    Excel Export
 ========================================================= */
 
-function exportReviewsToExcel(reviews: Review[], vendorName?: string) {
+function exportReviewsToExcel(
+  reviews: Review[],
+  t: TFn,
+  language: Language,
+  vendorName?: string
+) {
+  const x = (key: string, params?: Record<string, string | number>) =>
+    t(`vendor.reviews.excel.${key}` as TranslationKey, params);
+  const dateLocale = LANGUAGE_DATE_LOCALE[language];
+
   if (reviews.length === 0) {
-    alert("No reviews to export!");
+    alert(x("nothingToExport"));
     return;
   }
 
@@ -163,24 +186,24 @@ function exportReviewsToExcel(reviews: Review[], vendorName?: string) {
     .reduce((acc, r) => acc + r.rating, 0) / (totalApproved || 1);
 
   const summaryData: any[][] = [
-    ['📊 REVIEWS REPORT SUMMARY'],
+    [x("summaryTitle")],
     [''],
-    ['Vendor', vendorName || 'N/A'],
-    ['Report Date', new Date().toLocaleString('en-US', { dateStyle: 'full', timeStyle: 'medium' })],
+    [x("vendor"), vendorName || x("na")],
+    [x("reportDate"), new Date().toLocaleString(dateLocale, { dateStyle: 'full', timeStyle: 'medium' })],
     [''],
-    ['📈 STATISTICS'],
-    ['Metric', 'Value'],
-    ['Total Reviews', reviews.length],
-    ['Approved Reviews', totalApproved],
-    ['Pending Reviews', totalPending],
-    ['Rejected Reviews', totalRejected],
-    ['Visible Reviews', totalVisible],
-    ['Hidden Reviews', totalHidden],
-    ['Average Rating', String(avgRating.toFixed(1)) + ' ⭐'],
-    ['Approval Rate', String(((totalApproved / reviews.length) * 100).toFixed(1)) + '%'],
+    [x("statistics")],
+    [x("metric"), x("value")],
+    [x("totalReviews"), reviews.length],
+    [x("approvedReviews"), totalApproved],
+    [x("pendingReviews"), totalPending],
+    [x("rejectedReviews"), totalRejected],
+    [x("visibleReviews"), totalVisible],
+    [x("hiddenReviews"), totalHidden],
+    [x("averageRating"), String(avgRating.toFixed(1)) + ' ⭐'],
+    [x("approvalRate"), String(((totalApproved / reviews.length) * 100).toFixed(1)) + '%'],
     [''],
-    ['📋 SERVICES OVERVIEW'],
-    ['Service Name', 'Reviews Count', 'Avg Rating'],
+    [x("servicesOverview")],
+    [x("serviceName"), x("reviewsCount"), x("avgRating")],
   ];
 
   Object.values(reviewsByService).forEach(({ serviceName, reviews: r }) => {
@@ -192,29 +215,31 @@ function exportReviewsToExcel(reviews: Review[], vendorName?: string) {
   const summaryWS = XLSX.utils.aoa_to_sheet(summaryData);
   summaryWS['!cols'] = [{ wch: 30 }, { wch: 25 }, { wch: 20 }];
   summaryWS['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 2 } }];
-  XLSX.utils.book_append_sheet(workbook, summaryWS, 'Summary');
+  XLSX.utils.book_append_sheet(workbook, summaryWS, x("sheetSummary"));
+
+  const visibilityLabel = (review: Review) =>
+    review.status === ReviewStatus.Approved
+      ? (review.isDisplayed ? x("visible") : x("hidden"))
+      : "—";
 
   Object.values(reviewsByService).forEach(({ serviceName, reviews: serviceReviews }) => {
     const rows: any[][] = [
-      [`📋 ${serviceName} - Reviews Report`],
+      [x("serviceReportTitle", { service: serviceName })],
       [""],
-      ["NO", "Customer", "Rating", "Status", "Visibility", "Comment", "Date"],
+      [x("no"), x("customer"), x("rating"), x("status"), x("visibility"), x("comment"), x("date")],
     ];
 
     serviceReviews.forEach((review, index) => {
-      const statusLabel = getStatusMeta(review.status).label;
-      const visibility = review.status === ReviewStatus.Approved
-        ? (review.isDisplayed ? "✅ Visible" : "🚫 Hidden")
-        : "—";
       const stars = '⭐'.repeat(Math.round(review.rating));
+
       rows.push([
         index + 1,
-        review.userFullName || 'Anonymous',
+        review.userFullName || t("vendor.reviews.card.anonymous"),
         `${review.rating} ${stars}`,
-        statusLabel,
-        visibility,
-        review.comment || '(No comment)',
-        formatDate(review.createdAt),
+        t(getStatusMeta(review.status).labelKey),
+        visibilityLabel(review),
+        review.comment || x("noComment"),
+        formatDate(review.createdAt, dateLocale),
       ]);
     });
 
@@ -225,34 +250,32 @@ function exportReviewsToExcel(reviews: Review[], vendorName?: string) {
   });
 
   const allReviewsData: any[][] = [
-    ['📋 ALL REVIEWS - Complete List'],
+    [x("allTitle")],
     [''],
-    ['No', 'Customer', 'Service', 'Rating', 'Status', 'Visibility', 'Comment', 'Date'],
+    [x("no"), x("customer"), x("service"), x("rating"), x("status"), x("visibility"), x("comment"), x("date")],
   ];
 
   reviews.forEach((review, index) => {
     const stars = '⭐'.repeat(Math.round(review.rating));
-    const visibility = review.status === ReviewStatus.Approved
-      ? (review.isDisplayed ? "✅ Visible" : "🚫 Hidden")
-      : "—";
+
     allReviewsData.push([
       index + 1,
-      review.userFullName || 'Anonymous',
+      review.userFullName || t("vendor.reviews.card.anonymous"),
       review.serviceName,
       `${review.rating} ${stars}`,
-      getStatusMeta(review.status).label,
-      visibility,
-      review.comment || '(No comment)',
-      formatDate(review.createdAt),
+      t(getStatusMeta(review.status).labelKey),
+      visibilityLabel(review),
+      review.comment || x("noComment"),
+      formatDate(review.createdAt, dateLocale),
     ]);
   });
 
   const allWS = XLSX.utils.aoa_to_sheet(allReviewsData);
   allWS['!cols'] = [{ wch: 6 }, { wch: 28 }, { wch: 32 }, { wch: 22 }, { wch: 16 }, { wch: 16 }, { wch: 50 }, { wch: 22 }];
   allWS['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 7 } }];
-  XLSX.utils.book_append_sheet(workbook, allWS, 'All Reviews');
+  XLSX.utils.book_append_sheet(workbook, allWS, x("sheetAll"));
 
-  XLSX.writeFile(workbook, `reviews_report_${new Date().toISOString().split('T')[0]}.xlsx`);
+  XLSX.writeFile(workbook, `${x("fileName")}_${new Date().toISOString().split('T')[0]}.xlsx`);
 }
 
 /* =========================================================
@@ -260,17 +283,19 @@ function exportReviewsToExcel(reviews: Review[], vendorName?: string) {
 ========================================================= */
 
 const StatusBadge = memo(function StatusBadge({ status }: { status: ReviewStatus }) {
+  const { t } = useLanguage();
   const meta = getStatusMeta(status);
   const Icon = meta.icon;
+  const statusLabel = t(meta.labelKey);
 
   return (
-    <Tooltip title={`Status: ${meta.label}`} arrow>
+    <Tooltip title={t("vendor.reviews.status.tooltip", { status: statusLabel })} arrow>
       <span
-        className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.04em] ${meta.className}`}
+        className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.04em] rtl:tracking-normal ${meta.className}`}
       >
         <Icon size={12} strokeWidth={2.3} />
-        <span className="hidden xs:inline">{meta.label}</span>
-        <span className="xs:hidden">{meta.label.charAt(0)}</span>
+        <span className="hidden xs:inline">{statusLabel}</span>
+        <span className="xs:hidden">{statusLabel.charAt(0)}</span>
       </span>
     </Tooltip>
   );
@@ -297,11 +322,11 @@ const StatCard = memo(function StatCard({
         highlight ? "border-[#dfd0bf]" : "border-[#e8dfd8]"
       }`}
     >
-      <div className="absolute -right-8 -top-8 h-20 w-20 rounded-full bg-[#f8f2ed] opacity-60 transition-transform duration-500 group-hover:scale-125 sm:h-24 sm:w-24" />
+      <div className="absolute -end-8 -top-8 h-20 w-20 rounded-full bg-[#f8f2ed] opacity-60 transition-transform duration-500 group-hover:scale-125 sm:h-24 sm:w-24" />
 
       <div className="relative flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <p className="text-[10px] font-medium uppercase tracking-[0.08em] text-[#8d8077] sm:text-xs">
+          <p className="text-[10px] font-medium uppercase tracking-[0.08em] rtl:tracking-normal text-[#8d8077] sm:text-xs">
             {title}
           </p>
 
@@ -341,8 +366,9 @@ const ReviewCard = memo(function ReviewCard({
   index: number;
   onViewDetails?: (review: Review) => void;
 }) {
-  const ratingLabel = getRatingLabel(review.rating);
-  const timeAgo = getTimeAgo(review.createdAt);
+  const { t, language } = useLanguage();
+  const ratingLabel = t(getRatingLabelKey(review.rating));
+  const timeAgo = getTimeAgo(review.createdAt, t, language);
   const [isExpanded, setIsExpanded] = useState(false);
 
   const shouldTruncate = review.comment && review.comment.length > 150;
@@ -368,7 +394,7 @@ const ReviewCard = memo(function ReviewCard({
       {/* ✅ شريط علوي ملون حسب الحالة */}
       {review.status === ReviewStatus.Approved && (
         <div
-          className={`absolute left-0 right-0 top-0 h-1 rounded-t-2xl ${
+          className={`absolute inset-x-0 top-0 h-1 rounded-t-2xl ${
             review.isDisplayed ? "bg-emerald-400" : "bg-red-400"
           }`}
         />
@@ -392,11 +418,11 @@ const ReviewCard = memo(function ReviewCard({
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5 sm:gap-2">
               <p className="truncate text-xs font-semibold text-[#30251f] sm:text-sm">
-                {review.userFullName || "Anonymous"}
+                {review.userFullName || t("vendor.reviews.card.anonymous")}
               </p>
             </div>
             <div className="mt-0.5 flex flex-wrap items-center gap-1.5 sm:gap-2">
-              <p className="text-[10px] text-[#a39891] sm:text-[11px]">Customer</p>
+              <p className="text-[10px] text-[#a39891] sm:text-[11px]">{t("vendor.reviews.card.customer")}</p>
               <span className="hidden h-1 w-1 rounded-full bg-[#d5c8be] sm:inline" />
               <p className="text-[10px] text-[#a39891] sm:text-[11px]">{timeAgo}</p>
             </div>
@@ -407,11 +433,11 @@ const ReviewCard = memo(function ReviewCard({
           {/* ✅ Visibility Badge واضح */}
           {review.status === ReviewStatus.Approved && (
             <Tooltip
-              title={review.isDisplayed ? "Visible on listing" : "Hidden by admin"}
+              title={review.isDisplayed ? t("vendor.reviews.card.visibleTooltip") : t("vendor.reviews.card.hiddenTooltip")}
               arrow
             >
               <span
-                className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[9px] font-semibold uppercase tracking-[0.04em] sm:gap-1.5 sm:px-2.5 sm:text-[10px] ${
+                className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[9px] font-semibold uppercase tracking-[0.04em] rtl:tracking-normal sm:gap-1.5 sm:px-2.5 sm:text-[10px] ${
                   review.isDisplayed
                     ? "border border-emerald-200 bg-emerald-50 text-emerald-700"
                     : "border border-red-200 bg-red-50 text-red-700"
@@ -420,12 +446,12 @@ const ReviewCard = memo(function ReviewCard({
                 {review.isDisplayed ? (
                   <>
                     <Eye size={11} strokeWidth={2.3} />
-                    <span className="hidden xs:inline">Visible</span>
+                    <span className="hidden xs:inline">{t("vendor.reviews.card.visible")}</span>
                   </>
                 ) : (
                   <>
                     <EyeOff size={11} strokeWidth={2.3} />
-                    <span className="hidden xs:inline">Hidden</span>
+                    <span className="hidden xs:inline">{t("vendor.reviews.card.hidden")}</span>
                   </>
                 )}
               </span>
@@ -439,8 +465,8 @@ const ReviewCard = memo(function ReviewCard({
       <div className="mt-3 rounded-xl border border-[#f0eae5] bg-[#fcfaf8] p-2.5 sm:mt-5 sm:p-3.5">
         <div className="flex items-center justify-between gap-2 sm:gap-3">
           <div className="min-w-0 flex-1">
-            <p className="mb-0.5 text-[9px] font-medium uppercase tracking-[0.08em] text-[#a39891] sm:mb-1 sm:text-[10px]">
-              Service
+            <p className="mb-0.5 text-[9px] font-medium uppercase tracking-[0.08em] rtl:tracking-normal text-[#a39891] sm:mb-1 sm:text-[10px]">
+              {t("vendor.reviews.card.service")}
             </p>
 
             <Link
@@ -471,13 +497,13 @@ const ReviewCard = memo(function ReviewCard({
               onClick={() => setIsExpanded(!isExpanded)}
               className="mt-1.5 text-[10px] font-semibold text-[#a47e43] hover:text-[#8b6d55] transition-colors sm:mt-2 sm:text-xs"
             >
-              {isExpanded ? "Show less" : "Read more"}
+              {isExpanded ? t("vendor.reviews.card.showLess") : t("vendor.reviews.card.readMore")}
             </button>
           )}
         </div>
       ) : (
         <p className="mt-3 text-xs italic text-[#aaa19b] sm:mt-5 sm:text-sm">
-          No written comment was provided.
+          {t("vendor.reviews.card.noComment")}
         </p>
       )}
 
@@ -488,7 +514,7 @@ const ReviewCard = memo(function ReviewCard({
             <AlertCircle size={13} className="mt-0.5 shrink-0 text-red-500 sm:h-3.75 sm:w-3.75" />
             <div>
               <p className="text-[10px] font-semibold text-red-700 sm:text-xs">
-                Moderation feedback
+                {t("vendor.reviews.card.moderationFeedback")}
               </p>
               <p className="mt-0.5 text-[10px] leading-4 text-red-600 sm:mt-1 sm:text-xs sm:leading-5">
                 {review.rejectionReason}
@@ -501,7 +527,7 @@ const ReviewCard = memo(function ReviewCard({
       {/* Bottom */}
       <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-[#f1ece8] pt-3 sm:mt-5 sm:gap-3 sm:pt-4">
         <p className="text-[10px] text-[#aaa19b] sm:text-[11px]">
-          {formatDate(review.createdAt)}
+          {formatDate(review.createdAt, LANGUAGE_DATE_LOCALE[language])}
         </p>
 
         {onViewDetails && (
@@ -509,7 +535,7 @@ const ReviewCard = memo(function ReviewCard({
             onClick={() => onViewDetails(review)}
             className="text-[10px] font-medium text-[#8b6d55] hover:text-[#30251f] transition-colors sm:text-xs"
           >
-            View →
+            {t("vendor.reviews.card.view")}
           </button>
         )}
       </div>
@@ -556,6 +582,8 @@ const EmptyState = memo(function EmptyState({
   onClear?: () => void;
   icon?: React.ReactNode;
 }) {
+  const { t } = useLanguage();
+
   return (
     <div className="rounded-2xl border border-dashed border-[#ded3cb] bg-white px-4 py-10 text-center sm:px-6 sm:py-14">
       <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[#f5eee9] text-[#8d715e] sm:h-14 sm:w-14">
@@ -563,13 +591,13 @@ const EmptyState = memo(function EmptyState({
       </div>
 
       <h3 className="mt-4 text-sm font-semibold text-[#40342e] sm:mt-5">
-        {filtered ? "No matching reviews" : "No reviews yet"}
+        {filtered ? t("vendor.reviews.empty.filteredTitle") : t("vendor.reviews.empty.noneTitle")}
       </h3>
 
       <p className="mx-auto mt-2 max-w-md text-xs leading-5 text-[#8b817a] sm:text-sm sm:leading-6">
         {filtered
-          ? "Try changing or clearing your filters to see more reviews."
-          : "You haven't received any reviews yet. Reviews will appear here once customers review your services."}
+          ? t("vendor.reviews.empty.filteredText")
+          : t("vendor.reviews.empty.noneText")}
       </p>
 
       {filtered && onClear && (
@@ -579,7 +607,7 @@ const EmptyState = memo(function EmptyState({
           className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[#30251f] px-3.5 py-2 text-xs font-semibold text-white transition hover:bg-[#46382f] sm:mt-5 sm:px-4 sm:py-2.5"
         >
           <X size={14} />
-          Clear filters
+          {t("vendor.reviews.empty.clearFilters")}
         </button>
       )}
     </div>
@@ -625,6 +653,8 @@ function MobileFilterDrawer({
   hasActiveFilters: boolean;
   clearFilters: () => void;
 }) {
+  const { t } = useLanguage();
+
   return (
     <SwipeableDrawer
       anchor="bottom"
@@ -641,14 +671,14 @@ function MobileFilterDrawer({
       }}
     >
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-[#30251f]">Filters</h3>
+        <h3 className="text-lg font-semibold text-[#30251f]">{t("vendor.reviews.drawer.title")}</h3>
         <div className="flex items-center gap-2">
           {hasActiveFilters && (
             <button
               onClick={clearFilters}
               className="text-xs font-medium text-[#8b6d55] hover:text-[#30251f] transition-colors"
             >
-              Clear all
+              {t("vendor.reviews.filters.clearAll")}
             </button>
           )}
           <IconButton onClick={onClose} size="small">
@@ -661,11 +691,11 @@ function MobileFilterDrawer({
 
       <div className="space-y-4">
         <div>
-          <label className="text-xs font-medium text-[#8d8077] block mb-1.5">Search</label>
+          <label className="text-xs font-medium text-[#8d8077] block mb-1.5">{t("vendor.reviews.drawer.search")}</label>
           <TextField
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search reviews..."
+            placeholder={t("vendor.reviews.filters.searchPlaceholder")}
             size="small"
             fullWidth
             slotProps={{
@@ -698,20 +728,20 @@ function MobileFilterDrawer({
         </div>
 
         <div>
-          <label className="text-xs font-medium text-[#8d8077] block mb-1.5">Service</label>
+          <label className="text-xs font-medium text-[#8d8077] block mb-1.5">{t("vendor.reviews.drawer.service")}</label>
           <Autocomplete
             value={serviceOptions.find(s => s.id === serviceFilter) ?? null}
             onChange={(_, newValue) => setServiceFilter(newValue?.id ?? "all")}
             options={serviceOptions}
             getOptionLabel={(option) => option.name}
             isOptionEqualToValue={(option, value) => option.id === value.id}
-            noOptionsText="No services found"
+            noOptionsText={t("vendor.reviews.filters.noServices")}
             popupIcon={<ChevronDown size={17} />}
             fullWidth
             renderInput={(params) => (
               <TextField
                 {...params}
-                placeholder="All services"
+                placeholder={t("vendor.reviews.filters.allServices")}
                 sx={{
                   "& .MuiOutlinedInput-root": {
                     borderRadius: "12px",
@@ -728,7 +758,7 @@ function MobileFilterDrawer({
         </div>
 
         <div>
-          <label className="text-xs font-medium text-[#8d8077] block mb-1.5">Status</label>
+          <label className="text-xs font-medium text-[#8d8077] block mb-1.5">{t("vendor.reviews.drawer.status")}</label>
           <Select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
@@ -740,7 +770,7 @@ function MobileFilterDrawer({
               return (
                 <div className="flex items-center gap-2">
                   <Icon size={16} className="text-[#8d796a]" />
-                  <span>{current.label}</span>
+                  <span>{t(current.labelKey)}</span>
                 </div>
               );
             }}
@@ -759,7 +789,7 @@ function MobileFilterDrawer({
                 <MenuItem key={option.value} value={option.value}>
                   <div className="flex items-center gap-2.5">
                     <Icon size={15} className="text-[#806a5c]" />
-                    <span>{option.label}</span>
+                    <span>{t(option.labelKey)}</span>
                   </div>
                 </MenuItem>
               );
@@ -769,7 +799,7 @@ function MobileFilterDrawer({
 
         {/* ✅ فلتر الـ Visibility */}
         <div>
-          <label className="text-xs font-medium text-[#8d8077] block mb-1.5">Visibility</label>
+          <label className="text-xs font-medium text-[#8d8077] block mb-1.5">{t("vendor.reviews.drawer.visibility")}</label>
           <Select
             value={visibilityFilter}
             onChange={(e) => setVisibilityFilter(e.target.value)}
@@ -781,7 +811,7 @@ function MobileFilterDrawer({
               return (
                 <div className="flex items-center gap-2">
                   <Icon size={16} className="text-[#8d796a]" />
-                  <span>{current.label}</span>
+                  <span>{t(current.labelKey)}</span>
                 </div>
               );
             }}
@@ -800,7 +830,7 @@ function MobileFilterDrawer({
                 <MenuItem key={option.value} value={option.value}>
                   <div className="flex items-center gap-2.5">
                     <Icon size={15} className="text-[#806a5c]" />
-                    <span>{option.label}</span>
+                    <span>{t(option.labelKey)}</span>
                   </div>
                 </MenuItem>
               );
@@ -809,7 +839,7 @@ function MobileFilterDrawer({
         </div>
 
         <div>
-          <label className="text-xs font-medium text-[#8d8077] block mb-1.5">Sort by</label>
+          <label className="text-xs font-medium text-[#8d8077] block mb-1.5">{t("vendor.reviews.drawer.sortBy")}</label>
           <Select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
@@ -819,7 +849,7 @@ function MobileFilterDrawer({
               const option = SORT_OPTIONS.find(o => o.value === value);
               return <div className="flex items-center gap-2">
                 <ArrowUpDown size={16} className="text-[#8d796a]" />
-                <span className="text-xs">{option?.label || "Sort"}</span>
+                <span className="text-xs">{option ? t(option.labelKey) : t("vendor.reviews.filters.sortPlaceholder")}</span>
               </div>;
             }}
             sx={{
@@ -833,7 +863,7 @@ function MobileFilterDrawer({
           >
             {SORT_OPTIONS.map((option) => (
               <MenuItem key={option.value} value={option.value}>
-                {option.label}
+                {t(option.labelKey)}
               </MenuItem>
             ))}
           </Select>
@@ -843,7 +873,7 @@ function MobileFilterDrawer({
           onClick={onClose}
           className="w-full mt-2 rounded-xl bg-[#30251f] py-3 text-sm font-semibold text-white transition hover:bg-[#46382f]"
         >
-          Apply Filters
+          {t("vendor.reviews.drawer.apply")}
         </button>
       </div>
     </SwipeableDrawer>
@@ -855,6 +885,7 @@ function MobileFilterDrawer({
 ========================================================= */
 
 export default function VendorReviewsPage() {
+  const { t, language } = useLanguage();
   const { vendor } = useVendor();
   const { services } = useVendorServices();
   const { reviews, loading, error, refetch } = useVendorReviews();
@@ -1004,17 +1035,17 @@ export default function VendorReviewsPage() {
     setExportMenuAnchor(null);
   }, []);
 
-  const vendorDisplayName = vendor?.businessName || "Vendor";
+  const vendorDisplayName = vendor?.businessName || t("vendor.header.vendor");
 
   const handleExportAll = useCallback(() => {
-    exportReviewsToExcel(reviews, vendorDisplayName);
+    exportReviewsToExcel(reviews, t, language, vendorDisplayName);
     handleExportClose();
-  }, [reviews, vendorDisplayName, handleExportClose]);
+  }, [reviews, vendorDisplayName, handleExportClose, t, language]);
 
   const handleExportFiltered = useCallback(() => {
-    exportReviewsToExcel(filteredReviews, vendorDisplayName);
+    exportReviewsToExcel(filteredReviews, t, language, vendorDisplayName);
     handleExportClose();
-  }, [filteredReviews, vendorDisplayName, handleExportClose]);
+  }, [filteredReviews, vendorDisplayName, handleExportClose, t, language]);
 
   /* =======================================================
      Render
@@ -1030,12 +1061,12 @@ export default function VendorReviewsPage() {
 
               <div className="flex items-center gap-2 sm:gap-3">
                 <h1 className="text-2xl font-semibold tracking-tight text-[#30251f] sm:text-3xl lg:text-4xl">
-                  Reviews
+                  {t("vendor.reviews.title")}
                 </h1>
               </div>
 
               <p className="mt-2 max-w-xl text-xs leading-5 text-[#756b65] sm:mt-3 sm:text-sm sm:leading-6">
-                Monitor customer feedback, track moderation status, and understand how customers perceive your services.
+                {t("vendor.reviews.subtitle")}
               </p>
             </div>
 
@@ -1043,6 +1074,7 @@ export default function VendorReviewsPage() {
               <button
                 onClick={handleRefresh}
                 disabled={isRefreshing}
+                aria-label={t("vendor.reviews.refresh")}
                 className="inline-flex items-center gap-1.5 rounded-xl border border-[#e3d9d1] bg-white px-2.5 py-1.5 text-[10px] font-medium text-[#665950] transition-all hover:border-[#cfc1b7] hover:bg-[#faf8f6] disabled:opacity-50 sm:gap-2 sm:px-3.5 sm:py-2 sm:text-sm"
               >
                 <RefreshCw size={13} className={isRefreshing ? "animate-spin" : "sm:h-5 sm:w-5"} />
@@ -1067,7 +1099,7 @@ export default function VendorReviewsPage() {
                     "&:disabled": { opacity: 0.5 },
                   }}
                 >
-                  <span className="">Export</span>
+                  <span className="">{t("vendor.reviews.export")}</span>
                 </Button>
               </div>
             </div>
@@ -1075,41 +1107,41 @@ export default function VendorReviewsPage() {
         </header>
 
         {/* Stats */}
-        <section aria-label="Review statistics" className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-5 lg:gap-4">
+        <section aria-label={t("vendor.reviews.statsAria")} className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-5 lg:gap-4">
           <StatCard
-            title="Average Rating"
+            title={t("vendor.reviews.stats.avgRating")}
             value={stats.averageRating.toFixed(1)}
             icon={Star}
-            description={`${stats.approved} approved`}
+            description={t("vendor.reviews.stats.approvedCount", { count: stats.approved })}
             highlight
           />
 
           <StatCard
-            title="Total"
+            title={t("vendor.reviews.stats.total")}
             value={stats.total}
             icon={MessageSquareText}
-            description="All reviews"
+            description={t("vendor.reviews.stats.allReviews")}
           />
 
           <StatCard
-            title="Visible"
+            title={t("vendor.reviews.stats.visible")}
             value={stats.visible}
             icon={Eye}
-            description="Shown on listing"
+            description={t("vendor.reviews.stats.shownOnListing")}
           />
 
           <StatCard
-            title="Hidden"
+            title={t("vendor.reviews.stats.hidden")}
             value={stats.hidden}
             icon={EyeOff}
-            description="Hidden by admin"
+            description={t("vendor.reviews.stats.hiddenByAdmin")}
           />
 
           <StatCard
-            title="Pending"
+            title={t("vendor.reviews.stats.pending")}
             value={stats.pending}
             icon={Clock3}
-            description={`${stats.rejected} rejected`}
+            description={t("vendor.reviews.stats.rejectedCount", { count: stats.rejected })}
           />
         </section>
 
@@ -1121,9 +1153,9 @@ export default function VendorReviewsPage() {
                 <Filter size={14} className="text-[#a47e43] sm:h-4 sm:w-4" />
               </div>
               <div>
-                <h2 className="text-xs font-semibold text-[#40342e] sm:text-sm">Filter reviews</h2>
+                <h2 className="text-xs font-semibold text-[#40342e] sm:text-sm">{t("vendor.reviews.filters.title")}</h2>
                 <p className="hidden text-[10px] text-[#9b8f86] sm:mt-0.5 sm:block sm:text-[11px]">
-                  Refine reviews by service, status, visibility, or search
+                  {t("vendor.reviews.filters.subtitle")}
                 </p>
               </div>
             </div>
@@ -1132,7 +1164,7 @@ export default function VendorReviewsPage() {
               <div className="text-[10px] text-[#91867f] sm:text-xs">
                 <span className="font-medium text-[#5e5149]">{filteredReviews.length}</span>
                 <span className="hidden sm:inline">
-                  {" "}{filteredReviews.length === 1 ? "review" : "reviews"}
+                  {" "}{filteredReviews.length === 1 ? t("vendor.reviews.filters.resultOne") : t("vendor.reviews.filters.resultMany")}
                 </span>
               </div>
 
@@ -1141,7 +1173,7 @@ export default function VendorReviewsPage() {
                 className="inline-flex items-center gap-1.5 rounded-xl border border-[#e3d9d1] bg-white px-3 py-1.5 text-xs font-medium text-[#665950] transition hover:border-[#cfc1b7] hover:bg-[#faf8f6] md:hidden"
               >
                 <MenuIcon size={14} />
-                Filters
+                {t("vendor.reviews.filters.button")}
                 {activeFiltersCount > 0 && (
                   <span className="flex h-4 w-4 items-center justify-center rounded-full bg-[#a47e43] text-[8px] font-bold text-white">
                     {activeFiltersCount}
@@ -1154,7 +1186,7 @@ export default function VendorReviewsPage() {
                   onClick={handleClearFilters}
                   className="hidden text-[10px] font-medium text-[#8b6d55] hover:text-[#30251f] transition-colors sm:text-xs md:inline"
                 >
-                  Clear all
+                  {t("vendor.reviews.filters.clearAll")}
                 </button>
               )}
             </div>
@@ -1165,7 +1197,7 @@ export default function VendorReviewsPage() {
             <TextField
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search reviews..."
+              placeholder={t("vendor.reviews.filters.searchPlaceholder")}
               size="small"
               slotProps={{
                 input: {
@@ -1202,12 +1234,12 @@ export default function VendorReviewsPage() {
               options={serviceOptions}
               getOptionLabel={(option) => option.name}
               isOptionEqualToValue={(option, value) => option.id === value.id}
-              noOptionsText="No services found"
+              noOptionsText={t("vendor.reviews.filters.noServices")}
               popupIcon={<ChevronDown size={17} />}
               renderInput={(params) => (
                 <TextField
                   {...params}
-                  placeholder="All services"
+                  placeholder={t("vendor.reviews.filters.allServices")}
                   sx={{
                     "& .MuiOutlinedInput-root": {
                       height: 42,
@@ -1233,7 +1265,7 @@ export default function VendorReviewsPage() {
                 return (
                   <div className="flex items-center gap-2">
                     <Icon size={16} className="text-[#8d796a]" />
-                    <span>{current.label}</span>
+                    <span>{t(current.labelKey)}</span>
                   </div>
                 );
               }}
@@ -1253,7 +1285,7 @@ export default function VendorReviewsPage() {
                   <MenuItem key={option.value} value={option.value}>
                     <div className="flex items-center gap-2.5">
                       <Icon size={15} className="text-[#806a5c]" />
-                      <span>{option.label}</span>
+                      <span>{t(option.labelKey)}</span>
                     </div>
                   </MenuItem>
                 );
@@ -1271,7 +1303,7 @@ export default function VendorReviewsPage() {
                 return (
                   <div className="flex items-center gap-2">
                     <Icon size={16} className="text-[#8d796a]" />
-                    <span>{current.label}</span>
+                    <span>{t(current.labelKey)}</span>
                   </div>
                 );
               }}
@@ -1291,7 +1323,7 @@ export default function VendorReviewsPage() {
                   <MenuItem key={option.value} value={option.value}>
                     <div className="flex items-center gap-2.5">
                       <Icon size={15} className="text-[#806a5c]" />
-                      <span>{option.label}</span>
+                      <span>{t(option.labelKey)}</span>
                     </div>
                   </MenuItem>
                 );
@@ -1306,7 +1338,7 @@ export default function VendorReviewsPage() {
                 const option = SORT_OPTIONS.find(o => o.value === value);
                 return <div className="flex items-center gap-2">
                   <ArrowUpDown size={16} className="text-[#8d796a]" />
-                  <span className="text-xs">{option?.label || "Sort"}</span>
+                  <span className="text-xs">{option ? t(option.labelKey) : t("vendor.reviews.filters.sortPlaceholder")}</span>
                 </div>;
               }}
               sx={{
@@ -1321,7 +1353,7 @@ export default function VendorReviewsPage() {
             >
               {SORT_OPTIONS.map((option) => (
                 <MenuItem key={option.value} value={option.value}>
-                  {option.label}
+                  {t(option.labelKey)}
                 </MenuItem>
               ))}
             </Select>
@@ -1330,7 +1362,7 @@ export default function VendorReviewsPage() {
           {/* Active Filters */}
           {hasActiveFilters && (
             <div className="mt-3 flex flex-wrap items-center gap-1.5 border-t border-[#f1ece8] pt-3 sm:gap-2 sm:pt-4">
-              <span className="mr-0.5 text-[9px] font-medium text-[#958a83] sm:mr-1 sm:text-[11px]">Active:</span>
+              <span className="me-0.5 text-[9px] font-medium text-[#958a83] sm:me-1 sm:text-[11px]">{t("vendor.reviews.filters.active")}</span>
 
               {searchQuery && (
                 <Chip
@@ -1352,7 +1384,7 @@ export default function VendorReviewsPage() {
 
               {serviceFilter !== "all" && (
                 <Chip
-                  label={serviceOptions.find(s => s.id === serviceFilter)?.name || "Unknown"}
+                  label={serviceOptions.find(s => s.id === serviceFilter)?.name || t("vendor.reviews.filters.unknown")}
                   onDelete={() => setServiceFilter("all")}
                   size="small"
                   sx={{
@@ -1370,7 +1402,7 @@ export default function VendorReviewsPage() {
 
               {statusFilter !== "all" && (
                 <Chip
-                  label={STATUS_FILTERS.find(s => s.value === statusFilter)?.label || "Unknown"}
+                  label={(() => { const f = STATUS_FILTERS.find(s => s.value === statusFilter); return f ? t(f.labelKey) : t("vendor.reviews.filters.unknown"); })()}
                   onDelete={() => setStatusFilter("all")}
                   size="small"
                   sx={{
@@ -1389,7 +1421,7 @@ export default function VendorReviewsPage() {
               {visibilityFilter !== "all" && (
                 <Chip
                   icon={visibilityFilter === "visible" ? <Eye size={12} /> : <EyeOff size={12} />}
-                  label={VISIBILITY_FILTERS.find(s => s.value === visibilityFilter)?.label || "Unknown"}
+                  label={(() => { const f = VISIBILITY_FILTERS.find(s => s.value === visibilityFilter); return f ? t(f.labelKey) : t("vendor.reviews.filters.unknown"); })()}
                   onDelete={() => setVisibilityFilter("all")}
                   size="small"
                   sx={{
@@ -1415,14 +1447,14 @@ export default function VendorReviewsPage() {
                 onClick={handleClearFilters}
                 className="text-[9px] font-medium text-[#8b6d55] hover:text-[#30251f] transition-colors sm:text-xs"
               >
-                Clear all
+                {t("vendor.reviews.filters.clearAll")}
               </button>
             </div>
           )}
         </section>
 
         {/* Results */}
-        <section aria-label="Customer reviews" className="mt-4 sm:mt-6 lg:mt-8">
+        <section aria-label={t("vendor.reviews.listAria")} className="mt-4 sm:mt-6 lg:mt-8">
           {loading && <ReviewSkeleton count={3} />}
 
           {!loading && error && (
@@ -1430,14 +1462,14 @@ export default function VendorReviewsPage() {
               <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-white text-red-500 shadow-sm sm:h-12 sm:w-12">
                 <AlertCircle size={18} className="sm:h-5.25 sm:w-5.25" />
               </div>
-              <h3 className="mt-3 text-sm font-semibold text-red-800 sm:mt-4">Unable to load reviews</h3>
+              <h3 className="mt-3 text-sm font-semibold text-red-800 sm:mt-4">{t("vendor.reviews.error.title")}</h3>
               <p className="mx-auto mt-1.5 max-w-md text-xs leading-5 text-red-600 sm:mt-2">{error}</p>
               <button
                 onClick={handleRefresh}
                 className="mt-3 inline-flex items-center gap-2 rounded-xl bg-red-100 px-3.5 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-200 transition-colors sm:mt-4 sm:px-4 sm:py-2"
               >
                 <RefreshCw size={14} />
-                Try again
+                {t("vendor.reviews.error.tryAgain")}
               </button>
             </div>
           )}
@@ -1455,10 +1487,10 @@ export default function VendorReviewsPage() {
               <div className="mb-3 flex items-center justify-between sm:mb-4">
                 <div>
                   <h3 className="text-xs font-semibold text-[#40342e] sm:text-sm">
-                    Customer feedback
+                    {t("vendor.reviews.feedback")}
                   </h3>
                   <p className="mt-0.5 text-[10px] text-[#9b8f86] sm:text-xs">
-                    Showing {displayedReviews.length} of {filteredReviews.length}
+                    {t("vendor.reviews.showing", { shown: displayedReviews.length, total: filteredReviews.length })}
                   </p>
                 </div>
 
@@ -1466,11 +1498,11 @@ export default function VendorReviewsPage() {
                 <div className="hidden items-center gap-3 sm:flex">
                   <div className="flex items-center gap-1.5">
                     <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
-                    <span className="text-[10px] text-[#9b8f86]">Visible</span>
+                    <span className="text-[10px] text-[#9b8f86]">{t("vendor.reviews.card.visible")}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <span className="h-2.5 w-2.5 rounded-full bg-red-400" />
-                    <span className="text-[10px] text-[#9b8f86]">Hidden</span>
+                    <span className="text-[10px] text-[#9b8f86]">{t("vendor.reviews.card.hidden")}</span>
                   </div>
                 </div>
               </div>
@@ -1492,7 +1524,7 @@ export default function VendorReviewsPage() {
                     onClick={handleLoadMore}
                     className="inline-flex items-center gap-2 rounded-xl border border-[#e3d9d1] bg-white px-4 py-2 text-xs font-medium text-[#665950] transition-all hover:border-[#cfc1b7] hover:bg-[#faf8f6] sm:px-6 sm:py-3 sm:text-sm"
                   >
-                    Load more reviews
+                    {t("vendor.reviews.loadMore")}
                     <ChevronDown size={14} className="sm:h-4 sm:w-4" />
                   </button>
                 </div>
@@ -1531,7 +1563,7 @@ export default function VendorReviewsPage() {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-start justify-between gap-3 mb-3 sm:gap-4 sm:mb-4">
-                <h3 className="text-base font-semibold text-[#30251f] sm:text-lg">Review Details</h3>
+                <h3 className="text-base font-semibold text-[#30251f] sm:text-lg">{t("vendor.reviews.detail.title")}</h3>
                 <button
                   onClick={() => setSelectedReview(null)}
                   className="rounded-lg p-1 hover:bg-[#f5eee9] transition-colors"
@@ -1547,28 +1579,28 @@ export default function VendorReviewsPage() {
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-[#30251f] sm:text-base">
-                      {selectedReview.userFullName || "Anonymous"}
+                      {selectedReview.userFullName || t("vendor.reviews.card.anonymous")}
                     </p>
                     <p className="text-[10px] text-[#a39891] sm:text-xs">
-                      {formatDate(selectedReview.createdAt)}
+                      {formatDate(selectedReview.createdAt, LANGUAGE_DATE_LOCALE[language])}
                     </p>
                   </div>
                 </div>
 
                 <div className="flex flex-col gap-2 rounded-xl bg-[#fcfaf8] p-3 border border-[#f0eae5] sm:flex-row sm:items-center sm:justify-between sm:p-4">
                   <div>
-                    <p className="text-[10px] font-medium text-[#a39891] sm:text-xs">Service</p>
+                    <p className="text-[10px] font-medium text-[#a39891] sm:text-xs">{t("vendor.reviews.detail.service")}</p>
                     <p className="text-sm font-semibold text-[#30251f] sm:text-base">{selectedReview.serviceName}</p>
                   </div>
-                  <div className="text-left sm:text-right">
+                  <div className="text-start sm:text-end">
                     <RatingStars rating={selectedReview.rating} size={16} />
-                    <p className="mt-0.5 text-[10px] text-[#a39891] sm:text-xs">{getRatingLabel(selectedReview.rating)}</p>
+                    <p className="mt-0.5 text-[10px] text-[#a39891] sm:text-xs">{t(getRatingLabelKey(selectedReview.rating))}</p>
                   </div>
                 </div>
 
                 {selectedReview.comment && (
                   <div>
-                    <p className="text-[10px] font-medium text-[#a39891] mb-1 sm:text-xs">Comment</p>
+                    <p className="text-[10px] font-medium text-[#a39891] mb-1 sm:text-xs">{t("vendor.reviews.detail.comment")}</p>
                     <p className="whitespace-pre-line text-sm leading-6 text-[#5f544d] bg-[#fcfaf8] p-3 rounded-xl border border-[#f0eae5] sm:p-4 sm:text-sm sm:leading-7">
                       {selectedReview.comment}
                     </p>
@@ -1577,12 +1609,12 @@ export default function VendorReviewsPage() {
 
                 <div className="flex flex-col gap-2 border-t border-[#f1ece8] pt-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:pt-4">
                   <div>
-                    <p className="text-[10px] font-medium text-[#a39891] sm:text-xs">Status</p>
+                    <p className="text-[10px] font-medium text-[#a39891] sm:text-xs">{t("vendor.reviews.detail.status")}</p>
                     <StatusBadge status={selectedReview.status} />
                   </div>
                   {selectedReview.status === ReviewStatus.Rejected && selectedReview.rejectionReason && (
-                    <div className="text-left sm:text-right">
-                      <p className="text-[10px] font-medium text-[#a39891] sm:text-xs">Rejection Reason</p>
+                    <div className="text-start sm:text-end">
+                      <p className="text-[10px] font-medium text-[#a39891] sm:text-xs">{t("vendor.reviews.detail.rejectionReason")}</p>
                       <p className="text-sm text-red-600">{selectedReview.rejectionReason}</p>
                     </div>
                   )}

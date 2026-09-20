@@ -22,6 +22,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useFavoriteDetails } from "@/features/favorites/hooks/useFavoriteDetails";
 import { useFavorites } from "@/features/favorites/hooks/useFavorites";
 import { formatDate } from "@/lib/format";
+import { LANGUAGE_DATE_LOCALE } from "@/locales";
 import { FavoriteTargetType } from "@/types/favorite";
 
 import type { Favorite } from "@/types/favorite";
@@ -84,7 +85,7 @@ function FavoritesContent() {
         <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-[#e8d7bd] opacity-30 blur-3xl" />
         <div className="pointer-events-none absolute -left-24 top-24 h-72 w-72 rounded-full bg-[#d9c9be] opacity-25 blur-3xl" />
 
-        <div className="relative mx-auto lg:max-w-10/12">
+        <div className="relative mx-auto max-w-6xl">
           <div className="mb-3 flex items-center gap-2">
             <Sparkles className="h-3.5 w-3.5 text-[#b99a62]" />
             <span className="text-[10px] font-medium uppercase tracking-[0.4em] rtl:tracking-normal text-[#9b8367]">
@@ -156,7 +157,7 @@ function FavoritesContent() {
       </section>
 
       {/* ===================== BODY ===================== */}
-      <section className="mx-auto lg:max-w-10/12 px-4 py-12 sm:px-6 lg:px-8">
+      <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
         {/* Loading — skeleton cards */}
         {loading && <FavoritesSkeleton />}
 
@@ -326,7 +327,7 @@ function FavoriteFallbackCard({
             {t("favorites.savedOn", {
               date: formatDate(
                 favorite.createdAt,
-                language === "ar" ? "ar-EG-u-nu-latn" : "en-US"
+                LANGUAGE_DATE_LOCALE[language]
               ),
             })}
           </p>

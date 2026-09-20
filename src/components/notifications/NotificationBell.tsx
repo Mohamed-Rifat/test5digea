@@ -13,9 +13,11 @@ import {
   XCircle,
 } from "lucide-react";
 
+import { useLanguage } from "@/context/LanguageContext";
 import { useNotifications } from "@/features/notifications/hooks/useNotifications";
 import { useUnreadCount } from "@/features/notifications/hooks/useUnreadCount";
 import { formatDate } from "@/lib/format";
+import { LANGUAGE_DATE_LOCALE } from "@/locales/config";
 import { NotificationType } from "@/types/notification";
 import type { Notification } from "@/types/notification";
 
@@ -77,6 +79,7 @@ interface NotificationBellProps {
 export default function NotificationBell({
   viewAllHref,
 }: NotificationBellProps) {
+  const { t, language } = useLanguage();
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -141,24 +144,24 @@ export default function NotificationBell({
       <button
         type="button"
         onClick={handleOpen}
-        aria-label="Notifications"
+        aria-label={t("common.notifications")}
         aria-expanded={open}
         className="relative flex h-9 w-9 items-center justify-center rounded-full border border-[#eee5df] text-[#756860] transition hover:bg-[#faf7f4] hover:text-[#30251f] sm:h-10 sm:w-10"
       >
         <Bell size={17} strokeWidth={1.8} />
 
         {unreadCount > 0 && (
-          <span className="absolute -right-1 -top-1 flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-[#c1443a] px-1 text-[9px] font-bold text-white ring-2 ring-white">
+          <span className="absolute -end-1 -top-1 flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-[#c1443a] px-1 text-[9px] font-bold text-white ring-2 ring-white">
             {unreadCount > 9 ? "9+" : unreadCount}
           </span>
         )}
       </button>
 
       {open && (
-        <div className="fixed inset-x-3 top-20 z-30 w-auto overflow-hidden rounded-2xl border border-[#eee5df] bg-white shadow-[0_20px_60px_rgba(48,37,31,0.15)] sm:absolute sm:inset-x-auto sm:right-0 sm:top-full sm:mt-2 sm:w-96">
+        <div className="fixed inset-x-3 top-20 z-30 w-auto overflow-hidden rounded-2xl border border-[#eee5df] bg-white shadow-[0_20px_60px_rgba(48,37,31,0.15)] sm:absolute sm:inset-x-auto sm:end-0 sm:top-full sm:mt-2 sm:w-96">
           <div className="flex items-center justify-between border-b border-[#f0e9e4] px-4 py-3">
             <p className="text-sm font-semibold text-[#30251f]">
-              Notifications
+              {t("common.notifications")}
             </p>
 
             {unreadCount > 0 && (
@@ -169,7 +172,7 @@ export default function NotificationBell({
                 className="flex items-center gap-1 text-xs font-semibold text-[#a47e43] transition hover:text-[#30251f] disabled:opacity-50"
               >
                 <CheckCheck size={13} />
-                Mark all read
+                {t("common.markAllRead")}
               </button>
             )}
           </div>
@@ -188,7 +191,7 @@ export default function NotificationBell({
 
             {!loading && notifications.length === 0 && (
               <p className="px-4 py-10 text-center text-sm text-[#9b8f86]">
-                No notifications yet.
+                {t("common.noNotifications")}
               </p>
             )}
 
@@ -198,7 +201,7 @@ export default function NotificationBell({
                   key={notification.id}
                   type="button"
                   onClick={() => handleItemClick(notification)}
-                  className={`flex w-full items-start gap-3 border-b border-[#f5f0eb] px-4 py-3 text-left transition hover:bg-[#faf7f4] ${
+                  className={`flex w-full items-start gap-3 border-b border-[#f5f0eb] px-4 py-3 text-start transition hover:bg-[#faf7f4] ${
                     notification.isRead ? "" : "bg-[#faf5ee]"
                   }`}
                 >
@@ -210,7 +213,7 @@ export default function NotificationBell({
                     </span>
 
                     <span className="mt-0.5 block text-[11px] text-[#9b8f86]">
-                      {formatDate(notification.createdAt)}
+                      {formatDate(notification.createdAt, LANGUAGE_DATE_LOCALE[language])}
                     </span>
                   </span>
 
@@ -226,7 +229,7 @@ export default function NotificationBell({
             onClick={() => setOpen(false)}
             className="block border-t border-[#f0e9e4] px-4 py-3 text-center text-xs font-semibold text-[#a47e43] transition hover:bg-[#faf7f4] hover:text-[#30251f]"
           >
-            View all notifications
+            {t("common.viewAllNotifications")}
           </Link>
         </div>
       )}

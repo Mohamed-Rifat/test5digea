@@ -8,7 +8,7 @@ import {
   BriefcaseBusiness,
   CheckCircle2,
   Clock3,
-  DollarSign,
+  Banknote,
   Edit3,
   Loader2,
   Plus,
@@ -37,48 +37,55 @@ import {
 } from "@mui/material";
 
 import { useVendorServices } from "@/features/services/hooks/useVendorServices";
+import { useLanguage } from "@/context/LanguageContext";
+import type { TranslationKey } from "@/locales";
 
 type StatusFilter = "All" | "Approved" | "Pending" | "Rejected" | "Inactive";
 
 const statusConfig: Record<
   string,
-  { label: string; icon: React.ElementType; className: string; color: string }
+  { labelKey: TranslationKey; icon: React.ElementType; className: string; color: string }
 > = {
   Approved: {
-    label: "Approved",
+    labelKey: "vendor.services.statusLabel.approved",
     icon: CheckCircle2,
     className: "bg-emerald-50 text-emerald-700 border border-emerald-200",
     color: "emerald",
   },
   Pending: {
-    label: "Pending Review",
+    labelKey: "vendor.services.statusLabel.pending",
     icon: Clock3,
     className: "bg-amber-50 text-amber-700 border border-amber-200",
     color: "amber",
   },
   Rejected: {
-    label: "Rejected",
+    labelKey: "vendor.services.statusLabel.rejected",
     icon: XCircle,
     className: "bg-red-50 text-red-700 border border-red-200",
     color: "red",
   },
   Inactive: {
-    label: "Inactive",
+    labelKey: "vendor.services.statusLabel.inactive",
     icon: XCircle,
     className: "bg-gray-100 text-gray-700 border border-gray-200",
     color: "gray",
   },
 };
 
-const STATUS_FILTERS = [
-  { value: "All", label: "All", icon: Filter },
-  { value: "Approved", label: "Approved", icon: CheckCircle2 },
-  { value: "Pending", label: "Pending", icon: Clock3 },
-  { value: "Rejected", label: "Rejected", icon: XCircle },
-  { value: "Inactive", label: "Inactive", icon: XCircle },
-] as const;
+const STATUS_FILTERS: {
+  value: StatusFilter;
+  labelKey: TranslationKey;
+  icon: React.ElementType;
+}[] = [
+  { value: "All", labelKey: "vendor.services.list.filterAll", icon: Filter },
+  { value: "Approved", labelKey: "vendor.services.list.stats.approved", icon: CheckCircle2 },
+  { value: "Pending", labelKey: "vendor.services.list.stats.pending", icon: Clock3 },
+  { value: "Rejected", labelKey: "vendor.services.list.stats.rejected", icon: XCircle },
+  { value: "Inactive", labelKey: "vendor.services.list.stats.inactive", icon: XCircle },
+];
 
 export default function VendorServicesPage() {
+  const { t } = useLanguage();
   const {
     services,
     loading,
@@ -172,12 +179,12 @@ export default function VendorServicesPage() {
 
               <div className="flex items-center gap-2 sm:gap-3">
                 <h1 className="text-2xl font-semibold tracking-tight text-[#30251f] sm:text-3xl lg:text-4xl">
-                  My Services
+                  {t("vendor.services.list.title")}
                 </h1>
               </div>
 
               <p className="mt-2 max-w-2xl text-xs leading-5 text-[#756b65] sm:mt-3 sm:text-sm sm:leading-6">
-                Manage the services you offer in the marketplace. Create, edit, and track your service listings.
+                {t("vendor.services.list.subtitle")}
               </p>
             </div>
 
@@ -187,6 +194,7 @@ export default function VendorServicesPage() {
                 type="button"
                 onClick={handleRefresh}
                 disabled={isRefreshing || loading}
+                aria-label={t("vendor.services.list.refresh")}
                 className="inline-flex items-center gap-1.5 rounded-xl border border-[#e3d9d1] bg-white px-2.5 py-1.5 text-[10px] font-medium text-[#665950] transition-all hover:border-[#cfc1b7] hover:bg-[#faf8f6] disabled:opacity-50 sm:gap-2 sm:px-3.5 sm:py-2 sm:text-sm"
               >
                 <RefreshCw size={13} className={isRefreshing ? "animate-spin" : "sm:h-5 sm:w-5"} />
@@ -196,7 +204,7 @@ export default function VendorServicesPage() {
                 href="/vendor/services/new"
                 className="inline-flex items-center gap-1.5 rounded-xl bg-[#30251f] px-3 py-1.5 text-[10px] font-semibold text-white transition hover:bg-[#463831] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
               >
-                <Plus size={13} className="sm:h-5 sm:w-5" /><span>Add Services</span>
+                <Plus size={13} className="sm:h-5 sm:w-5" /><span>{t("vendor.services.list.addService")}</span>
               </Link>
 
               {/* Badge with count */}
@@ -232,33 +240,33 @@ export default function VendorServicesPage() {
         {!loading && services.length > 0 && (
           <section className="mb-4 grid grid-cols-2 gap-2 sm:mb-6 sm:gap-3 lg:grid-cols-5 lg:gap-4">
             <div className="rounded-2xl border border-[#e8dfd8] bg-white p-3 shadow-sm transition-all hover:shadow-md sm:p-4">
-              <p className="text-[9px] font-medium uppercase tracking-[0.08em] text-[#8d8077] sm:text-[10px]">Total</p>
+              <p className="text-[9px] font-medium uppercase tracking-[0.08em] rtl:tracking-normal text-[#8d8077] sm:text-[10px]">{t("vendor.services.list.stats.total")}</p>
               <p className="mt-1 text-lg font-semibold text-[#30251f] sm:mt-1.5 sm:text-2xl">{stats.total}</p>
-              <p className="text-[8px] text-[#9a8d85] sm:text-[10px]">All services</p>
+              <p className="text-[8px] text-[#9a8d85] sm:text-[10px]">{t("vendor.services.list.stats.totalSub")}</p>
             </div>
 
             <div className="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-3 shadow-sm transition-all hover:shadow-md sm:p-4">
-              <p className="text-[9px] font-medium uppercase tracking-[0.08em] text-emerald-700 sm:text-[10px]">Approved</p>
+              <p className="text-[9px] font-medium uppercase tracking-[0.08em] rtl:tracking-normal text-emerald-700 sm:text-[10px]">{t("vendor.services.list.stats.approved")}</p>
               <p className="mt-1 text-lg font-semibold text-emerald-700 sm:mt-1.5 sm:text-2xl">{stats.approved}</p>
-              <p className="text-[8px] text-emerald-600 sm:text-[10px]">Active</p>
+              <p className="text-[8px] text-emerald-600 sm:text-[10px]">{t("vendor.services.list.stats.approvedSub")}</p>
             </div>
 
             <div className="rounded-2xl border border-amber-200 bg-amber-50/50 p-3 shadow-sm transition-all hover:shadow-md sm:p-4">
-              <p className="text-[9px] font-medium uppercase tracking-[0.08em] text-amber-700 sm:text-[10px]">Pending</p>
+              <p className="text-[9px] font-medium uppercase tracking-[0.08em] rtl:tracking-normal text-amber-700 sm:text-[10px]">{t("vendor.services.list.stats.pending")}</p>
               <p className="mt-1 text-lg font-semibold text-amber-700 sm:mt-1.5 sm:text-2xl">{stats.pending}</p>
-              <p className="text-[8px] text-amber-600 sm:text-[10px]">Review</p>
+              <p className="text-[8px] text-amber-600 sm:text-[10px]">{t("vendor.services.list.stats.pendingSub")}</p>
             </div>
 
             <div className="rounded-2xl border border-red-200 bg-red-50/50 p-3 shadow-sm transition-all hover:shadow-md sm:p-4">
-              <p className="text-[9px] font-medium uppercase tracking-[0.08em] text-red-700 sm:text-[10px]">Rejected</p>
+              <p className="text-[9px] font-medium uppercase tracking-[0.08em] rtl:tracking-normal text-red-700 sm:text-[10px]">{t("vendor.services.list.stats.rejected")}</p>
               <p className="mt-1 text-lg font-semibold text-red-700 sm:mt-1.5 sm:text-2xl">{stats.rejected}</p>
-              <p className="text-[8px] text-red-600 sm:text-[10px]">Need fix</p>
+              <p className="text-[8px] text-red-600 sm:text-[10px]">{t("vendor.services.list.stats.rejectedSub")}</p>
             </div>
 
             <div className="rounded-2xl border border-gray-200 bg-gray-50/50 p-3 shadow-sm transition-all hover:shadow-md sm:p-4">
-              <p className="text-[9px] font-medium uppercase tracking-[0.08em] text-gray-600 sm:text-[10px]">Inactive</p>
+              <p className="text-[9px] font-medium uppercase tracking-[0.08em] rtl:tracking-normal text-gray-600 sm:text-[10px]">{t("vendor.services.list.stats.inactive")}</p>
               <p className="mt-1 text-lg font-semibold text-gray-600 sm:mt-1.5 sm:text-2xl">{stats.inactive}</p>
-              <p className="text-[8px] text-gray-500 sm:text-[10px]">Disabled</p>
+              <p className="text-[8px] text-gray-500 sm:text-[10px]">{t("vendor.services.list.stats.inactiveSub")}</p>
             </div>
           </section>
         )}
@@ -284,7 +292,7 @@ export default function VendorServicesPage() {
               <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#f5eee9] sm:h-8 sm:w-8">
                 <Filter size={12} className="text-[#a47e43] sm:h-3.5 sm:w-3.5" />
               </div>
-              <span className="text-xs font-medium text-[#40352f] sm:text-sm">Filter</span>
+              <span className="text-xs font-medium text-[#40352f] sm:text-sm">{t("vendor.services.list.filter")}</span>
             </div>
 
             <div className="flex flex-1 flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
@@ -293,7 +301,7 @@ export default function VendorServicesPage() {
                 <TextField
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search services..."
+                  placeholder={t("vendor.services.list.searchPlaceholder")}
                   size="small"
                   fullWidth
                   slotProps={{
@@ -346,7 +354,7 @@ export default function VendorServicesPage() {
                       }`}
                     >
                       <Icon size={12} className={isActive ? "text-white" : "text-[#8d8077]"} />
-                      {filter.label}
+                      {t(filter.labelKey)}
                     </button>
                   );
                 })}
@@ -376,7 +384,7 @@ export default function VendorServicesPage() {
                       <MenuItem key={filter.value} value={filter.value}>
                         <div className="flex items-center gap-2">
                           <Icon size={14} className="text-[#8d8077]" />
-                          <span>{filter.label}</span>
+                          <span>{t(filter.labelKey)}</span>
                         </div>
                       </MenuItem>
                     );
@@ -389,11 +397,11 @@ export default function VendorServicesPage() {
           {/* Active Filters */}
           {(statusFilter !== "All" || searchQuery) && (
             <div className="mt-3 flex flex-wrap items-center gap-1.5 border-t border-[#f1ece8] pt-3">
-              <span className="text-[9px] font-medium text-[#958a83] sm:text-[10px]">Active:</span>
+              <span className="text-[9px] font-medium text-[#958a83] sm:text-[10px]">{t("vendor.services.list.activeFilters")}</span>
 
               {statusFilter !== "All" && (
                 <Chip
-                  label={statusFilter}
+                  label={t(STATUS_FILTERS.find((f) => f.value === statusFilter)?.labelKey ?? "vendor.services.list.filterAll")}
                   onDelete={() => handleStatusFilterChange("All")}
                   size="small"
                   sx={{
@@ -436,10 +444,14 @@ export default function VendorServicesPage() {
         {!loading && !error && filteredServices.length > 0 && (
           <div className="mb-3 flex items-center justify-between sm:mb-4">
             <p className="text-[10px] text-[#9b8f86] sm:text-xs">
-              Showing <span className="font-medium text-[#5e5149]">{filteredServices.length}</span>
-              {filteredServices.length === 1 ? " service" : " services"}
+              {t(
+                filteredServices.length === 1
+                  ? "vendor.services.list.showingOne"
+                  : "vendor.services.list.showingMany",
+                { count: filteredServices.length }
+              )}
               {services.length > 0 && filteredServices.length !== services.length && (
-                <span className="text-[#bbb2ac]"> (of {services.length})</span>
+                <span className="text-[#bbb2ac]"> {t("vendor.services.list.ofTotal", { total: services.length })}</span>
               )}
             </p>
           </div>
@@ -470,7 +482,7 @@ export default function VendorServicesPage() {
               className="mt-4 inline-flex items-center gap-2 rounded-xl bg-red-100 px-4 py-2 text-xs font-semibold text-red-700 hover:bg-red-200 transition-colors"
             >
               <RefreshCw size={14} />
-              Try again
+              {t("vendor.services.list.tryAgain")}
             </button>
           </div>
         ) : filteredServices.length === 0 ? (
@@ -479,12 +491,12 @@ export default function VendorServicesPage() {
               <BriefcaseBusiness className="h-6 w-6 text-[#806b5e] sm:h-7 sm:w-7" />
             </div>
             <h3 className="mt-4 text-sm font-semibold text-[#40352f] sm:mt-5 sm:text-base">
-              {searchQuery || statusFilter !== "All" ? "No matching services" : "No services yet"}
+              {searchQuery || statusFilter !== "All" ? t("vendor.services.list.noMatchTitle") : t("vendor.services.list.noneTitle")}
             </h3>
             <p className="mx-auto mt-2 max-w-md text-xs leading-5 text-[#81746d] sm:text-sm sm:leading-6">
               {searchQuery || statusFilter !== "All"
-                ? "Try adjusting your filters or search terms to find what you're looking for."
-                : "Start adding your services so customers can discover what your business offers."}
+                ? t("vendor.services.list.noMatchText")
+                : t("vendor.services.list.noneText")}
             </p>
             {(searchQuery || statusFilter !== "All") ? (
               <button
@@ -495,7 +507,7 @@ export default function VendorServicesPage() {
                 className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[#30251f] px-4 py-2 text-xs font-semibold text-white transition hover:bg-[#46382f] sm:mt-5 sm:px-5 sm:py-2.5"
               >
                 <X size={14} />
-                Clear filters
+                {t("vendor.services.list.clearFilters")}
               </button>
             ) : (
               <Link
@@ -503,7 +515,7 @@ export default function VendorServicesPage() {
                 className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[#30251f] px-4 py-2 text-xs font-semibold text-white transition hover:bg-[#46382f] sm:mt-5 sm:px-5 sm:py-2.5"
               >
                 <Plus className="h-4 w-4" />
-                Add Your First Service
+                {t("vendor.services.list.addFirst")}
               </Link>
             )}
           </div>
@@ -530,13 +542,13 @@ export default function VendorServicesPage() {
                           className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-semibold sm:gap-1.5 sm:px-2.5 sm:py-1 sm:text-[10px] ${status.className}`}
                         >
                           <StatusIcon className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                          {status.label}
+                          {t(status.labelKey)}
                         </span>
                       </div>
 
                       {/* Category */}
                       <p className="mt-0.5 text-[11px] text-[#81746d] sm:mt-1 sm:text-sm">
-                        {service.categoryName || "Uncategorized"}
+                        {service.categoryName || t("vendor.services.list.uncategorized")}
                       </p>
 
                       {/* Description */}
@@ -549,20 +561,20 @@ export default function VendorServicesPage() {
                       {/* Rejection Reason */}
                       {service.status === "Rejected" && service.rejectionReason && (
                         <div className="mt-2 rounded-xl bg-red-50 px-2.5 py-1.5 text-[10px] text-red-700 sm:mt-3 sm:px-3 sm:py-2 sm:text-xs">
-                          <span className="font-medium">Rejection reason:</span> {service.rejectionReason}
+                          <span className="font-medium">{t("vendor.services.list.rejectionReason")}</span> {service.rejectionReason}
                         </div>
                       )}
 
                       {/* Prices */}
                       {service.prices.length > 0 && (
                         <div className="mt-2 flex flex-wrap items-center gap-1.5 sm:mt-3 sm:gap-2">
-                          <DollarSign className="h-3 w-3 text-[#9a8d85] sm:h-4 sm:w-4" />
+                          <Banknote className="h-3 w-3 text-[#9a8d85] sm:h-4 sm:w-4" />
                           {service.prices.map((price) => (
                             <span
                               key={price.id}
                               className="rounded-full bg-[#f7f1ed] px-2 py-0.5 text-[9px] font-medium text-[#66564c] sm:px-3 sm:py-1 sm:text-xs"
                             >
-                              {price.label}: {price.price}
+                              {price.label}: {price.price} {t("common.currency")}
                             </span>
                           ))}
                         </div>
@@ -572,7 +584,7 @@ export default function VendorServicesPage() {
                     {/* Actions */}
                     <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
                       {service.status === "Rejected" && (
-                        <Tooltip title="Resubmit for review" arrow>
+                        <Tooltip title={t("vendor.services.list.resubmitTooltip")} arrow>
                           <button
                             type="button"
                             onClick={() => handleResubmit(service.id)}
@@ -584,7 +596,7 @@ export default function VendorServicesPage() {
                             ) : (
                               <RotateCcw className="h-3 w-3 sm:h-4 sm:w-4" />
                             )}
-                            <span className="hidden xs:inline">Resubmit</span>
+                            <span className="hidden xs:inline">{t("vendor.services.list.resubmit")}</span>
                           </button>
                         </Tooltip>
                       )}
@@ -594,8 +606,8 @@ export default function VendorServicesPage() {
                         className="inline-flex h-8 items-center justify-center gap-1 rounded-xl bg-[#30251f] px-2.5 text-[10px] font-medium text-white transition hover:bg-[#463831] sm:h-10 sm:gap-2 sm:px-4 sm:text-sm"
                       >
                         <Edit3 className="h-3 w-3 sm:h-4 sm:w-4" />
-                        <span className="hidden xs:inline">Manage</span>
-                        <span className="xs:hidden">Edit</span>
+                        <span className="hidden xs:inline">{t("vendor.services.list.manage")}</span>
+                        <span className="xs:hidden">{t("vendor.services.list.edit")}</span>
                       </Link>
                     </div>
                   </div>

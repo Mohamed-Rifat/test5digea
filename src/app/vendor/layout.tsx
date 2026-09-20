@@ -9,6 +9,8 @@ import VendorSidebar from "@/components/vendor/VendorSidebar";
 import VendorHeader from "@/components/vendor/VendorHeader";
 import { VendorProvider, useVendorContext } from "@/context/VendorContext";
 import { useAuth } from "@/context/AuthContext";
+import { useLanguage } from "@/context/LanguageContext";
+import LanguageSwitcher from "@/components/layout/LanguageSwitcher";
 
 const PROFILE_PATH = "/vendor/profile";
 
@@ -30,6 +32,7 @@ function VendorStatusGate({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { vendor, loading, error } = useVendorContext();
+  const { t } = useLanguage();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   const isApproved = vendor?.status === "Approved";
@@ -57,7 +60,7 @@ function VendorStatusGate({ children }: { children: React.ReactNode }) {
         <div className="max-w-sm rounded-3xl border border-[#e8dfd8] bg-white p-8 text-center shadow-sm">
           <AlertTriangle className="mx-auto h-8 w-8 text-red-500" />
           <p className="mt-3 text-sm font-medium text-[#40352f]">
-            {error || "We couldn't load your vendor account."}
+            {error || t("vendor.gate.loadError")}
           </p>
         </div>
       </div>
@@ -102,6 +105,7 @@ function PendingReviewHeader({
 }) {
   const router = useRouter();
   const { logout } = useAuth();
+  const { t } = useLanguage();
 
   const handleLogout = async () => {
     await logout();
@@ -111,20 +115,17 @@ function PendingReviewHeader({
   const copy =
     status === "Rejected"
       ? {
-          label: "Changes requested",
-          message:
-            "An admin reviewed your application and asked for changes. Update your details below and resubmit.",
+          label: t("vendor.gate.rejectedLabel"),
+          message: t("vendor.gate.rejectedMessage"),
         }
       : status === "Inactive"
       ? {
-          label: "Account deactivated",
-          message:
-            "Your vendor account is currently deactivated. You can still update your details below.",
+          label: t("vendor.gate.inactiveLabel"),
+          message: t("vendor.gate.inactiveMessage"),
         }
       : {
-          label: "Under review",
-          message:
-            "Thanks for signing up! An admin is reviewing your details. You'll get full dashboard access as soon as you're approved.",
+          label: t("vendor.gate.pendingLabel"),
+          message: t("vendor.gate.pendingMessage"),
         };
 
   return (
@@ -139,14 +140,19 @@ function PendingReviewHeader({
           </span>
         </div>
 
-        <button
-          type="button"
-          onClick={handleLogout}
-          className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-[#756860] transition hover:bg-red-50 hover:text-red-600"
-        >
-          <LogOut size={16} />
-          Logout
-        </button>
+        <div className="flex items-center gap-2">
+          <LanguageSwitcher variant="compact" className="sm:hidden" />
+          <LanguageSwitcher className="hidden sm:block" />
+
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-[#756860] transition hover:bg-red-50 hover:text-red-600"
+          >
+            <LogOut size={16} />
+            {t("vendor.gate.logout")}
+          </button>
+        </div>
       </header>
 
       <div className="mx-auto max-w-3xl px-4 pt-6 sm:px-6">

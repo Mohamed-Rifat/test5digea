@@ -1,4 +1,104 @@
-// Populated in Phase 3.
-const support = {};
+const support = {
+  eyebrow: "مركز الدعم",
+  title: "نقدر نساعدك إزاي؟",
+  intro:
+    "هتلاقي الدعم اللي محتاجه، سواء كنت عميل أو مقدم خدمة أو أدمن. فريقنا موجود علشان يساعدك.",
+  user: {
+    guestName: "زائر",
+    guestRole: "زائر",
+    guestDescription: "👋 أهلاً بيك",
+    adminName: "أدمن",
+    adminRole: "مدير النظام",
+    adminDescription: "👑 أدمن",
+    vendorName: "مقدم خدمة",
+    vendorRole: "شريك مقدم خدمة",
+    vendorDescription: "🏪 مقدم خدمة",
+    customerName: "مستخدم",
+    customerRole: "عميل",
+    customerDescription: "👤 عميل",
+  },
+  roleLabel: {
+    guest: "زائر",
+    admin: "أدمن",
+    vendor: "مقدم خدمة",
+    user: "مستخدم",
+  },
+  searchPlaceholder: "دور على مساعدة أو أدلة أو مواضيع...",
+  clearSearch: "مسح البحث",
+  quickActions: {
+    title: "إجراءات سريعة",
+    reviewReports: "مراجعة التقارير",
+    adminDashboard: "لوحة تحكم الأدمن",
+    systemStatus: "حالة النظام",
+    supportTickets: "تذاكر الدعم",
+    myServices: "خدماتي",
+    submitTicket: "افتح تذكرة",
+    viewFaq: "الأسئلة الشائعة",
+    myAccount: "حسابي",
+  },
+  resources: {
+    title: "مصادر الدعم",
+    docs: {
+      title: "الوثائق",
+      description: "تصفح الأدلة والشروحات التفصيلية",
+    },
+    chat: {
+      title: "الدردشة المباشرة",
+      description: "اتكلم مع فريق الدعم في نفس اللحظة",
+    },
+    email: {
+      title: "الدعم عبر الإيميل",
+      description: "ابعتلنا إيميل وهنرد عليك في أقرب وقت",
+    },
+    faq: {
+      title: "الأسئلة الشائعة",
+      description: "إجابات الأسئلة الأكتر تكرارًا",
+    },
+    ticket: {
+      title: "افتح تذكرة",
+      description: "افتح تذكرة دعم للمشاكل المعقدة",
+    },
+    phone: {
+      title: "الدعم الهاتفي",
+      description: "كلمنا في مواعيد العمل",
+    },
+    badgeAvailable: "متاح",
+    badgeNew: "جديد",
+    online: "🟢 متصل",
+    callNow: "📞 اتصل دلوقتي",
+    learnMore: "اعرف أكتر",
+  },
+  noResults: {
+    title: "مفيش نتايج",
+    text: "جرّب تدور على موضوع تاني أو تصفح كل مصادر الدعم.",
+    clear: "مسح البحث",
+  },
+  hours: {
+    title: "مواعيد الدعم",
+    weekdays: "من الاثنين للجمعة",
+    weekdayTime: "9:00 ص - 6:00 م",
+    weekend: "السبت والأحد",
+    closed: "مغلق",
+    responseTime: "متوسط وقت الرد",
+    responseValue: "أقل من ساعتين",
+  },
+  info: {
+    title: "معلومات سريعة",
+    adminPrivileges: "عندك صلاحيات {bold}",
+    adminBold: "الأدمن",
+    vendor: "مقدم الخدمة {bold}",
+    vendorFallback: "شريك",
+    priority: "{bold} متاح",
+    priorityBold: "الدعم ذو الأولوية",
+    welcomeBack: "أهلاً بعودتك، {bold}",
+    standardSupport: "الدعم القياسي متاح",
+    guestBrowsing: "أنت بتتصفح كـ {bold}",
+    guestBold: "زائر",
+    publicResources: "مصادر الدعم العامة متاحة",
+  },
+  contact: {
+    text: "💡 محتاج مساعدة فورية؟ كلمنا مباشرة:",
+  },
+};
 
 export default support;

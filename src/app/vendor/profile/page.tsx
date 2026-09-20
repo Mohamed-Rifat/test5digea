@@ -28,6 +28,8 @@ import {
   FaTiktok,
 } from "react-icons/fa";
 import { useVendor } from "@/features/vendors/hooks/useVendor";
+import { useLanguage } from "@/context/LanguageContext";
+import type { TranslationKey } from "@/locales";
 import type { UpdateVendorRequest } from "@/types/vendor";
 
 // ================================================================
@@ -48,14 +50,22 @@ const emptyForm: UpdateVendorRequest = {
 };
 
 const DAYS_OF_WEEK = [
-  { label: "Saturday", key: "sat" },
-  { label: "Sunday", key: "sun" },
-  { label: "Monday", key: "mon" },
-  { label: "Tuesday", key: "tue" },
-  { label: "Wednesday", key: "wed" },
-  { label: "Thursday", key: "thu" },
-  { label: "Friday", key: "fri" },
+  { labelKey: "vendor.profile.days.sat", key: "sat" },
+  { labelKey: "vendor.profile.days.sun", key: "sun" },
+  { labelKey: "vendor.profile.days.mon", key: "mon" },
+  { labelKey: "vendor.profile.days.tue", key: "tue" },
+  { labelKey: "vendor.profile.days.wed", key: "wed" },
+  { labelKey: "vendor.profile.days.thu", key: "thu" },
+  { labelKey: "vendor.profile.days.fri", key: "fri" },
 ] as const;
+
+// Backend status -> translation key.
+const STATUS_KEYS: Record<string, TranslationKey> = {
+  Approved: "vendor.status.approved",
+  Pending: "vendor.status.pending",
+  Rejected: "vendor.status.rejected",
+  Inactive: "vendor.status.inactive",
+};
 
 // ================================================================
 // TYPES
@@ -69,13 +79,14 @@ type SocialLinks = {
 };
 
 type WorkingHours = Record<string, string>;
-type ValidationErrors = Record<string, string>;
+type ValidationErrors = Record<string, TranslationKey | "">;
 
 // ================================================================
 // MAIN COMPONENT
 // ================================================================
 
 export default function VendorProfilePage() {
+  const { t } = useLanguage();
   const {
     vendor,
     loading,
@@ -91,7 +102,7 @@ export default function VendorProfilePage() {
   const [form, setForm] = useState<UpdateVendorRequest>(emptyForm);
   const [isEditing, setIsEditing] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [formError, setFormError] = useState("");
+  const [formError, setFormError] = useState<TranslationKey | "">("");
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
   const [touchedFields, setTouchedFields] = useState<Record<string, boolean>>({});
   const profileImageInputRef = useRef<HTMLInputElement>(null);
@@ -169,33 +180,33 @@ export default function VendorProfilePage() {
     }
   };
 
-  const validateField = (field: string, value: string): string => {
+  const validateField = (field: string, value: string): TranslationKey | "" => {
     switch (field) {
       case "businessName":
-        if (!value.trim()) return "Business name is required";
-        if (value.trim().length < 2) return "Business name must be at least 2 characters";
+        if (!value.trim()) return "vendor.profile.errors.nameRequired";
+        if (value.trim().length < 2) return "vendor.profile.errors.nameShort";
         return "";
 
       case "location":
-        if (!value.trim()) return "Location is required";
+        if (!value.trim()) return "vendor.profile.errors.locationRequired";
         return "";
 
       case "contactPhone":
-        if (!value.trim()) return "Phone number is required";
-        if (!validatePhone(value)) return "Invalid phone number format";
+        if (!value.trim()) return "vendor.profile.errors.phoneRequired";
+        if (!validatePhone(value)) return "vendor.profile.errors.phoneInvalid";
         return "";
 
       case "contactEmail":
-        if (!value.trim()) return "Email is required";
-        if (!validateEmail(value)) return "Please enter a valid email address";
+        if (!value.trim()) return "vendor.profile.errors.emailRequired";
+        if (!validateEmail(value)) return "vendor.profile.errors.emailInvalid";
         return "";
 
       case "slogan":
-        if (value.length > 100) return "Slogan must be less than 100 characters";
+        if (value.length > 100) return "vendor.profile.errors.sloganLong";
         return "";
 
       case "bio":
-        if (value.length > 2000) return "Bio must be less than 2000 characters";
+        if (value.length > 2000) return "vendor.profile.errors.bioLong";
         return "";
 
       default:
@@ -331,7 +342,7 @@ export default function VendorProfilePage() {
 
       if (Object.keys(errors).length > 0) {
         setValidationErrors(errors);
-        setFormError("Please fix all validation errors before saving.");
+        setFormError("vendor.profile.errors.fixAll");
         return;
       }
 
@@ -411,6 +422,11 @@ export default function VendorProfilePage() {
     [vendor?.galleryImages]
   );
 
+  const errorText = (field: string): string => {
+    const key = validationErrors[field];
+    return key ? t(key) : "";
+  };
+
   // ==============================================================
   // RENDER: LOADING
   // ==============================================================
@@ -441,12 +457,12 @@ export default function VendorProfilePage() {
         ========================================================== */}
         <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
           <div>
-            <p className="mb-1 text-sm font-semibold uppercase tracking-[0.2em] text-[#9b8171]">
-              Vendor Dashboard
+            <p className="mb-1 text-sm font-semibold uppercase tracking-[0.2em] rtl:tracking-normal text-[#9b8171]">
+              {t("vendor.profile.eyebrow")}
             </p>
  
             <h2 className="text-2xl font-semibold tracking-tight text-[#30251f] sm:text-3xl">
-             {form.businessName || "Your Business"}
+             {form.businessName || t("vendor.profile.defaultName")}
             </h2>
           </div>
 
@@ -462,7 +478,7 @@ export default function VendorProfilePage() {
                   className={`h-4 w-4 ${isResubmitting ? "animate-spin" : ""
                     }`}
                 />
-                Resubmit
+                {t("vendor.profile.resubmit")}
               </button>
             )}
 
@@ -473,7 +489,7 @@ export default function VendorProfilePage() {
                 className="inline-flex h-11 items-center gap-2 rounded-xl bg-[#30251f] px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#463831]"
               >
                 <Settings2 className="h-4 w-4" />
-                Profile Settings
+                {t("vendor.profile.profileSettings")}
               </button>
             ) : (
               <button
@@ -482,7 +498,7 @@ export default function VendorProfilePage() {
                 className="inline-flex h-11 items-center gap-2 rounded-xl border border-[#e3d9d1] bg-white px-5 text-sm font-semibold text-[#514740] transition hover:bg-[#f7f2ef]"
               >
                 <X className="h-4 w-4" />
-                Cancel
+                {t("vendor.profile.cancel")}
               </button>
             )}
           </div>
@@ -496,7 +512,7 @@ export default function VendorProfilePage() {
             <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
 
             <div>
-              <p className="font-semibold">Profile needs attention</p>
+              <p className="font-semibold">{t("vendor.profile.needsAttention")}</p>
               <p className="mt-1">{vendor.rejectionReason}</p>
             </div>
           </div>
@@ -520,52 +536,52 @@ export default function VendorProfilePage() {
             {(formError || actionError) && (
               <div className="flex items-center gap-3 rounded-2xl border border-red-100 bg-red-50 p-4 text-sm text-red-700">
                 <AlertCircle className="h-5 w-5 shrink-0" />
-                {formError || actionError}
+                {formError ? t(formError) : actionError}
               </div>
             )}
 
             {/* Basic Information */}
             <section className="rounded-4xl border border-[#e8dfd8] bg-white p-6 shadow-[0_10px_40px_rgba(48,37,31,0.04)] sm:p-8">
               <div className="mb-7">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#9b8171]">
-                  Identity
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] rtl:tracking-normal text-[#9b8171]">
+                  {t("vendor.profile.identity.eyebrow")}
                 </p>
 
                 <h2 className="mt-2 text-xl font-semibold text-[#30251f]">
-                  Business Information
+                  {t("vendor.profile.identity.title")}
                 </h2>
 
                 <p className="mt-1 text-sm text-[#756b65]">
-                  Tell customers who you are and what makes your business special.
+                  {t("vendor.profile.identity.subtitle")}
                 </p>
               </div>
 
               <div className="grid gap-6 sm:grid-cols-2">
                 <Field
-                  label="Business Name"
+                  label={t("vendor.profile.fields.businessName")}
                   value={form.businessName}
                   onChange={(value) => handleChange("businessName", value)}
                   onBlur={() => handleBlur("businessName")}
                   required
-                  error={validationErrors.businessName}
+                  error={errorText("businessName")}
                   touched={touchedFields.businessName}
                 />
 
                 <Field
-                  label="Slogan"
+                  label={t("vendor.profile.fields.slogan")}
                   value={form.slogan}
                   onChange={(value) => handleChange("slogan", value)}
                   onBlur={() => handleBlur("slogan")}
-                  placeholder="Your memorable tagline"
-                  error={validationErrors.slogan}
+                  placeholder={t("vendor.profile.fields.sloganPlaceholder")}
+                  error={errorText("slogan")}
                   touched={touchedFields.slogan}
                 />
 
                 <div className="sm:col-span-2">
                   <label htmlFor="bio" className="mb-2 block text-sm font-semibold text-[#40352f]">
-                    About Your Business
-                    <span className="ml-1 text-xs font-normal text-[#756b65]">
-                      (Optional)
+                    {t("vendor.profile.fields.about")}
+                    <span className="ms-1 text-xs font-normal text-[#756b65]">
+                      {t("vendor.profile.optional")}
                     </span>
                   </label>
 
@@ -575,11 +591,11 @@ export default function VendorProfilePage() {
                     onChange={(e) => handleChange("bio", e.target.value)}
                     onBlur={() => handleBlur("bio")}
                     rows={5}
-                    placeholder="Describe your business, experience and what you offer..."
+                    placeholder={t("vendor.profile.fields.bioPlaceholder")}
                     className="w-full resize-none rounded-2xl border border-[#e3d9d1] bg-[#fcfaf8] px-4 py-3.5 text-sm text-[#30251f] outline-none transition placeholder:text-[#aaa09a] focus:border-[#8c7363] focus:bg-white focus:ring-4 focus:ring-[#8c7363]/5"
                   />
                   {validationErrors.bio && touchedFields.bio && (
-                    <p className="mt-1 text-xs text-red-500">{validationErrors.bio}</p>
+                    <p className="mt-1 text-xs text-red-500">{errorText("bio")}</p>
                   )}
                 </div>
               </div>
@@ -588,55 +604,57 @@ export default function VendorProfilePage() {
             {/* Contact */}
             <section className="rounded-4xl border border-[#e8dfd8] bg-white p-6 shadow-[0_10px_40px_rgba(48,37,31,0.04)] sm:p-8">
               <div className="mb-7">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#9b8171]">
-                  Contact
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] rtl:tracking-normal text-[#9b8171]">
+                  {t("vendor.profile.contact.eyebrow")}
                 </p>
 
                 <h2 className="mt-2 text-xl font-semibold text-[#30251f]">
-                  Contact Information
+                  {t("vendor.profile.contact.editTitle")}
                 </h2>
 
                 <p className="mt-1 text-sm text-[#756b65]">
-                  All contact fields are required for customer communication.
+                  {t("vendor.profile.contact.editSubtitle")}
                 </p>
               </div>
 
               <div className="grid gap-6 sm:grid-cols-2">
                 <Field
-                  label="Location"
+                  label={t("vendor.profile.fields.location")}
                   value={form.location}
                   onChange={(value) => handleChange("location", value)}
                   onBlur={() => handleBlur("location")}
                   icon={<MapPin className="h-4 w-4" />}
                   required
-                  error={validationErrors.location}
+                  error={errorText("location")}
                   touched={touchedFields.location}
-                  placeholder="City, Country"
+                  placeholder={t("vendor.profile.fields.locationPlaceholder")}
                 />
 
                 <Field
-                  label="Phone"
+                  label={t("vendor.profile.fields.phone")}
                   value={form.contactPhone}
                   onChange={(value) => handleChange("contactPhone", value)}
                   onBlur={() => handleBlur("contactPhone")}
                   icon={<Phone className="h-4 w-4" />}
                   required
-                  error={validationErrors.contactPhone}
+                  error={errorText("contactPhone")}
                   touched={touchedFields.contactPhone}
                   placeholder="+1234567890"
+                  ltr
                 />
 
                 <Field
-                  label="Email"
+                  label={t("vendor.profile.fields.email")}
                   value={form.contactEmail}
                   onChange={(value) => handleChange("contactEmail", value)}
                   onBlur={() => handleBlur("contactEmail")}
                   type="email"
                   icon={<Mail className="h-4 w-4" />}
                   required
-                  error={validationErrors.contactEmail}
+                  error={errorText("contactEmail")}
                   touched={touchedFields.contactEmail}
                   placeholder="business@example.com"
+                  ltr
                 />
               </div>
             </section>
@@ -644,16 +662,16 @@ export default function VendorProfilePage() {
             {/* Social */}
             <section className="rounded-4xl border border-[#e8dfd8] bg-white p-6 shadow-[0_10px_40px_rgba(48,37,31,0.04)] sm:p-8">
               <div className="mb-7">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#9b8171]">
-                  Social Presence
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] rtl:tracking-normal text-[#9b8171]">
+                  {t("vendor.profile.social.eyebrow")}
                 </p>
 
                 <h2 className="mt-2 text-xl font-semibold text-[#30251f]">
-                  Social Media
+                  {t("vendor.profile.social.title")}
                 </h2>
 
                 <p className="mt-1 text-sm text-[#756b65]">
-                  Add your social profiles so customers can discover your business.
+                  {t("vendor.profile.social.subtitle")}
                 </p>
               </div>
 
@@ -684,7 +702,7 @@ export default function VendorProfilePage() {
 
                 <SocialField
                   icon={<Globe2 className="h-5 w-5" />}
-                  label="Website"
+                  label={t("vendor.profile.fields.website")}
                   value={socialLinks.website || ""}
                   onChange={(value) => updateSocialLink("website", value)}
                   placeholder="https://..."
@@ -695,21 +713,21 @@ export default function VendorProfilePage() {
             {/* Working Hours */}
             <section className="rounded-4xl border border-[#e8dfd8] bg-white p-6 shadow-[0_10px_40px_rgba(48,37,31,0.04)] sm:p-8">
               <div className="mb-7">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#9b8171]">
-                  Availability
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] rtl:tracking-normal text-[#9b8171]">
+                  {t("vendor.profile.hours.eyebrow")}
                 </p>
 
                 <h2 className="mt-2 text-xl font-semibold text-[#30251f]">
-                  Working Hours
+                  {t("vendor.profile.hours.title")}
                 </h2>
 
                 <p className="mt-1 text-sm text-[#756b65]">
-                  Set your working hours or mark a day as &quot;Day Off&quot;.
+                  {t("vendor.profile.hours.subtitle")}
                 </p>
               </div>
 
               <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                {DAYS_OF_WEEK.map(({ label, key }) => {
+                {DAYS_OF_WEEK.map(({ labelKey, key }) => {
                   const isOff = isDayOff(key);
                   const value = workingHours[key] || "";
 
@@ -718,7 +736,7 @@ export default function VendorProfilePage() {
                       <div className="flex items-center justify-between">
                         <label className="flex items-center gap-2 text-sm font-semibold text-[#40352f]">
                           <Clock3 className="h-4 w-4" />
-                          {label}
+                          {t(labelKey)}
                         </label>
 
                         <button
@@ -732,12 +750,12 @@ export default function VendorProfilePage() {
                           {isOff ? (
                             <>
                               <Calendar className="h-3.5 w-3.5" />
-                              Restore
+                              {t("vendor.profile.restore")}
                             </>
                           ) : (
                             <>
                               <CalendarOff className="h-3.5 w-3.5" />
-                              Day Off
+                              {t("vendor.profile.dayOff")}
                             </>
                           )}
                         </button>
@@ -745,8 +763,8 @@ export default function VendorProfilePage() {
 
                       {isOff ? (
                         <div className="flex h-12 items-center rounded-2xl border border-dashed border-rose-200 bg-rose-50/50 px-4 text-sm font-medium text-rose-500">
-                          <CalendarOff className="mr-2 h-4 w-4" />
-                          Day Off
+                          <CalendarOff className="me-2 h-4 w-4" />
+                          {t("vendor.profile.dayOff")}
                         </div>
                       ) : (
                         <input
@@ -767,11 +785,11 @@ export default function VendorProfilePage() {
             <div className="flex flex-wrap items-center justify-between gap-4 rounded-4xl border border-[#e8dfd8] bg-white p-5 shadow-sm">
               <div>
                 <p className="text-sm font-semibold text-[#30251f]">
-                  Ready to save?
+                  {t("vendor.profile.save.readyTitle")}
                 </p>
 
                 <p className="mt-1 text-xs text-[#756b65]">
-                  Your profile will be updated immediately.
+                  {t("vendor.profile.save.readyText")}
                 </p>
               </div>
 
@@ -781,7 +799,7 @@ export default function VendorProfilePage() {
                   onClick={handleCancel}
                   className="h-11 rounded-xl px-5 text-sm font-semibold text-[#514740] transition hover:bg-[#f7f2ef]"
                 >
-                  Cancel
+                  {t("vendor.profile.cancel")}
                 </button>
 
                 <button
@@ -790,13 +808,13 @@ export default function VendorProfilePage() {
                   className="inline-flex h-11 items-center gap-2 rounded-xl bg-[#30251f] px-6 text-sm font-semibold text-white shadow-sm transition hover:bg-[#463831] disabled:opacity-60"
                 >
                   <Save className="h-4 w-4" />
-                  {isSaving ? "Saving..." : "Save Changes"}
+                  {isSaving ? t("vendor.profile.save.saving") : t("vendor.profile.save.save")}
                 </button>
 
                 {success && (
                   <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-700">
                     <CheckCircle2 className="h-4 w-4" />
-                    Saved
+                    {t("vendor.profile.save.saved")}
                   </span>
                 )}
               </div>
@@ -819,7 +837,7 @@ export default function VendorProfilePage() {
                         {vendor?.profileImageUrl ? (
                           <img
                             src={vendor.profileImageUrl}
-                            alt={form.businessName || "Vendor"}
+                            alt={form.businessName || t("vendor.header.vendor")}
                             className="h-full w-full object-cover"
                           />
                         ) : (
@@ -844,8 +862,8 @@ export default function VendorProfilePage() {
                         type="button"
                         onClick={() => profileImageInputRef.current?.click()}
                         disabled={isUploadingProfileImage}
-                        aria-label="Change profile photo"
-                        className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-[#30251f] text-white shadow-md transition hover:bg-[#463831] disabled:cursor-not-allowed disabled:opacity-70"
+                        aria-label={t("vendor.profile.view.changePhoto")}
+                        className="absolute -bottom-1 -end-1 flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-[#30251f] text-white shadow-md transition hover:bg-[#463831] disabled:cursor-not-allowed disabled:opacity-70"
                       >
                         {isUploadingProfileImage ? (
                           <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -858,12 +876,12 @@ export default function VendorProfilePage() {
                     <div className="pb-1">
                       <div className="flex flex-wrap items-center gap-2">
                         <h2 className="text-2xl font-semibold tracking-tight text-[#30251f] sm:text-3xl">
-                          {form.businessName || "Your Business"}
+                          {form.businessName || t("vendor.profile.defaultName")}
                         </h2>
 
                         {vendor?.status && (
                           <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
-                            {vendor.status}
+                            {STATUS_KEYS[vendor.status] ? t(STATUS_KEYS[vendor.status]) : vendor.status}
                           </span>
                         )}
                       </div>
@@ -882,7 +900,7 @@ export default function VendorProfilePage() {
                     className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-[#e3d9d1] bg-white px-4 text-sm font-semibold text-[#514740] transition hover:bg-[#f7f2ef]"
                   >
                     <Edit3 className="h-4 w-4" />
-                    Edit Profile
+                    {t("vendor.profile.view.editProfile")}
                   </button>
                 </div>
               </div>
@@ -893,50 +911,51 @@ export default function VendorProfilePage() {
               {/* About */}
               <section className="rounded-4xl border border-[#e8dfd8] bg-white p-6 shadow-[0_10px_40px_rgba(48,37,31,0.04)] lg:col-span-2">
                 <div className="mb-5">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#9b8171]">
-                    About
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] rtl:tracking-normal text-[#9b8171]">
+                    {t("vendor.profile.view.aboutEyebrow")}
                   </p>
 
                   <h3 className="mt-2 text-xl font-semibold text-[#30251f]">
-                    About the Business
+                    {t("vendor.profile.view.aboutTitle")}
                   </h3>
                 </div>
 
                 <p className="whitespace-pre-line text-sm leading-7 text-[#756b65]">
-                  {form.bio ||
-                    "Add a short description about your business to help customers understand what makes you special."}
+                  {form.bio || t("vendor.profile.view.bioEmpty")}
                 </p>
               </section>
 
               {/* Contact */}
               <section className="rounded-4xl border border-[#e8dfd8] bg-white p-6 shadow-[0_10px_40px_rgba(48,37,31,0.04)]">
                 <div className="mb-5">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#9b8171]">
-                    Contact
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] rtl:tracking-normal text-[#9b8171]">
+                    {t("vendor.profile.contact.eyebrow")}
                   </p>
 
                   <h3 className="mt-2 text-xl font-semibold text-[#30251f]">
-                    Get in Touch
+                    {t("vendor.profile.contact.viewTitle")}
                   </h3>
                 </div>
 
                 <div className="space-y-4">
                   <InfoRow
                     icon={<MapPin className="h-4 w-4" />}
-                    label="Location"
+                    label={t("vendor.profile.fields.location")}
                     value={form.location}
                   />
 
                   <InfoRow
                     icon={<Phone className="h-4 w-4" />}
-                    label="Phone"
+                    label={t("vendor.profile.fields.phone")}
                     value={form.contactPhone}
+                    ltr
                   />
 
                   <InfoRow
                     icon={<Mail className="h-4 w-4" />}
-                    label="Email"
+                    label={t("vendor.profile.fields.email")}
                     value={form.contactEmail}
+                    ltr
                   />
                 </div>
               </section>
@@ -948,16 +967,16 @@ export default function VendorProfilePage() {
             <section className="rounded-4xl border border-[#e8dfd8] bg-white p-6 shadow-[0_10px_40px_rgba(48,37,31,0.04)] sm:p-8">
               <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#9b8171]">
-                    Connect
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] rtl:tracking-normal text-[#9b8171]">
+                    {t("vendor.profile.social.connectEyebrow")}
                   </p>
 
                   <h3 className="mt-2 text-xl font-semibold text-[#30251f]">
-                    Follow Our Socials
+                    {t("vendor.profile.social.followTitle")}
                   </h3>
 
                   <p className="mt-1 text-sm text-[#756b65]">
-                    Stay connected and discover more from our business.
+                    {t("vendor.profile.social.followText")}
                   </p>
                 </div>
               </div>
@@ -993,7 +1012,7 @@ export default function VendorProfilePage() {
                 {socialLinks.website && (
                   <SocialCard
                     icon={<Globe2 className="h-6 w-6" />}
-                    label="Website"
+                    label={t("vendor.profile.fields.website")}
                     handle={socialLinks.website}
                     href={socialLinks.website}
                   />
@@ -1005,7 +1024,7 @@ export default function VendorProfilePage() {
                   !socialLinks.website && (
                     <div className="sm:col-span-2 lg:col-span-4 rounded-2xl border border-dashed border-[#ded4cc] bg-[#fcfaf8] p-8 text-center">
                       <p className="text-sm font-medium text-[#514740]">
-                        No social profiles added yet.
+                        {t("vendor.profile.social.none")}
                       </p>
 
                       <button
@@ -1013,7 +1032,7 @@ export default function VendorProfilePage() {
                         onClick={() => setIsEditing(true)}
                         className="mt-3 text-sm font-semibold text-[#9b6d52] hover:underline"
                       >
-                        Add social profiles
+                        {t("vendor.profile.social.add")}
                       </button>
                     </div>
                   )}
@@ -1025,19 +1044,20 @@ export default function VendorProfilePage() {
             ====================================================== */}
             <section className="rounded-4xl border border-[#e8dfd8] bg-white p-6 shadow-[0_10px_40px_rgba(48,37,31,0.04)] sm:p-8">
               <div className="mb-6">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#9b8171]">
-                  Availability
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] rtl:tracking-normal text-[#9b8171]">
+                  {t("vendor.profile.hours.eyebrow")}
                 </p>
 
                 <h3 className="mt-2 text-xl font-semibold text-[#30251f]">
-                  Working Hours
+                  {t("vendor.profile.hours.title")}
                 </h3>
               </div>
 
               {Object.keys(workingHours).length > 0 ? (
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   {Object.entries(workingHours).map(([day, hours]) => {
-                    const dayLabel = DAYS_OF_WEEK.find((d) => d.key === day)?.label || day;
+                    const dayKey = DAYS_OF_WEEK.find((d) => d.key === day)?.labelKey;
+                    const dayLabel = dayKey ? t(dayKey) : day;
                     const isOff = hours === "OFF";
 
                     return (
@@ -1062,7 +1082,7 @@ export default function VendorProfilePage() {
 
                         <span className={`text-xs font-medium ${isOff ? "text-rose-500" : "text-[#756b65]"
                           }`}>
-                          {isOff ? "Day Off" : hours}
+                          {isOff ? t("vendor.profile.dayOff") : hours}
                         </span>
                       </div>
                     );
@@ -1073,7 +1093,7 @@ export default function VendorProfilePage() {
                   <Clock3 className="mx-auto h-7 w-7 text-[#9b8171]" />
 
                   <p className="mt-3 text-sm font-medium text-[#514740]">
-                    Working hours haven't been added yet.
+                    {t("vendor.profile.hours.none")}
                   </p>
                 </div>
               )}
@@ -1103,6 +1123,7 @@ function Field({
   required = false,
   error,
   touched,
+  ltr = false,
 }: {
   label: string;
   value: string | number;
@@ -1114,6 +1135,7 @@ function Field({
   required?: boolean;
   error?: string;
   touched?: boolean;
+  ltr?: boolean;
 }) {
   const fieldId = `field-${label.replace(/\s+/g, "-").toLowerCase()}`;
   const hasError = touched && error;
@@ -1135,6 +1157,7 @@ function Field({
         onChange={(e) => onChange(e.target.value)}
         onBlur={onBlur}
         placeholder={placeholder}
+        dir={ltr ? "ltr" : undefined}
         className={`h-12 w-full rounded-2xl border px-4 text-sm text-[#30251f] outline-none transition placeholder:text-[#aaa09a] focus:ring-4 ${hasError
             ? "border-red-300 bg-red-50/50 focus:border-red-400 focus:ring-red-500/10"
             : isValid
@@ -1169,6 +1192,7 @@ function SocialField({
   onChange: (value: string) => void;
   placeholder?: string;
 }) {
+  const { t } = useLanguage();
   const fieldId = `social-${label.toLowerCase()}`;
 
   return (
@@ -1176,7 +1200,7 @@ function SocialField({
       <label htmlFor={fieldId} className="mb-2 flex items-center gap-2 text-sm font-semibold text-[#40352f]">
         {icon}
         {label}
-        <span className="text-xs font-normal text-[#756b65]">(Optional)</span>
+        <span className="text-xs font-normal text-[#756b65]">{t("vendor.profile.optional")}</span>
       </label>
 
       <input
@@ -1187,6 +1211,7 @@ function SocialField({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         spellCheck={false}
+        dir="ltr"
         className="h-12 w-full rounded-2xl border border-[#e3d9d1] bg-[#fcfaf8] px-4 text-sm text-[#30251f] outline-none transition placeholder:text-[#aaa09a] focus:border-[#8c7363] focus:bg-white focus:ring-4 focus:ring-[#8c7363]/5"
       />
     </div>
@@ -1200,11 +1225,15 @@ function InfoRow({
   icon,
   label,
   value,
+  ltr = false,
 }: {
   icon: React.ReactNode;
   label: string;
   value?: string;
+  ltr?: boolean;
 }) {
+  const { t } = useLanguage();
+
   return (
     <div className="flex items-start gap-3">
       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#f7f2ef] text-[#806a5b]">
@@ -1214,7 +1243,7 @@ function InfoRow({
       <div className="min-w-0">
         <p className="text-xs font-medium text-[#9b8171]">{label}</p>
         <p className="mt-1 wrap-break-word text-sm font-medium text-[#40352f]">
-          {value || "Not provided"}
+          {value ? (ltr ? <span dir="ltr" className="inline-block">{value}</span> : value) : t("vendor.profile.notProvided")}
         </p>
       </div>
     </div>
@@ -1249,13 +1278,13 @@ function SocialCard({
 
         <div className="min-w-0">
           <p className="text-sm font-semibold text-[#30251f]">{label}</p>
-          <p className="mt-1 max-w-45 truncate text-xs text-[#756b65]">
+          <p dir="ltr" className="mt-1 max-w-45 truncate text-xs text-[#756b65] text-start">
             {handle}
           </p>
         </div>
       </div>
 
-      <span className="text-lg text-[#b09a8c] transition group-hover:translate-x-1">
+      <span className="text-lg text-[#b09a8c] transition group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1">
         →
       </span>
     </a>

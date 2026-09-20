@@ -32,13 +32,15 @@ import {
 
 import { useAuth } from "@/context/AuthContext";
 import { useVendor } from "@/features/vendors/hooks/useVendor";
+import { useLanguage } from "@/context/LanguageContext";
+import type { TranslationKey } from "@/locales";
 
 // =========================================================
 // Types
 // =========================================================
 
 type QuickAction = {
-  title: string;
+  titleKey: TranslationKey;
   icon: React.ElementType;
   href: string;
   color: string;
@@ -46,12 +48,12 @@ type QuickAction = {
 
 type SupportOption = {
   id: string;
-  title: string;
-  description: string;
+  titleKey: TranslationKey;
+  descriptionKey: TranslationKey;
   icon: React.ElementType;
   color: string;
   href: string;
-  badge: string | null;
+  badge: "available" | "new" | null;
 };
 
 // =========================================================
@@ -59,130 +61,46 @@ type SupportOption = {
 // =========================================================
 
 const ADMIN_QUICK_ACTIONS: QuickAction[] = [
-  {
-    title: "Review Reports",
-    icon: FileText,
-    href: "/admin/reports",
-    color: "#a47e43",
-  },
-  {
-    title: "Admin Dashboard",
-    icon: Users,
-    href: "/admin",
-    color: "#8b5cf6",
-  },
-  {
-    title: "System Status",
-    icon: Shield,
-    href: "/admin/status",
-    color: "#06b6d4",
-  },
-  {
-    title: "Support Tickets",
-    icon: Ticket,
-    href: "/admin/tickets",
-    color: "#ef4444",
-  },
+  { titleKey: "support.quickActions.reviewReports", icon: FileText, href: "/admin/reports", color: "#a47e43" },
+  { titleKey: "support.quickActions.adminDashboard", icon: Users, href: "/admin", color: "#8b5cf6" },
+  { titleKey: "support.quickActions.systemStatus", icon: Shield, href: "/admin/status", color: "#06b6d4" },
+  { titleKey: "support.quickActions.supportTickets", icon: Ticket, href: "/admin/tickets", color: "#ef4444" },
 ];
 
 const VENDOR_QUICK_ACTIONS: QuickAction[] = [
-  {
-    title: "My Services",
-    icon: Building2,
-    href: "/vendor/services",
-    color: "#a47e43",
-  },
-  {
-    title: "Submit Ticket",
-    icon: Ticket,
-    href: "/vendor/support/ticket",
-    color: "#f59e0b",
-  },
-  {
-    title: "View FAQ",
-    icon: FileText,
-    href: "/support/faq",
-    color: "#06b6d4",
-  },
+  { titleKey: "support.quickActions.myServices", icon: Building2, href: "/vendor/services", color: "#a47e43" },
+  { titleKey: "support.quickActions.submitTicket", icon: Ticket, href: "/vendor/support/ticket", color: "#f59e0b" },
+  { titleKey: "support.quickActions.viewFaq", icon: FileText, href: "/support/faq", color: "#06b6d4" },
 ];
 
 const USER_QUICK_ACTIONS: QuickAction[] = [
-  {
-    title: "My Account",
-    icon: User,
-    href: "/profile",
-    color: "#a47e43",
-  },
-  {
-    title: "Submit Ticket",
-    icon: Ticket,
-    href: "/support/ticket",
-    color: "#f59e0b",
-  },
-  {
-    title: "View FAQ",
-    icon: FileText,
-    href: "/support/faq",
-    color: "#06b6d4",
-  },
+  { titleKey: "support.quickActions.myAccount", icon: User, href: "/profile", color: "#a47e43" },
+  { titleKey: "support.quickActions.submitTicket", icon: Ticket, href: "/support/ticket", color: "#f59e0b" },
+  { titleKey: "support.quickActions.viewFaq", icon: FileText, href: "/support/faq", color: "#06b6d4" },
 ];
 
 const SUPPORT_OPTIONS: SupportOption[] = [
-  {
-    id: "docs",
-    title: "Documentation",
-    description: "Browse our detailed guides and tutorials",
-    icon: FileText,
-    color: "#a47e43",
-    href: "/support/docs",
-    badge: null,
-  },
-  {
-    id: "chat",
-    title: "Live Chat",
-    description: "Chat with our support team in real-time",
-    icon: MessageCircle,
-    color: "#10b981",
-    href: "/support/chat",
-    badge: "Available",
-  },
-  {
-    id: "email",
-    title: "Email Support",
-    description: "Send us an email and we'll get back to you",
-    icon: Mail,
-    color: "#8b5cf6",
-    href: "mailto:support@5digea.com",
-    badge: null,
-  },
-  {
-    id: "faq",
-    title: "FAQ",
-    description: "Frequently asked questions",
-    icon: HelpCircle,
-    color: "#06b6d4",
-    href: "/support/faq",
-    badge: null,
-  },
-  {
-    id: "ticket",
-    title: "Submit Ticket",
-    description: "Open a support ticket for complex issues",
-    icon: Ticket,
-    color: "#f59e0b",
-    href: "/support/ticket",
-    badge: "New",
-  },
-  {
-    id: "phone",
-    title: "Phone Support",
-    description: "Call us during business hours",
-    icon: Phone,
-    color: "#ef4444",
-    href: "tel:+15551234567",
-    badge: null,
-  },
+  { id: "docs", titleKey: "support.resources.docs.title", descriptionKey: "support.resources.docs.description", icon: FileText, color: "#a47e43", href: "/support/docs", badge: null },
+  { id: "chat", titleKey: "support.resources.chat.title", descriptionKey: "support.resources.chat.description", icon: MessageCircle, color: "#10b981", href: "/support/chat", badge: "available" },
+  { id: "email", titleKey: "support.resources.email.title", descriptionKey: "support.resources.email.description", icon: Mail, color: "#8b5cf6", href: "mailto:support@5digea.com", badge: null },
+  { id: "faq", titleKey: "support.resources.faq.title", descriptionKey: "support.resources.faq.description", icon: HelpCircle, color: "#06b6d4", href: "/support/faq", badge: null },
+  { id: "ticket", titleKey: "support.resources.ticket.title", descriptionKey: "support.resources.ticket.description", icon: Ticket, color: "#f59e0b", href: "/support/ticket", badge: "new" },
+  { id: "phone", titleKey: "support.resources.phone.title", descriptionKey: "support.resources.phone.description", icon: Phone, color: "#ef4444", href: "tel:+15551234567", badge: null },
 ];
+
+// Renders a translated sentence containing a {bold} placeholder, so the
+// highlighted word can sit anywhere in the sentence in either language.
+function Rich({ text, bold }: { text: string; bold: string }) {
+  const [before, after = ""] = text.split("{bold}");
+
+  return (
+    <>
+      {before}
+      <strong className="text-[#30251f]">{bold}</strong>
+      {after}
+    </>
+  );
+}
 
 // =========================================================
 // Main Component
@@ -199,6 +117,7 @@ export default function SupportHubPage() {
   } = useAuth();
 
   const { vendor } = useVendor();
+  const { t } = useLanguage();
 
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -209,9 +128,9 @@ export default function SupportHubPage() {
   const userInfo = useMemo(() => {
     if (!isAuthenticated) {
       return {
-        name: "Guest",
-        role: "Guest",
-        roleDescription: "👋 Welcome",
+        name: t("support.user.guestName"),
+        role: t("support.user.guestRole"),
+        roleDescription: t("support.user.guestDescription"),
         icon: User,
         color: "bg-[#f5eee9] text-[#8b796d]",
       };
@@ -222,9 +141,9 @@ export default function SupportHubPage() {
         name:
           user?.fullName ||
           user?.email?.split("@")[0] ||
-          "Admin",
-        role: "Administrator",
-        roleDescription: "👑 Admin",
+          t("support.user.adminName"),
+        role: t("support.user.adminRole"),
+        roleDescription: t("support.user.adminDescription"),
         icon: Shield,
         color: "bg-purple-50 text-purple-700",
       };
@@ -236,9 +155,9 @@ export default function SupportHubPage() {
           vendor?.businessName ||
           user?.fullName ||
           user?.email?.split("@")[0] ||
-          "Vendor",
-        role: "Vendor Partner",
-        roleDescription: "🏪 Vendor",
+          t("support.user.vendorName"),
+        role: t("support.user.vendorRole"),
+        roleDescription: t("support.user.vendorDescription"),
         icon: Building2,
         color: "bg-amber-50 text-amber-700",
       };
@@ -248,9 +167,9 @@ export default function SupportHubPage() {
       name:
         user?.fullName ||
         user?.email?.split("@")[0] ||
-        "User",
-      role: "Customer",
-      roleDescription: "👤 Customer",
+        t("support.user.customerName"),
+      role: t("support.user.customerRole"),
+      roleDescription: t("support.user.customerDescription"),
       icon: User,
       color: "bg-blue-50 text-blue-700",
     };
@@ -258,9 +177,9 @@ export default function SupportHubPage() {
     isAuthenticated,
     isAdmin,
     isVendor,
-    isUser,
     user,
     vendor,
+    t,
   ]);
 
   // =======================================================
@@ -284,12 +203,12 @@ export default function SupportHubPage() {
   // =======================================================
 
   const roleLabel = !isAuthenticated
-    ? "Guest"
+    ? t("support.roleLabel.guest")
     : role === "Admin"
-      ? "Admin"
+      ? t("support.roleLabel.admin")
       : role === "Vendor"
-        ? "Vendor"
-        : "User";
+        ? t("support.roleLabel.vendor")
+        : t("support.roleLabel.user");
 
   const roleColor = !isAuthenticated
     ? "#8b796d"
@@ -312,11 +231,11 @@ export default function SupportHubPage() {
 
     return SUPPORT_OPTIONS.filter((option) => {
       return (
-        option.title.toLowerCase().includes(query) ||
-        option.description.toLowerCase().includes(query)
+        t(option.titleKey).toLowerCase().includes(query) ||
+        t(option.descriptionKey).toLowerCase().includes(query)
       );
     });
-  }, [searchQuery]);
+  }, [searchQuery, t]);
 
   const UserIcon = userInfo.icon;
 
@@ -336,13 +255,13 @@ export default function SupportHubPage() {
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
 
             <div className="flex-1">
-              <p className="mb-1.5 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#9b8171] sm:mb-2 sm:text-xs">
+              <p className="mb-1.5 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] rtl:tracking-normal text-[#9b8171] sm:mb-2 sm:text-xs">
                 <Sparkles
                   size={11}
                   className="sm:h-3.25 sm:w-3.25"
                 />
 
-                Support Center
+                {t("support.eyebrow")}
               </p>
 
               <div className="flex items-center gap-2 sm:gap-3">
@@ -356,15 +275,13 @@ export default function SupportHubPage() {
 
                 <div>
                   <h1 className="text-xl font-semibold tracking-tight text-[#30251f] sm:text-2xl lg:text-3xl">
-                    How can we help you?
+                    {t("support.title")}
                   </h1>
                 </div>
               </div>
 
               <p className="mt-2 max-w-2xl text-xs leading-5 text-[#756b65] sm:mt-3 sm:text-sm sm:leading-6">
-                Get the support you need, whether you&apos;re a
-                customer, vendor, or administrator. Our team is here
-                to assist you.
+                {t("support.intro")}
               </p>
             </div>
 
@@ -400,13 +317,13 @@ export default function SupportHubPage() {
             onChange={(event) => {
               setSearchQuery(event.target.value);
             }}
-            placeholder="Search for help, guides, or topics..."
+            placeholder={t("support.searchPlaceholder")}
             fullWidth
             size="small"
             slotProps={{
               input: {
                 startAdornment: (
-                  <InputAdornment position="start">
+                  <InputAdornment position="start" sx={{ mr: 0, marginInlineEnd: "8px" }}>
                     <Search
                       size={18}
                       className="text-[#9b8f86]"
@@ -415,11 +332,11 @@ export default function SupportHubPage() {
                 ),
 
                 endAdornment: searchQuery ? (
-                  <InputAdornment position="end">
+                  <InputAdornment position="end" sx={{ ml: 0, marginInlineStart: "8px" }}>
                     <button
                       type="button"
                       onClick={() => setSearchQuery("")}
-                      aria-label="Clear search"
+                      aria-label={t("support.clearSearch")}
                       className="rounded-md p-1 text-[#9b8f86] transition hover:bg-[#f5eee9] hover:text-[#30251f]"
                     >
                       <span className="text-sm">✕</span>
@@ -460,7 +377,7 @@ export default function SupportHubPage() {
         <div className="mb-6">
           <div className="mb-3 flex items-center gap-2">
             <h2 className="text-sm font-semibold text-[#30251f] sm:text-base">
-              Quick Actions
+              {t("support.quickActions.title")}
             </h2>
 
             <Chip
@@ -482,7 +399,7 @@ export default function SupportHubPage() {
 
               return (
                 <Link
-                  key={action.href}
+                  key={action.titleKey}
                   href={action.href}
                   className="group flex flex-col items-center rounded-2xl border border-[#e8dfd8] bg-white p-4 text-center transition hover:-translate-y-0.5 hover:shadow-md sm:p-5"
                 >
@@ -501,10 +418,10 @@ export default function SupportHubPage() {
                   </div>
 
                   <p className="mt-2 text-xs font-semibold text-[#30251f] sm:mt-3 sm:text-sm">
-                    {action.title}
+                    {t(action.titleKey)}
                   </p>
 
-                  <ChevronRight className="mt-1 h-3 w-3 text-[#9a8d85] opacity-0 transition group-hover:translate-x-0.5 group-hover:opacity-100 sm:h-4 sm:w-4" />
+                  <ChevronRight className="mt-1 h-3 w-3 text-[#9a8d85] opacity-0 transition group-hover:translate-x-0.5 group-hover:opacity-100 sm:h-4 sm:w-4 rtl:rotate-180 rtl:group-hover:-translate-x-0.5" />
                 </Link>
               );
             })}
@@ -517,7 +434,7 @@ export default function SupportHubPage() {
 
         <div className="mb-6">
           <h2 className="mb-3 text-sm font-semibold text-[#30251f] sm:mb-4 sm:text-base">
-            Support Resources
+            {t("support.resources.title")}
           </h2>
 
           {filteredOptions.length > 0 ? (
@@ -549,14 +466,18 @@ export default function SupportHubPage() {
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
                           <h3 className="text-sm font-semibold text-[#30251f] sm:text-base">
-                            {option.title}
+                            {t(option.titleKey)}
                           </h3>
 
                           {option.badge && (
                             <Badge
-                              badgeContent={option.badge}
+                              badgeContent={
+                                option.badge === "available"
+                                  ? t("support.resources.badgeAvailable")
+                                  : t("support.resources.badgeNew")
+                              }
                               color={
-                                option.badge === "Available"
+                                option.badge === "available"
                                   ? "success"
                                   : "warning"
                               }
@@ -567,7 +488,7 @@ export default function SupportHubPage() {
                                   minWidth: 16,
                                   fontWeight: 600,
                                   backgroundColor:
-                                    option.badge === "Available"
+                                    option.badge === "available"
                                       ? "#10b981"
                                       : "#f59e0b",
                                 },
@@ -577,7 +498,7 @@ export default function SupportHubPage() {
                         </div>
 
                         <p className="mt-0.5 text-xs text-[#756b65] sm:text-sm">
-                          {option.description}
+                          {t(option.descriptionKey)}
                         </p>
                       </div>
                     </div>
@@ -585,13 +506,13 @@ export default function SupportHubPage() {
                     <div className="mt-3 flex items-center justify-between border-t border-[#f0eae5] pt-3">
                       <span className="text-[10px] text-[#9a8d85] sm:text-xs">
                         {option.id === "chat"
-                          ? "🟢 Online"
+                          ? t("support.resources.online")
                           : option.id === "phone"
-                            ? "📞 Call now"
-                            : "Learn more"}
+                            ? t("support.resources.callNow")
+                            : t("support.resources.learnMore")}
                       </span>
 
-                      <ChevronRight className="h-4 w-4 text-[#a47e43] opacity-0 transition group-hover:translate-x-0.5 group-hover:opacity-100" />
+                      <ChevronRight className="h-4 w-4 text-[#a47e43] opacity-0 transition group-hover:translate-x-0.5 group-hover:opacity-100 rtl:rotate-180 rtl:group-hover:-translate-x-0.5" />
                     </div>
                   </Link>
                 );
@@ -604,12 +525,11 @@ export default function SupportHubPage() {
               </div>
 
               <h3 className="mt-3 text-sm font-semibold text-[#30251f]">
-                No results found
+                {t("support.noResults.title")}
               </h3>
 
               <p className="mt-1 text-xs text-[#756b65]">
-                Try searching for a different topic or browse all
-                support resources.
+                {t("support.noResults.text")}
               </p>
 
               <button
@@ -617,7 +537,7 @@ export default function SupportHubPage() {
                 onClick={() => setSearchQuery("")}
                 className="mt-4 text-xs font-semibold text-[#a47e43] hover:underline"
               >
-                Clear search
+                {t("support.noResults.clear")}
               </button>
             </div>
           )}
@@ -636,32 +556,32 @@ export default function SupportHubPage() {
               <Clock className="h-5 w-5 text-[#a47e43]" />
 
               <h3 className="font-semibold text-[#30251f]">
-                Support Hours
+                {t("support.hours.title")}
               </h3>
             </div>
 
             <div className="mt-3 space-y-1.5 text-sm text-[#756b65]">
               <p className="flex justify-between gap-4">
-                <span>Monday - Friday</span>
+                <span>{t("support.hours.weekdays")}</span>
 
                 <span className="font-medium text-[#30251f]">
-                  9:00 AM - 6:00 PM
+                  {t("support.hours.weekdayTime")}
                 </span>
               </p>
 
               <p className="flex justify-between gap-4">
-                <span>Saturday - Sunday</span>
+                <span>{t("support.hours.weekend")}</span>
 
                 <span className="font-medium text-[#30251f]">
-                  Closed
+                  {t("support.hours.closed")}
                 </span>
               </p>
 
               <p className="flex justify-between gap-4 text-xs text-[#9a8d85]">
-                <span>Average response time</span>
+                <span>{t("support.hours.responseTime")}</span>
 
                 <span className="font-medium text-emerald-600">
-                  &lt; 2 hours
+                  {t("support.hours.responseValue")}
                 </span>
               </p>
             </div>
@@ -674,7 +594,7 @@ export default function SupportHubPage() {
               <AlertCircle className="h-5 w-5 text-[#a47e43]" />
 
               <h3 className="font-semibold text-[#30251f]">
-                Quick Info
+                {t("support.info.title")}
               </h3>
             </div>
 
@@ -685,24 +605,7 @@ export default function SupportHubPage() {
                   <p className="flex items-center gap-2 text-[#756b65]">
                     <Shield className="h-4 w-4 text-purple-500" />
 
-                    <span>
-                      You have{" "}
-                      <strong className="text-[#30251f]">
-                        Admin
-                      </strong>{" "}
-                      privileges
-                    </span>
-                  </p>
-
-                  <p className="flex items-center gap-2 text-[#756b65]">
-                    <Ticket className="h-4 w-4 text-red-500" />
-
-                    <span>
-                      <strong className="text-[#30251f]">
-                        12
-                      </strong>{" "}
-                      open tickets
-                    </span>
+                    <span><Rich text={t("support.info.adminPrivileges")} bold={t("support.info.adminBold")} /></span>
                   </p>
                 </>
               )}
@@ -712,26 +615,20 @@ export default function SupportHubPage() {
                   <p className="flex items-center gap-2 text-[#756b65]">
                     <Building2 className="h-4 w-4 text-amber-500" />
 
-                    <span>
-                      Vendor{" "}
-                      <strong className="text-[#30251f]">
-                        {vendor?.businessName ||
+                    <span><Rich
+                        text={t("support.info.vendor")}
+                        bold={
+                          vendor?.businessName ||
                           user?.fullName ||
-                          "Partner"}
-                      </strong>
-                    </span>
+                          t("support.info.vendorFallback")
+                        }
+                      /></span>
                   </p>
 
                   <p className="flex items-center gap-2 text-[#756b65]">
                     <CheckCircle2 className="h-4 w-4 text-emerald-500" />
 
-                    <span>
-                      Priority{" "}
-                      <strong className="text-[#30251f]">
-                        Support
-                      </strong>{" "}
-                      available
-                    </span>
+                    <span><Rich text={t("support.info.priority")} bold={t("support.info.priorityBold")} /></span>
                   </p>
                 </>
               )}
@@ -741,20 +638,13 @@ export default function SupportHubPage() {
                   <p className="flex items-center gap-2 text-[#756b65]">
                     <User className="h-4 w-4 text-blue-500" />
 
-                    <span>
-                      Welcome back,{" "}
-                      <strong className="text-[#30251f]">
-                        {userInfo.name}
-                      </strong>
-                    </span>
+                    <span><Rich text={t("support.info.welcomeBack")} bold={userInfo.name} /></span>
                   </p>
 
                   <p className="flex items-center gap-2 text-[#756b65]">
                     <CheckCircle2 className="h-4 w-4 text-emerald-500" />
 
-                    <span>
-                      Standard support available
-                    </span>
+                    <span>{t("support.info.standardSupport")}</span>
                   </p>
                 </>
               )}
@@ -764,20 +654,13 @@ export default function SupportHubPage() {
                   <p className="flex items-center gap-2 text-[#756b65]">
                     <User className="h-4 w-4 text-[#a47e43]" />
 
-                    <span>
-                      You are browsing as a{" "}
-                      <strong className="text-[#30251f]">
-                        Guest
-                      </strong>
-                    </span>
+                    <span><Rich text={t("support.info.guestBrowsing")} bold={t("support.info.guestBold")} /></span>
                   </p>
 
                   <p className="flex items-center gap-2 text-[#756b65]">
                     <CheckCircle2 className="h-4 w-4 text-emerald-500" />
 
-                    <span>
-                      Public support resources are available
-                    </span>
+                    <span>{t("support.info.publicResources")}</span>
                   </p>
                 </>
               )}
@@ -794,7 +677,7 @@ export default function SupportHubPage() {
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
 
             <p className="text-sm text-[#756b65]">
-              💡 Need immediate assistance? Contact us directly:
+              {t("support.contact.text")}
             </p>
 
             <div className="flex flex-wrap items-center gap-3">

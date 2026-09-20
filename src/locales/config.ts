@@ -26,6 +26,12 @@ export const LANGUAGE_NATIVE_NAME: Record<Language, string> = {
   en: "English",
 };
 
+/** Locale used for dates/numbers (Arabic month names, but Western digits). */
+export const LANGUAGE_DATE_LOCALE: Record<Language, string> = {
+  ar: "ar-EG-u-nu-latn",
+  en: "en-US",
+};
+
 export function isLanguage(value: unknown): value is Language {
   return (LANGUAGES as readonly unknown[]).includes(value);
 }

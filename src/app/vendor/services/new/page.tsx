@@ -32,10 +32,13 @@ import Select from "@/components/shared/Select";
 import { useVendorServices } from "@/features/services/hooks/useVendorServices";
 import { useCategories } from "@/features/categories/hooks/useCategories";
 import { useVendor } from "@/features/vendors/hooks/useVendor";
+import { useLanguage } from "@/context/LanguageContext";
+import TextWithSlot from "@/components/shared/TextWithSlot";
 import type { CreateServicePriceRequest } from "@/types/service";
 
 export default function NewVendorServicePage() {
   const router = useRouter();
+  const { t } = useLanguage();
 
   const { create, uploadImages, actionLoading, actionError } = useVendorServices();
   const { categories, loading: categoriesLoading } = useCategories();
@@ -131,7 +134,7 @@ export default function NewVendorServicePage() {
     setFormError("");
 
     if (!name.trim() || !description.trim() || !categoryId) {
-      setFormError("Please fill in the service name, description and category.");
+      setFormError(t("vendor.services.form.errors.fillNew"));
       return;
     }
 
@@ -140,7 +143,7 @@ export default function NewVendorServicePage() {
     );
 
     if (validPrices.length === 0) {
-      setFormError("Please add at least one price option.");
+      setFormError(t("vendor.services.form.errors.atLeastOnePrice"));
       return;
     }
 
@@ -164,7 +167,7 @@ export default function NewVendorServicePage() {
 
       router.push("/vendor/services");
     }
-  }, [name, description, categoryId, prices, images, create, uploadImages, router]);
+  }, [name, description, categoryId, prices, images, create, uploadImages, router, t]);
 
   const handleCancel = useCallback(() => {
     router.push("/vendor/services");
@@ -182,21 +185,20 @@ export default function NewVendorServicePage() {
             href="/vendor/services"
             className="mb-3 inline-flex items-center gap-1.5 text-xs font-medium text-[#756b65] transition hover:text-[#30251f] sm:mb-4 sm:gap-2 sm:text-sm"
           >
-            <ArrowLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-            Back to services
+            <ArrowLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4 rtl:rotate-180" />
+            {t("vendor.services.add.back")}
           </Link>
 
           <div className="flex items-center gap-2 sm:gap-3">
             <div>
               <h1 className="text-2xl font-semibold tracking-tight text-[#30251f] sm:text-3xl lg:text-4xl">
-                Add a New Service
+                {t("vendor.services.add.title")}
               </h1>
             </div>
           </div>
 
           <p className="mt-2 max-w-2xl text-xs leading-5 text-[#756b65] sm:mt-3 sm:text-sm sm:leading-6">
-            Your service will be sent for admin review before it appears in the marketplace.
-            Fill in all the details below to get started.
+            {t("vendor.services.add.intro")}
           </p>
         </header>
 
@@ -225,13 +227,13 @@ export default function NewVendorServicePage() {
 
           <div className="mb-5 sm:mb-6">
             <label className="mb-1.5 block text-xs font-medium text-[#40352f] sm:mb-2 sm:text-sm">
-              Service Name <span className="text-red-500">*</span>
+              {t("vendor.services.form.name")} <span className="text-red-500">*</span>
             </label>
             <TextField
               type="text"
               value={name}
               onChange={(event) => setName(event.target.value)}
-              placeholder="e.g. Wedding Photography Package"
+              placeholder={t("vendor.services.form.namePlaceholder")}
               fullWidth
               size="small"
               sx={{
@@ -246,7 +248,7 @@ export default function NewVendorServicePage() {
               }}
             />
             <p className="mt-1 text-[10px] text-[#9b8f86] sm:text-xs">
-              Choose a clear and descriptive name for your service
+              {t("vendor.services.form.nameHint")}
             </p>
           </div>
 
@@ -256,13 +258,13 @@ export default function NewVendorServicePage() {
 
           <div className="mb-5 sm:mb-6">
             <label className="mb-1.5 block text-xs font-medium text-[#40352f] sm:mb-2 sm:text-sm">
-              Category <span className="text-red-500">*</span>
+              {t("vendor.services.form.category")} <span className="text-red-500">*</span>
             </label>
 
             {categoriesLoadingCombined ? (
               <div className="flex items-center gap-3 rounded-xl border border-[#e3d9d1] bg-[#fcfaf8] px-4 py-3">
                 <Loader2 className="h-4 w-4 animate-spin text-[#a47e43]" />
-                <span className="text-sm text-[#9b8f86]">Loading categories...</span>
+                <span className="text-sm text-[#9b8f86]">{t("vendor.services.form.loadingCategories")}</span>
               </div>
             ) : (
               <Select
@@ -270,8 +272,8 @@ export default function NewVendorServicePage() {
                 onChange={setCategoryId}
                 options={categoryOptions}
                 loading={categoriesLoadingCombined}
-                placeholder="Select a category"
-                emptyMessage="No categories assigned to your business yet."
+                placeholder={t("vendor.services.form.selectCategory")}
+                emptyMessage={t("vendor.services.form.noCategoriesEmpty")}
               />
             )}
 
@@ -279,13 +281,20 @@ export default function NewVendorServicePage() {
               <div className="mt-2 flex items-start gap-2 rounded-xl bg-amber-50 p-2.5 text-xs text-amber-700 sm:p-3">
                 <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                 <span className="leading-5">
-                  Your business has no assigned categories yet, so you can&apos;t add a service.
-                  Please <a href="/support" className="font-semibold underline hover:no-underline">contact support</a> to get a category assigned.
+                  <TextWithSlot
+                    text={t("vendor.services.form.noAssigned")}
+                    token="{link}"
+                    slot={
+                      <a href="/support" className="font-semibold underline hover:no-underline">
+                        {t("vendor.services.form.contactSupportLink")}
+                      </a>
+                    }
+                  />
                 </span>
               </div>
             ) : (
               <p className="mt-1 text-[10px] text-[#9b8f86] sm:text-xs">
-                Choose the category that best fits your service
+                {t("vendor.services.form.categoryHint")}
               </p>
             )}
           </div>
@@ -296,14 +305,14 @@ export default function NewVendorServicePage() {
 
           <div className="mb-5 sm:mb-6">
             <label className="mb-1.5 block text-xs font-medium text-[#40352f] sm:mb-2 sm:text-sm">
-              Description <span className="text-red-500">*</span>
+              {t("vendor.services.form.description")} <span className="text-red-500">*</span>
             </label>
             <TextField
               value={description}
               onChange={(event) => setDescription(event.target.value)}
               multiline
               rows={5}
-              placeholder="Describe what's included in this service, what customers can expect, and any special features..."
+              placeholder={t("vendor.services.form.descriptionPlaceholder")}
               fullWidth
               sx={{
                 "& .MuiOutlinedInput-root": {
@@ -317,7 +326,7 @@ export default function NewVendorServicePage() {
               }}
             />
             <p className="mt-1 text-[10px] text-[#9b8f86] sm:text-xs">
-              Be detailed and specific. This helps customers understand the value you offer.
+              {t("vendor.services.form.descriptionHint")}
             </p>
           </div>
 
@@ -328,7 +337,7 @@ export default function NewVendorServicePage() {
           <div className="mb-5 sm:mb-6">
             <div className="mb-1.5 flex items-center justify-between sm:mb-2">
               <label className="text-xs font-medium text-[#40352f] sm:text-sm">
-                Pricing Options <span className="text-red-500">*</span>
+                {t("vendor.services.form.pricing")} <span className="text-red-500">*</span>
               </label>
               <button
                 type="button"
@@ -336,7 +345,7 @@ export default function NewVendorServicePage() {
                 className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-[#604b3e] transition hover:bg-[#f5eee9] hover:text-[#30251f] sm:gap-1.5 sm:px-2.5 sm:py-1.5 sm:text-sm"
               >
                 <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                Add Price
+                {t("vendor.services.form.addPrice")}
               </button>
             </div>
 
@@ -353,7 +362,7 @@ export default function NewVendorServicePage() {
                       onChange={(event) =>
                         updatePriceRow(index, "label", event.target.value)
                       }
-                      placeholder="Label (e.g. Basic Package)"
+                      placeholder={t("vendor.services.form.labelPlaceholder")}
                       size="small"
                       fullWidth
                       sx={{
@@ -370,21 +379,21 @@ export default function NewVendorServicePage() {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <div className="w-full sm:w-32">
+                    <div className="w-full sm:w-40">
                       <TextField
                         type="number"
                         value={price.price}
                         onChange={(event) =>
                           updatePriceRow(index, "price", event.target.value)
                         }
-                        placeholder="Price"
+                        placeholder={t("vendor.services.form.pricePlaceholder")}
                         size="small"
                         fullWidth
                         slotProps={{
                           input: {
                             startAdornment: (
                               <InputAdornment position="start">
-                                <span className="text-[#9b8f86]">$</span>
+                                <span className="text-[#9b8f86]">{t("common.currency")}</span>
                               </InputAdornment>
                             ),
                             inputProps: {
@@ -407,7 +416,7 @@ export default function NewVendorServicePage() {
                     </div>
 
                     {prices.length > 1 && (
-                      <Tooltip title="Remove this price option" arrow>
+                      <Tooltip title={t("vendor.services.form.removePrice")} arrow>
                         <button
                           type="button"
                           onClick={() => removePriceRow(index)}
@@ -423,7 +432,7 @@ export default function NewVendorServicePage() {
             </div>
 
             <p className="mt-1.5 text-[10px] text-[#9b8f86] sm:mt-2 sm:text-xs">
-              Add at least one price option. You can add multiple packages or tiers.
+              {t("vendor.services.form.pricesHint")}
             </p>
           </div>
 
@@ -433,7 +442,7 @@ export default function NewVendorServicePage() {
 
           <div className="mb-5 sm:mb-6">
             <label className="mb-1.5 block text-xs font-medium text-[#40352f] sm:mb-2 sm:text-sm">
-              Service Images
+              {t("vendor.services.form.images")}
             </label>
 
             <div className="flex flex-wrap gap-2.5 sm:gap-3">
@@ -445,13 +454,13 @@ export default function NewVendorServicePage() {
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={src}
-                    alt={`Selected image ${index + 1}`}
+                    alt={t("vendor.services.form.selectedImageAlt", { number: index + 1 })}
                     className="h-full w-full object-cover"
                   />
                   <button
                     type="button"
                     onClick={() => removeImage(index)}
-                    className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition group-hover:opacity-100"
+                    className="absolute end-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition group-hover:opacity-100"
                   >
                     <Trash2 className="h-3 w-3" />
                   </button>
@@ -460,7 +469,7 @@ export default function NewVendorServicePage() {
 
               <label className="flex h-20 w-20 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-[#d5c8be] bg-[#fcfaf8] text-[#9b8f86] transition hover:border-[#a47e43] hover:text-[#a47e43] sm:h-24 sm:w-24">
                 <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
-                <span className="text-[10px]">Add photo</span>
+                <span className="text-[10px]">{t("vendor.services.form.addPhoto")}</span>
                 <input
                   type="file"
                   accept="image/*"
@@ -472,7 +481,7 @@ export default function NewVendorServicePage() {
             </div>
 
             <p className="mt-1.5 text-[10px] text-[#9b8f86] sm:mt-2 sm:text-xs">
-              Add a few photos of your work — services with images get noticed more.
+              {t("vendor.services.form.imagesHint")}
             </p>
           </div>
 
@@ -489,12 +498,12 @@ export default function NewVendorServicePage() {
               {isSubmitting ? (
                 <>
                   <Loader2 className="h-3.5 w-3.5 animate-spin sm:h-4 sm:w-4" />
-                  Submitting...
+                  {t("vendor.services.form.submitting")}
                 </>
               ) : (
                 <>
                   <Save className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                  Submit for Review
+                  {t("vendor.services.form.submitForReview")}
                 </>
               )}
             </button>
@@ -504,13 +513,13 @@ export default function NewVendorServicePage() {
               onClick={handleCancel}
               className="inline-flex h-10 items-center justify-center rounded-xl border border-[#e3d9d1] bg-white px-4 text-xs font-medium text-[#514740] transition hover:bg-[#f7f2ef] sm:h-11 sm:px-6 sm:text-sm"
             >
-              Cancel
+              {t("vendor.services.form.cancel")}
             </button>
 
             {/* Status indicator */}
-            <div className="mt-2 flex items-center gap-2 text-[10px] text-[#9b8f86] sm:ml-auto sm:mt-0 sm:text-xs">
+            <div className="mt-2 flex items-center gap-2 text-[10px] text-[#9b8f86] sm:ms-auto sm:mt-0 sm:text-xs">
               <span className="inline-flex h-1.5 w-1.5 rounded-full bg-amber-400" />
-              <span>Draft</span>
+              <span>{t("vendor.services.form.draft")}</span>
             </div>
           </div>
 
@@ -521,10 +530,10 @@ export default function NewVendorServicePage() {
           <div className="mt-4 flex items-start gap-2 rounded-xl bg-[#fbf6f1] p-3 text-[10px] text-[#6f625a] sm:mt-6 sm:p-3.5 sm:text-xs">
             <HelpCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#a47e43] sm:h-4 sm:w-4" />
             <span className="leading-5">
-              <span className="font-medium text-[#40352f]">Need help?</span>{' '}
-              All services are reviewed by our team before going live. Make sure your description is clear and accurate.
-              <a href="/vendor/support" className="ml-1 font-medium text-[#a47e43] hover:underline">
-                Contact support
+              <span className="font-medium text-[#40352f]">{t("vendor.services.form.needHelp")}</span>{" "}
+              {t("vendor.services.form.needHelpText")}
+              <a href="/vendor/support" className="ms-1 font-medium text-[#a47e43] hover:underline">
+                {t("vendor.services.form.contactSupport")}
               </a>
             </span>
           </div>

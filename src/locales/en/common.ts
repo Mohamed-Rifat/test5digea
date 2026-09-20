@@ -29,6 +29,27 @@ const common: Translation["common"] = {
   nextImage: "Next image",
   imageNumber: "Image {number}",
   titleImageNumber: "{title} — image {number}",
+  notifications: "Notifications",
+  markAllRead: "Mark all read",
+  noNotifications: "No notifications yet.",
+  notificationsPage: {
+    title: "Notifications",
+    total: "{count} total",
+    markAllAsRead: "Mark all as read",
+    emptyTitle: "No notifications yet",
+    emptyText: "You'll see updates about approvals, reviews and other activity here.",
+    page: "Page {page} of {total}",
+    types: {
+      vendorApproved: "Vendor approved",
+      vendorRejected: "Vendor rejected",
+      serviceApproved: "Service approved",
+      serviceRejected: "Service rejected",
+      newReview: "New review",
+      system: "System",
+      update: "Update",
+    },
+  },
+  viewAllNotifications: "View all notifications",
 };
 
 export default common;

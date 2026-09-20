@@ -18,7 +18,7 @@ export default function AdminLayout({
       <div className="min-h-screen bg-[#faf8f6] text-[#30251f]">
         <AdminSidebar mobileOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-        <div className="lg:pl-67.5">
+        <div className="lg:ps-67.5">
           <AdminHeader onMenuClick={() => setSidebarOpen(true)} />
 
           <main className="min-h-[calc(100vh-82px)] overflow-x-hidden p-3 sm:p-6 lg:p-8">

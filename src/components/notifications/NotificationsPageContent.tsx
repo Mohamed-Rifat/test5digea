@@ -3,6 +3,9 @@
 import { useState } from "react";
 import { Bell, CheckCheck, ChevronLeft, ChevronRight, Info, MessageSquareText, ShieldCheck, ShieldX, Sparkles, XCircle } from "lucide-react";
 
+import { useLanguage } from "@/context/LanguageContext";
+import { LANGUAGE_DATE_LOCALE } from "@/locales/config";
+import type { TranslationKey } from "@/locales";
 import { useNotifications } from "@/features/notifications/hooks/useNotifications";
 import { formatDate } from "@/lib/format";
 import { NotificationType } from "@/types/notification";
@@ -11,36 +14,36 @@ const PAGE_SIZE = 15;
 
 const typeMeta: Record<
   NotificationType,
-  { icon: typeof Bell; label: string; className: string }
+  { icon: typeof Bell; labelKey: TranslationKey; className: string }
 > = {
   [NotificationType.VendorApproved]: {
     icon: ShieldCheck,
-    label: "Vendor approved",
+    labelKey: "common.notificationsPage.types.vendorApproved",
     className: "bg-emerald-50 text-emerald-600",
   },
   [NotificationType.VendorRejected]: {
     icon: ShieldX,
-    label: "Vendor rejected",
+    labelKey: "common.notificationsPage.types.vendorRejected",
     className: "bg-red-50 text-red-500",
   },
   [NotificationType.ServiceApproved]: {
     icon: ShieldCheck,
-    label: "Service approved",
+    labelKey: "common.notificationsPage.types.serviceApproved",
     className: "bg-emerald-50 text-emerald-600",
   },
   [NotificationType.ServiceRejected]: {
     icon: XCircle,
-    label: "Service rejected",
+    labelKey: "common.notificationsPage.types.serviceRejected",
     className: "bg-red-50 text-red-500",
   },
   [NotificationType.NewReview]: {
     icon: MessageSquareText,
-    label: "New review",
+    labelKey: "common.notificationsPage.types.newReview",
     className: "bg-[#f0e9e0] text-[#a47e43]",
   },
   [NotificationType.System]: {
     icon: Sparkles,
-    label: "System",
+    labelKey: "common.notificationsPage.types.system",
     className: "bg-[#f0e9e0] text-[#a47e43]",
   },
 };
@@ -50,8 +53,9 @@ interface NotificationsPageContentProps {
 }
 
 export default function NotificationsPageContent({
-  title = "Notifications",
+  title,
 }: NotificationsPageContentProps) {
+  const { t, language } = useLanguage();
   const [page, setPage] = useState(1);
 
   const {
@@ -72,12 +76,12 @@ export default function NotificationsPageContent({
       <div className="mb-6 flex items-center justify-between gap-4">
         <div>
           <h1 className="font-serif text-2xl font-light text-[#30251f] sm:text-3xl">
-            {title}
+            {title ?? t("common.notificationsPage.title")}
           </h1>
 
           {totalCount > 0 && (
             <p className="mt-1 text-sm text-[#9b8f86]">
-              {totalCount} total
+              {t("common.notificationsPage.total", { count: totalCount })}
             </p>
           )}
         </div>
@@ -90,7 +94,7 @@ export default function NotificationsPageContent({
             className="flex shrink-0 items-center gap-2 rounded-full border border-[#e4dbd0] bg-white px-4 py-2 text-xs font-semibold text-[#30251f] transition hover:border-[#b99a62] hover:bg-[#faf7f4] disabled:opacity-50"
           >
             <CheckCheck size={14} />
-            Mark all as read
+            {t("common.notificationsPage.markAllAsRead")}
           </button>
         )}
       </div>
@@ -119,12 +123,11 @@ export default function NotificationsPageContent({
           </div>
 
           <p className="text-sm font-medium text-[#30251f]">
-            No notifications yet
+            {t("common.notificationsPage.emptyTitle")}
           </p>
 
           <p className="mx-auto mt-1.5 max-w-sm text-sm leading-6 text-[#9b8f86]">
-            You&apos;ll see updates about approvals, reviews and
-            other activity here.
+            {t("common.notificationsPage.emptyText")}
           </p>
         </div>
       )}
@@ -135,7 +138,7 @@ export default function NotificationsPageContent({
             {notifications.map((notification) => {
               const meta = typeMeta[notification.type] ?? {
                 icon: Info,
-                label: "Update",
+                labelKey: "common.notificationsPage.types.update" as const,
                 className: "bg-[#f0e9e0] text-[#a47e43]",
               };
 
@@ -148,7 +151,7 @@ export default function NotificationsPageContent({
                   onClick={() =>
                     !notification.isRead && markAsRead(notification.id)
                   }
-                  className={`flex w-full items-start gap-3 rounded-2xl border border-[#eee7e1] bg-white p-4 text-left transition hover:border-[#dccab8] ${
+                  className={`flex w-full items-start gap-3 rounded-2xl border border-[#eee7e1] bg-white p-4 text-start transition hover:border-[#dccab8] ${
                     notification.isRead ? "" : "bg-[#faf5ee]"
                   }`}
                 >
@@ -159,8 +162,8 @@ export default function NotificationsPageContent({
                   </span>
 
                   <span className="min-w-0 flex-1">
-                    <span className="mb-0.5 block text-[10px] font-semibold uppercase tracking-wide text-[#a47e43]">
-                      {meta.label}
+                    <span className="mb-0.5 block text-[10px] font-semibold uppercase tracking-wide rtl:tracking-normal text-[#a47e43]">
+                      {t(meta.labelKey)}
                     </span>
 
                     <span className="block text-sm leading-5 text-[#30251f]">
@@ -168,7 +171,7 @@ export default function NotificationsPageContent({
                     </span>
 
                     <span className="mt-1 block text-xs text-[#9b8f86]">
-                      {formatDate(notification.createdAt)}
+                      {formatDate(notification.createdAt, LANGUAGE_DATE_LOCALE[language])}
                     </span>
                   </span>
 
@@ -188,11 +191,11 @@ export default function NotificationsPageContent({
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 className="flex h-9 w-9 items-center justify-center rounded-full border border-[#e4dbd0] text-[#5f544d] transition hover:border-[#b99a62] disabled:opacity-40"
               >
-                <ChevronLeft size={15} />
+                <ChevronLeft size={15} className="rtl:rotate-180" />
               </button>
 
               <span className="text-xs text-[#766d67]">
-                Page {page} of {totalPages}
+                {t("common.notificationsPage.page", { page, total: totalPages })}
               </span>
 
               <button
@@ -203,7 +206,7 @@ export default function NotificationsPageContent({
                 }
                 className="flex h-9 w-9 items-center justify-center rounded-full border border-[#e4dbd0] text-[#5f544d] transition hover:border-[#b99a62] disabled:opacity-40"
               >
-                <ChevronRight size={15} />
+                <ChevronRight size={15} className="rtl:rotate-180" />
               </button>
             </div>
           )}

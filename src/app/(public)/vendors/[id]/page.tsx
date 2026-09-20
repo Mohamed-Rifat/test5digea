@@ -36,6 +36,8 @@ import { useServices } from "@/features/services/hooks/useServices";
 import { getVendorDetails } from "@/features/vendors/api";
 import { fetchServiceReviews } from "@/features/reviews/api";
 import { formatDate, formatPrice, startingPrice } from "@/lib/format";
+import { useLanguage } from "@/context/LanguageContext";
+import { LANGUAGE_DATE_LOCALE, type TranslationKey } from "@/locales";
 import { FavoriteTargetType } from "@/types/favorite";
 import type { Review } from "@/types/review";
 import type { Vendor } from "@/types/vendor";
@@ -56,44 +58,44 @@ type WorkingHours = Record<string, string>;
 
 const DAYS_OF_WEEK = [
   {
-    label: "Saturday",
-    short: "Sat",
+    labelKey: "vendors.detail.hours.days.sat.name",
+    shortKey: "vendors.detail.hours.days.sat.short",
     key: "sat",
     jsDay: 0,
   },
   {
-    label: "Sunday",
-    short: "Sun",
+    labelKey: "vendors.detail.hours.days.sun.name",
+    shortKey: "vendors.detail.hours.days.sun.short",
     key: "sun",
     jsDay: 1,
   },
   {
-    label: "Monday",
-    short: "Mon",
+    labelKey: "vendors.detail.hours.days.mon.name",
+    shortKey: "vendors.detail.hours.days.mon.short",
     key: "mon",
     jsDay: 2,
   },
   {
-    label: "Tuesday",
-    short: "Tue",
+    labelKey: "vendors.detail.hours.days.tue.name",
+    shortKey: "vendors.detail.hours.days.tue.short",
     key: "tue",
     jsDay: 3,
   },
   {
-    label: "Wednesday",
-    short: "Wed",
+    labelKey: "vendors.detail.hours.days.wed.name",
+    shortKey: "vendors.detail.hours.days.wed.short",
     key: "wed",
     jsDay: 4,
   },
   {
-    label: "Thursday",
-    short: "Thu",
+    labelKey: "vendors.detail.hours.days.thu.name",
+    shortKey: "vendors.detail.hours.days.thu.short",
     key: "thu",
     jsDay: 5,
   },
   {
-    label: "Friday",
-    short: "Fri",
+    labelKey: "vendors.detail.hours.days.fri.name",
+    shortKey: "vendors.detail.hours.days.fri.short",
     key: "fri",
     jsDay: 6,
   },
@@ -195,11 +197,13 @@ function ContactRow({
   icon,
   children,
   ariaLabel,
+  ltr,
 }: {
   href?: string;
   icon: React.ReactNode;
   children: React.ReactNode;
   ariaLabel?: string;
+  ltr?: boolean;
 }) {
   const baseClass =
     "flex min-w-0 items-center gap-3 rounded-2xl bg-[#faf7f4] px-4 py-3 text-sm text-[#5f544d] transition-all duration-200";
@@ -214,7 +218,7 @@ function ContactRow({
         {icon}
       </span>
 
-      <span className="min-w-0 wrap-break-word">
+      <span dir={ltr ? "ltr" : undefined} className="min-w-0 wrap-break-word">
         {children}
       </span>
     </>
@@ -245,10 +249,11 @@ function ContactRow({
 
 export default function VendorDetailPage() {
   const params = useParams<{ id: string }>();
+  const { t, language } = useLanguage();
 
   const [vendor, setVendor] = useState<Vendor | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
 
   const {
@@ -411,13 +416,13 @@ export default function VendorDetailPage() {
 
       try {
         setLoading(true);
-        setError(null);
+        setError(false);
 
         const data = await getVendorDetails(params.id);
 
         setVendor(data);
       } catch {
-        setError("This vendor could not be found.");
+        setError(true);
       } finally {
         setLoading(false);
       }
@@ -489,20 +494,21 @@ export default function VendorDetailPage() {
           </div>
 
           <h2 className="font-serif text-2xl text-[#30251f]">
-            {error || "Vendor not found"}
+            {error
+              ? t("vendors.detail.notFound")
+              : t("vendors.detail.notFoundTitle")}
           </h2>
 
           <p className="mt-3 text-sm leading-6 text-[#766d67]">
-            The vendor you're looking for may have been
-            removed or is temporarily unavailable.
+            {t("vendors.detail.notFoundText")}
           </p>
 
           <Link
             href="/vendors"
             className="mt-8 inline-flex items-center gap-2 rounded-full bg-[#30251f] px-6 py-3 text-sm font-medium text-white transition-all duration-200 hover:bg-[#4a3a30] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b99a62]/50"
           >
-            <ArrowLeft size={16} />
-            Back to Vendors
+            <ArrowLeft size={16} className="rtl:rotate-180" />
+            {t("vendors.detail.backToVendors")}
           </Link>
         </div>
       </main>
@@ -541,7 +547,7 @@ export default function VendorDetailPage() {
     } else {
       categoryMap.set(service.categoryId, {
         id: service.categoryId,
-        name: service.categoryName || "Other",
+        name: service.categoryName || t("vendors.detail.services.otherCategory"),
         count: 1,
       });
     }
@@ -624,9 +630,9 @@ export default function VendorDetailPage() {
     orderedServices.length > displayedServices.length;
 
   const sortOptions: { value: SortMode; label: string }[] = [
-    { value: "recommended", label: "Recommended" },
-    { value: "rating", label: "Highest rated" },
-    { value: "newest", label: "Newest" },
+    { value: "recommended", label: t("vendors.detail.services.sort.recommended") },
+    { value: "rating", label: t("vendors.detail.services.sort.rating") },
+    { value: "newest", label: t("vendors.detail.services.sort.newest") },
   ];
 
   /* =========================================================
@@ -695,8 +701,8 @@ export default function VendorDetailPage() {
             href="/vendors"
             className="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-[#30251f]transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b99a62]/50"
           >
-            <ArrowLeft size={15}/>
-            <span className="text-[#9A8F86] hover:text-[#6b3203]">Back</span>
+            <ArrowLeft size={15} className="rtl:rotate-180" />
+            <span className="text-[#9A8F86] hover:text-[#6b3203]">{t("vendors.detail.back")}</span>
           </Link>
 
           <div className="flex items-center gap-2">
@@ -705,7 +711,7 @@ export default function VendorDetailPage() {
             <button
               type="button"
               onClick={handleShare}
-              aria-label="Share vendor"
+              aria-label={t("vendors.detail.share")}
               className="relative flex h-10 w-10 items-center justify-center rounded-full border border-white/60 bg-white/85 text-[#30251f] shadow-sm backdrop-blur transition-all duration-200 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b99a62]/50"
             >
               {shareCopied ? (
@@ -715,8 +721,8 @@ export default function VendorDetailPage() {
               )}
 
               {shareCopied && (
-                <span className="absolute right-0 top-12 whitespace-nowrap rounded-lg bg-[#30251f] px-2.5 py-1.5 text-[10px] text-white shadow-lg">
-                  Link copied
+                <span className="absolute end-0 top-12 whitespace-nowrap rounded-lg bg-[#30251f] px-2.5 py-1.5 text-[10px] text-white shadow-lg">
+                  {t("vendors.detail.linkCopied")}
                 </span>
               )}
             </button>
@@ -772,8 +778,8 @@ export default function VendorDetailPage() {
 
               {/* Verified */}
               <span
-                className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full border-4 border-white bg-[#a47e43] text-white shadow-sm"
-                title="Verified vendor"
+                className="absolute -bottom-1 -end-1 flex h-7 w-7 items-center justify-center rounded-full border-4 border-white bg-[#a47e43] text-white shadow-sm"
+                title={t("vendors.detail.verified")}
               >
                 <BadgeCheck size={13} />
               </span>
@@ -786,13 +792,13 @@ export default function VendorDetailPage() {
               <div className="min-w-0 flex-1">
 
                 <div className="flex flex-wrap items-center gap-2">
-                  <h1 className="wrap-break-word font-serif text-xl font-light leading-tight tracking-[-0.02em] text-[#30251f] sm:text-3xl">
+                  <h1 className="wrap-break-word font-serif text-xl font-light leading-tight rtl:leading-snug tracking-[-0.02em] rtl:tracking-normal text-[#30251f] sm:text-3xl">
                     {vendor.businessName}
                   </h1>
                 </div>
 
                 {vendor.slogan && (
-                  <p className="mt-1.5 max-w-2xl text-sm italic leading-6 text-[#a47e43]">
+                  <p className="mt-1.5 max-w-2xl text-sm italic rtl:not-italic leading-6 text-[#a47e43]">
                     {vendor.slogan}
                   </p>
                 )}
@@ -855,7 +861,7 @@ export default function VendorDetailPage() {
                     <SocialIconButton
                       href={socialLinks.website}
                       icon={<Globe2 size={16} />}
-                      label="Website"
+                      label={t("vendors.detail.website")}
                     />
                   )}
                 </div>
@@ -885,22 +891,25 @@ export default function VendorDetailPage() {
               <div className="mb-5 flex items-end justify-between gap-4">
 
                 <div>
-                  <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#a47e43]">
-                    What they offer
+                  <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] rtl:tracking-normal text-[#a47e43]">
+                    {t("vendors.detail.services.eyebrow")}
                   </p>
 
                   <h2 className="font-serif text-2xl font-light text-[#30251f] sm:text-3xl">
-                    Services
+                    {t("vendors.detail.services.title")}
                   </h2>
                 </div>
 
                 {!servicesLoading &&
                   availableServices.length > 0 && (
                     <span className="shrink-0 text-xs text-[#9b8f86]">
-                      {availableServices.length}{" "}
                       {availableServices.length === 1
-                        ? "service"
-                        : "services"}
+                        ? t("vendors.detail.services.countOne", {
+                            count: availableServices.length,
+                          })
+                        : t("vendors.detail.services.countMany", {
+                            count: availableServices.length,
+                          })}
                     </span>
                   )}
               </div>
@@ -921,7 +930,7 @@ export default function VendorDetailPage() {
                               : "border border-[#e4dbd0] bg-white text-[#5f544d] hover:border-[#c9bcae]"
                           }`}
                         >
-                          All
+                          {t("vendors.detail.services.all")}
                         </button>
 
                         {categoryOptions.map((category) => (
@@ -957,7 +966,7 @@ export default function VendorDetailPage() {
                     <div className="relative shrink-0">
                       <SlidersHorizontal
                         size={13}
-                        className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#a47e43]"
+                        className="pointer-events-none absolute start-3 top-1/2 -translate-y-1/2 text-[#a47e43]"
                       />
 
                       <select
@@ -965,7 +974,7 @@ export default function VendorDetailPage() {
                         onChange={(e) =>
                           setSortMode(e.target.value as SortMode)
                         }
-                        className="appearance-none rounded-full border border-[#e4dbd0] bg-white py-1.5 pl-8 pr-8 text-xs font-semibold text-[#5f544d] outline-none transition hover:border-[#c9bcae] focus-visible:ring-2 focus-visible:ring-[#b99a62]/40"
+                        className="appearance-none rounded-full border border-[#e4dbd0] bg-white py-1.5 ps-8 pe-8 text-xs font-semibold text-[#5f544d] outline-none transition hover:border-[#c9bcae] focus-visible:ring-2 focus-visible:ring-[#b99a62]/40"
                       >
                         {sortOptions.map((option) => (
                           <option
@@ -979,7 +988,7 @@ export default function VendorDetailPage() {
 
                       <ChevronDown
                         size={13}
-                        className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#a47e43]"
+                        className="pointer-events-none absolute end-3 top-1/2 -translate-y-1/2 text-[#a47e43]"
                       />
                     </div>
                   </div>
@@ -1023,12 +1032,11 @@ export default function VendorDetailPage() {
                     </div>
 
                     <p className="text-sm font-medium text-[#30251f]">
-                      No services available yet
+                      {t("vendors.detail.services.emptyTitle")}
                     </p>
 
                     <p className="mx-auto mt-1.5 max-w-sm text-sm leading-6 text-[#9b8f86]">
-                      This partner hasn't published any
-                      services yet.
+                      {t("vendors.detail.services.emptyText")}
                     </p>
                   </div>
                 )}
@@ -1039,7 +1047,7 @@ export default function VendorDetailPage() {
                 orderedServices.length === 0 && (
                   <div className="rounded-3xl border border-dashed border-[#dfd2c5] bg-white px-6 py-10 text-center">
                     <p className="text-sm font-medium text-[#30251f]">
-                      No services in this category
+                      {t("vendors.detail.services.noneInCategory")}
                     </p>
 
                     <button
@@ -1047,7 +1055,7 @@ export default function VendorDetailPage() {
                       onClick={() => setActiveCategoryId("")}
                       className="mt-3 text-xs font-semibold text-[#a47e43] underline-offset-2 hover:underline"
                     >
-                      Clear filter
+                      {t("vendors.detail.services.clearFilter")}
                     </button>
                   </div>
                 )}
@@ -1096,7 +1104,7 @@ export default function VendorDetailPage() {
 
                             {/* Rating */}
                             {serviceRating !== null && (
-                              <span className="absolute right-4 top-4 flex items-center gap-1.5 rounded-full border border-white/50 bg-white/90 px-2.5 py-1.5 text-[11px] font-semibold text-[#30251f] shadow-lg backdrop-blur-md">
+                              <span className="absolute end-4 top-4 flex items-center gap-1.5 rounded-full border border-white/50 bg-white/90 px-2.5 py-1.5 text-[11px] font-semibold text-[#30251f] shadow-lg backdrop-blur-md">
                                 <Star
                                   size={11}
                                   className="fill-[#a47e43] text-[#a47e43]"
@@ -1106,13 +1114,13 @@ export default function VendorDetailPage() {
                             )}
 
                             {/* Bottom image eyebrow */}
-                            <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between gap-3">
-                              <span className="text-[9px] font-semibold uppercase tracking-[0.18em] text-white/80">
-                                Wedding Service
+                            <div className="absolute bottom-4 start-4 end-4 flex items-end justify-between gap-3">
+                              <span className="text-[9px] font-semibold uppercase tracking-[0.18em] rtl:tracking-normal text-white/80">
+                                {t("vendors.detail.services.weddingService")}
                               </span>
 
                               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/90 text-[#30251f] shadow-lg backdrop-blur transition-all duration-300 group-hover:-rotate-6 group-hover:scale-105">
-                                <ArrowUpRight size={15} />
+                                <ArrowUpRight size={15} className="rtl:-scale-x-100" />
                               </span>
                             </div>
                           </div>
@@ -1129,8 +1137,7 @@ export default function VendorDetailPage() {
                               </p>
                             ) : (
                               <p className="mt-2.5 line-clamp-2 text-[12px] leading-6 text-[#b2a59c]">
-                                A carefully selected service for your special
-                                day.
+                                {t("vendors.detail.services.defaultDescription")}
                               </p>
                             )}
 
@@ -1140,22 +1147,22 @@ export default function VendorDetailPage() {
                             {/* Footer */}
                             <div className="mt-auto flex items-end justify-between gap-4">
                               <div className="min-w-0">
-                                <p className="text-[9px] font-semibold uppercase tracking-[0.16em] text-[#a99a90]">
-                                  Starting from
+                                <p className="text-[9px] font-semibold uppercase tracking-[0.16em] rtl:tracking-normal text-[#a99a90]">
+                                  {t("vendors.detail.services.startingFrom")}
                                 </p>
 
                                 <p className="mt-1 truncate text-[14px] font-semibold text-[#a47e43]">
                                   {price !== null
-                                    ? `${formatPrice(price)} EGP`
-                                    : "Contact for pricing"}
+                                    ? `${formatPrice(price)} ${t("common.currency")}`
+                                    : t("vendors.detail.services.contactForPricing")}
                                 </p>
                               </div>
 
-                              <span className="flex shrink-0 items-center gap-1.5 rounded-full border border-[#e7ddd4] px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#30251f] transition-all duration-300 group-hover:border-[#cbb08d] group-hover:bg-[#faf6f2]">
-                                Explore
+                              <span className="flex shrink-0 items-center gap-1.5 rounded-full border border-[#e7ddd4] px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.08em] rtl:tracking-normal text-[#30251f] transition-all duration-300 group-hover:border-[#cbb08d] group-hover:bg-[#faf6f2]">
+                                {t("vendors.detail.services.explore")}
                                 <ArrowUpRight
                                   size={12}
-                                  className="transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
+                                  className="rtl:-scale-x-100 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
                                 />
                               </span>
                             </div>
@@ -1213,17 +1220,16 @@ export default function VendorDetailPage() {
             >
 
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#a47e43]">
-                  Get in touch
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] rtl:tracking-normal text-[#a47e43]">
+                  {t("vendors.detail.contact.eyebrow")}
                 </p>
 
                 <h2 className="mt-1.5 font-serif text-xl font-light text-[#30251f]">
-                  Contact
+                  {t("vendors.detail.contact.title")}
                 </h2>
 
                 <p className="mt-2 text-sm leading-6 text-[#958980]">
-                  Reach out to {vendor.businessName} for
-                  pricing, availability and more details.
+                  {t("vendors.detail.contact.text", { name: vendor.businessName })}
                 </p>
               </div>
 
@@ -1232,8 +1238,11 @@ export default function VendorDetailPage() {
                 {vendor.contactPhone && (
                   <ContactRow
                     href={`tel:${vendor.contactPhone}`}
+            ltr
                     icon={<Phone size={15} />}
-                    ariaLabel={`Call ${vendor.businessName}`}
+                    ariaLabel={t("vendors.detail.contact.call", {
+              name: vendor.businessName,
+            })}
                   >
                     {vendor.contactPhone}
                   </ContactRow>
@@ -1242,8 +1251,11 @@ export default function VendorDetailPage() {
                 {vendor.contactEmail && (
                   <ContactRow
                     href={`mailto:${vendor.contactEmail}`}
+            ltr
                     icon={<Mail size={15} />}
-                    ariaLabel={`Email ${vendor.businessName}`}
+                    ariaLabel={t("vendors.detail.contact.email", {
+              name: vendor.businessName,
+            })}
                   >
                     {vendor.contactEmail}
                   </ContactRow>
@@ -1261,7 +1273,7 @@ export default function VendorDetailPage() {
                   !vendor.contactEmail &&
                   !vendor.location && (
                     <p className="rounded-2xl bg-[#faf7f4] p-4 text-sm text-[#968a82]">
-                      No contact details provided yet.
+                      {t("vendors.detail.contact.none")}
                     </p>
                   )}
               </div>
@@ -1289,8 +1301,8 @@ export default function VendorDetailPage() {
             href="#contact"
             className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-full bg-[#30251f] px-5 text-sm font-semibold text-white transition-all duration-200 hover:bg-[#49382f] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b99a62]/50"
           >
-            Contact Vendor
-            <ArrowUpRight size={15} />
+            {t("vendors.detail.contact.cta")}
+            <ArrowUpRight size={15} className="rtl:-scale-x-100" />
           </a>
 
           <div className="rounded-full border border-[#e9e0d8] p-0.5">
@@ -1307,7 +1319,7 @@ export default function VendorDetailPage() {
           <button
             type="button"
             onClick={handleShare}
-            aria-label="Share vendor"
+            aria-label={t("vendors.detail.share")}
             className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#e9e0d8] bg-white text-[#30251f] transition-all duration-200 hover:bg-[#faf7f4] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b99a62]/50"
           >
             {shareCopied ? (
@@ -1331,21 +1343,22 @@ function ContactCard({
 }: {
   vendor: Vendor;
 }) {
+  const { t } = useLanguage();
+
   return (
     <div className="rounded-3xl border border-[#e3d7cd] bg-white p-6 shadow-[0_12px_32px_rgba(48,37,31,0.05)]">
 
       <div>
-        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#a47e43]">
-          Get in touch
+        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] rtl:tracking-normal text-[#a47e43]">
+          {t("vendors.detail.contact.eyebrow")}
         </p>
 
         <h2 className="mt-1.5 font-serif text-xl font-light text-[#30251f]">
-          Contact
+          {t("vendors.detail.contact.title")}
         </h2>
 
         <p className="mt-2 text-sm leading-6 text-[#958980]">
-          Reach out to {vendor.businessName} for pricing,
-          availability and more details.
+          {t("vendors.detail.contact.text", { name: vendor.businessName })}
         </p>
       </div>
 
@@ -1354,8 +1367,11 @@ function ContactCard({
         {vendor.contactPhone && (
           <ContactRow
             href={`tel:${vendor.contactPhone}`}
+            ltr
             icon={<Phone size={15} />}
-            ariaLabel={`Call ${vendor.businessName}`}
+            ariaLabel={t("vendors.detail.contact.call", {
+              name: vendor.businessName,
+            })}
           >
             {vendor.contactPhone}
           </ContactRow>
@@ -1364,8 +1380,11 @@ function ContactCard({
         {vendor.contactEmail && (
           <ContactRow
             href={`mailto:${vendor.contactEmail}`}
+            ltr
             icon={<Mail size={15} />}
-            ariaLabel={`Email ${vendor.businessName}`}
+            ariaLabel={t("vendors.detail.contact.email", {
+              name: vendor.businessName,
+            })}
           >
             {vendor.contactEmail}
           </ContactRow>
@@ -1383,7 +1402,7 @@ function ContactCard({
           !vendor.contactEmail &&
           !vendor.location && (
             <p className="rounded-2xl bg-[#faf7f4] p-4 text-sm text-[#968a82]">
-              No contact details provided yet.
+              {t("vendors.detail.contact.none")}
             </p>
           )}
       </div>
@@ -1404,6 +1423,8 @@ function VendorReviewsSection({
   reviews: Review[];
   loading: boolean;
 }) {
+  const { t, language } = useLanguage();
+
   // The vendor profile is intentionally kept editorial and compact:
   // only the five newest reviews are shown here.
   const latestReviews = reviews.slice(0, REVIEWS_PAGE_SIZE);
@@ -1413,8 +1434,8 @@ function VendorReviewsSection({
     <section className="mt-12 border-t border-[#e9e0d8] pt-9">
       <div className="mb-5 flex items-end justify-between gap-4">
         <div>
-          <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#a47e43]">
-            From past clients
+          <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] rtl:tracking-normal text-[#a47e43]">
+            {t("vendors.detail.reviews.eyebrow")}
           </p>
 
           <h2 className="flex items-center gap-2 font-serif text-2xl font-light text-[#30251f] sm:text-3xl">
@@ -1422,7 +1443,7 @@ function VendorReviewsSection({
               size={20}
               className="text-[#a47e43]"
             />
-            Reviews
+            {t("vendors.detail.reviews.title")}
           </h2>
         </div>
 
@@ -1437,10 +1458,10 @@ function VendorReviewsSection({
           {hasMoreReviews && (
             <Link
               href={`/vendors/${vendor.id}/reviews`}
-              className="hidden items-center gap-1.5 rounded-full border border-[#e4dbd0] bg-white px-3.5 py-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#30251f] transition-all duration-200 hover:border-[#cbb08d] hover:bg-[#faf7f4] sm:inline-flex"
+              className="hidden items-center gap-1.5 rounded-full border border-[#e4dbd0] bg-white px-3.5 py-2 text-[10px] font-semibold uppercase tracking-[0.08em] rtl:tracking-normal text-[#30251f] transition-all duration-200 hover:border-[#cbb08d] hover:bg-[#faf7f4] sm:inline-flex"
             >
-              View all
-              <ArrowUpRight size={12} />
+              {t("vendors.detail.reviews.viewAll")}
+              <ArrowUpRight size={12} className="rtl:-scale-x-100" />
             </Link>
           )}
         </div>
@@ -1459,8 +1480,7 @@ function VendorReviewsSection({
 
       {!loading && reviews.length === 0 && (
         <p className="rounded-2xl border border-[#eee7e1] bg-white p-6 text-center text-sm text-[#9b8f86]">
-          No reviews yet. Be the first to share your experience
-          with {vendor.businessName}.
+          {t("vendors.detail.reviews.empty", { name: vendor.businessName })}
         </p>
       )}
 
@@ -1480,12 +1500,12 @@ function VendorReviewsSection({
 
                     <div className="min-w-0">
                       <p className="truncate text-sm font-semibold text-[#30251f]">
-                        {review.userFullName || "Anonymous"}
+                        {review.userFullName || t("vendors.detail.reviews.anonymous")}
                       </p>
 
                       <p className="mt-0.5 truncate text-[11px] text-[#9b8f86]">
                         {review.serviceName} ·{" "}
-                        {formatDate(review.createdAt)}
+                        {formatDate(review.createdAt, LANGUAGE_DATE_LOCALE[language])}
                       </p>
                     </div>
                   </div>
@@ -1496,7 +1516,7 @@ function VendorReviewsSection({
                 </div>
 
                 {review.comment && (
-                  <p className="mt-3 whitespace-pre-line text-sm leading-7 text-[#5f544d]">
+                  <p dir="auto" className="mt-3 whitespace-pre-line text-sm leading-7 text-[#5f544d]">
                     {review.comment}
                   </p>
                 )}
@@ -1510,8 +1530,8 @@ function VendorReviewsSection({
                 href={`/vendors/${vendor.id}/reviews`}
                 className="inline-flex items-center gap-2 rounded-full border border-[#e4dbd0] bg-white px-5 py-2.5 text-xs font-semibold text-[#30251f] transition-all duration-200 hover:border-[#b99a62] hover:bg-[#faf7f4]"
               >
-                View all reviews
-                <ArrowUpRight size={13} />
+                {t("vendors.detail.reviews.viewAllReviews")}
+                <ArrowUpRight size={13} className="rtl:-scale-x-100" />
               </Link>
             </div>
           )}
@@ -1530,13 +1550,15 @@ function AboutCard({
 }: {
   vendor: Vendor;
 }) {
+  const { t } = useLanguage();
+
   if (!vendor.bio) return null;
 
   return (
     <section className="rounded-xl border border-[#e3d7cd] bg-white p-6 shadow-[0_12px_32px_rgba(48,37,31,0.05)] ">
       <div>
-        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#a47e43]">
-          Get to know them
+        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] rtl:tracking-normal text-[#a47e43]">
+          {t("vendors.detail.about.eyebrow")}
         </p>
 
         <h2 className="mt-1.5 flex items-center gap-2 font-serif text-xl font-light text-[#30251f]">
@@ -1544,7 +1566,7 @@ function AboutCard({
             size={17}
             className="text-[#a47e43]"
           />
-          About
+          {t("vendors.detail.about.title")}
         </h2>
       </div>
 
@@ -1568,6 +1590,8 @@ function WorkingHoursCard({
   workingHours: WorkingHours;
   todayJsDay: number;
 }) {
+  const { t } = useLanguage();
+
   return (
     <div className="rounded-3xl border border-[#eee7e1] bg-white p-6">
 
@@ -1577,15 +1601,15 @@ function WorkingHoursCard({
           className="text-[#a47e43]"
         />
 
-        Working Hours
+        {t("vendors.detail.hours.title")}
       </h2>
 
       <div className="space-y-2">
 
         {DAYS_OF_WEEK.map(
           ({
-            label,
-            short,
+            labelKey,
+            shortKey,
             key,
             jsDay,
           }) => {
@@ -1618,16 +1642,16 @@ function WorkingHoursCard({
                   />
 
                   <span className="hidden text-[#5f544d] sm:inline">
-                    {label}
+                    {t(labelKey)}
                   </span>
 
                   <span className="text-[#5f544d] sm:hidden">
-                    {short}
+                    {t(shortKey)}
                   </span>
 
                   {isToday && (
                     <span className="rounded-full bg-[#a47e43] px-2 py-0.5 text-[9px] font-semibold text-white">
-                      Today
+                      {t("vendors.detail.hours.today")}
                     </span>
                   )}
                 </div>
@@ -1640,7 +1664,7 @@ function WorkingHoursCard({
                   }
                 >
                   {isOff
-                    ? "Day off"
+                    ? t("vendors.detail.hours.dayOff")
                     : value}
                 </span>
               </div>
