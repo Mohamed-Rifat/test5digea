@@ -1668,7 +1668,6 @@ function RoadmapContent() {
         partnerName={roadmap.partnerName || "Your Love"}
         eventDate={roadmap.eventDate}
         progress={progress}
-        coverImageUrl="https://cdn.prod.website-files.com/6718e262328596ea787524a5/6732673cc4f81ec0ef5c928d_AdobeStock_198831835_optimized_4000.jpeg"
       />
 
       <div className="relative mx-auto px-4 pb-12 sm:px-6 lg:max-w-10/12 lg:px-10">

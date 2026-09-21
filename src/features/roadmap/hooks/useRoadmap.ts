@@ -95,7 +95,7 @@ export const useRoadmap = (): UseRoadmapReturn => {
         await fetchRoadmap();
 
         return true;
-      } catch (err) {
+      } catch {
         setActionError(getApiErrorMessage(err, "Failed to create your roadmap."));
         return false;
       } finally {
@@ -115,7 +115,7 @@ export const useRoadmap = (): UseRoadmapReturn => {
         await fetchRoadmap();
 
         return true;
-      } catch (err) {
+      } catch {
         setActionError(getApiErrorMessage(err, "Failed to update your roadmap."));
         return false;
       } finally {
@@ -138,7 +138,7 @@ export const useRoadmap = (): UseRoadmapReturn => {
         await fetchRoadmap();
 
         return true;
-      } catch (err) {
+      } catch {
         setActionError(getApiErrorMessage(err, "Failed to select this vendor."));
         return false;
       } finally {
@@ -158,7 +158,7 @@ export const useRoadmap = (): UseRoadmapReturn => {
         await fetchRoadmap();
 
         return true;
-      } catch (err) {
+      } catch {
         setActionError(getApiErrorMessage(err, "Failed to remove this vendor."));
         return false;
       } finally {
@@ -178,7 +178,7 @@ export const useRoadmap = (): UseRoadmapReturn => {
         await fetchRoadmap();
 
         return true;
-      } catch (err) {
+      } catch {
         setActionError(getApiErrorMessage(err, "Failed to update this category."));
         return false;
       } finally {
@@ -198,7 +198,7 @@ export const useRoadmap = (): UseRoadmapReturn => {
         await fetchRoadmap();
 
         return true;
-      } catch (err) {
+      } catch {
         setActionError(getApiErrorMessage(err, "Failed to update this category."));
         return false;
       } finally {

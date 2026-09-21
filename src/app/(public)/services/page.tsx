@@ -87,7 +87,7 @@ function ServicesPageContent() {
       const data = await searchServices(params);
 
       setResult(data);
-    } catch (err) {
+    } catch {
       setError(true);
     } finally {
       setLoading(false);

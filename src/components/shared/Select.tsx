@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Check, ChevronDown, Loader2 } from "lucide-react";
 
+import { useLanguage } from "@/context/LanguageContext";
+
 export interface SelectOption {
   value: string;
   label: string;
@@ -29,11 +31,14 @@ export default function Select({
   value,
   onChange,
   options,
-  placeholder = "Select an option",
+  placeholder,
   disabled = false,
   loading = false,
-  emptyMessage = "No options available.",
+  emptyMessage,
 }: SelectProps) {
+  const { t } = useLanguage();
+  const placeholderText = placeholder ?? t("common.selectOption");
+  const emptyText = emptyMessage ?? t("common.noOptions");
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -88,7 +93,7 @@ export default function Select({
             selected ? "text-[#30251f]" : "text-[#a99d94]"
           }`}
         >
-          {selected ? selected.label : placeholder}
+          {selected ? selected.label : placeholderText}
         </span>
 
         {loading ? (
@@ -110,7 +115,7 @@ export default function Select({
           <div className="max-h-64 overflow-y-auto py-1.5">
             {options.length === 0 ? (
               <p className="px-4 py-3 text-sm text-[#9a8d85]">
-                {emptyMessage}
+                {emptyText}
               </p>
             ) : (
               options.map((option) => {

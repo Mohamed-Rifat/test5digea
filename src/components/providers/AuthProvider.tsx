@@ -1,24 +1,12 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import type { ReactNode } from "react";
-
-const AuthProvider = dynamic(
-() =>
-import("@/context/AuthContext").then(
-(module) => module.AuthProvider
-),
-{
-ssr: false,
-}
-);
+import { AuthProvider as AuthContextProvider } from "@/context/AuthContext";
 
 interface AuthProviderProps {
-children: ReactNode;
+  children: ReactNode;
 }
 
-export default function AuthProviderWrapper({
-children,
-}: AuthProviderProps) {
-return <AuthProvider>{children}</AuthProvider>;
+export default function AuthProvider({ children }: AuthProviderProps) {
+  return <AuthContextProvider>{children}</AuthContextProvider>;
 }

@@ -708,7 +708,7 @@ function ApprovedReviewsManager() {
       setError(null);
       const data = await fetchApprovedReviews();
       setAllReviews(data);
-    } catch (err) {
+    } catch {
       setError("Failed to load approved reviews.");
     } finally {
       setLoading(false);
@@ -821,7 +821,7 @@ function ApprovedReviewsManager() {
           r.id === review.id ? { ...r, isDisplayed: !r.isDisplayed } : r
         )
       );
-    } catch (err) {
+    } catch {
       // no-op
     } finally {
       setBusyId(null);

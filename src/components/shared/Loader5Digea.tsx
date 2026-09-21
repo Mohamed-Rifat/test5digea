@@ -1,11 +1,16 @@
+"use client";
+
+import { useLanguage } from "@/context/LanguageContext";
 
 type Loader5DigeaProps = {
   label?: string;
 };
 
 export default function Loader5Digea({ label }: Loader5DigeaProps) {
+  const { t } = useLanguage();
+
   return (
-    <div className="loader5digea" role="status" aria-label={label ?? "Loading"}>
+    <div className="loader5digea" role="status" aria-label={label ?? t("common.loading")}>
       <div className="loader5d-hearts" aria-hidden="true">
         <span className="heart h1">♥</span>
         <span className="heart h2">♥</span>

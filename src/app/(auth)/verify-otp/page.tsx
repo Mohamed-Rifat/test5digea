@@ -100,7 +100,7 @@ function VerifyOtpForm() {
         )}`
       );
     } catch (err: unknown) {
-      console.error("OTP verification failed:", err);
+      
 
       setError(
         getApiErrorMessage(
@@ -125,7 +125,7 @@ function VerifyOtpForm() {
       setDigits(Array(OTP_LENGTH).fill(""));
       inputRefs.current[0]?.focus();
     } catch (err: unknown) {
-      console.error("Resending OTP failed:", err);
+      
 
       setError(
         getApiErrorMessage(err, t("auth.verifyOtpPage.resendFailed"))

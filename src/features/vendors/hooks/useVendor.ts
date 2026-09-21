@@ -160,7 +160,6 @@ export const useVendor = (): UseVendorReturn => {
         setVendor(data);
         await syncMarker(data, !!options.rebaseline);
       } catch (error) {
-        console.error("Failed to fetch current vendor:", error);
         setError(localizedError("vendor.errors.loadVendor", error));
       } finally {
         if (!options.silent) setLoading(false);
@@ -226,8 +225,6 @@ export const useVendor = (): UseVendorReturn => {
 
         return true;
       } catch (error) {
-        console.error("Failed to update vendor:", error);
-
         // The server may refuse an edit (e.g. one is already awaiting
         // review). Show its reason (if it gave one) and resync so the UI
         // locks accordingly.
@@ -258,7 +255,6 @@ export const useVendor = (): UseVendorReturn => {
 
       return true;
     } catch (error) {
-      console.error("Failed to resubmit vendor:", error);
       setActionError(localizedError("vendor.errors.resubmitProfile", error));
 
       return false;
@@ -281,7 +277,6 @@ export const useVendor = (): UseVendorReturn => {
 
         return true;
       } catch (error) {
-        console.error("Failed to upload vendor profile image:", error);
         setActionError(localizedError("vendor.errors.uploadProfilePhoto", error));
 
         return false;
@@ -312,7 +307,6 @@ export const useVendor = (): UseVendorReturn => {
 
         return true;
       } catch (error) {
-        console.error("Failed to upload vendor gallery images:", error);
         setActionError(localizedError("vendor.errors.uploadGallery", error));
 
         return false;
@@ -362,7 +356,6 @@ export const useVendor = (): UseVendorReturn => {
 
         return true;
       } catch (error) {
-        console.error("Failed to delete vendor gallery image:", error);
         setActionError(localizedError("vendor.errors.deleteGalleryPhoto", error));
 
         return false;

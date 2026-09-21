@@ -219,11 +219,8 @@ export default function AdminCategoriesPage() {
             setSuccessMessage(
                 "Category created successfully."
             );
-        } catch (error) {
-            console.error(
-                "Failed to create category:",
-                error
-            );
+        } catch {
+            
 
             setActionError(
                 "Failed to create category. Please try again."
@@ -286,11 +283,8 @@ export default function AdminCategoriesPage() {
             setSuccessMessage(
                 "Category updated successfully."
             );
-        } catch (error) {
-            console.error(
-                "Failed to update category:",
-                error
-            );
+        } catch {
+            
 
             setActionError(
                 "Failed to update category. Please try again."
@@ -324,11 +318,8 @@ export default function AdminCategoriesPage() {
                     ? `"${category.name}" has been disabled.`
                     : `"${category.name}" has been activated.`
             );
-        } catch (error) {
-            console.error(
-                "Failed to toggle category:",
-                error
-            );
+        } catch {
+            
 
             setActionError(
                 "Failed to update category status."
@@ -369,11 +360,8 @@ export default function AdminCategoriesPage() {
             setSuccessMessage(
                 `"${deletedName}" was deleted successfully.`
             );
-        } catch (error) {
-            console.error(
-                "Failed to delete category:",
-                error
-            );
+        } catch {
+            
 
             setActionError(
                 "Failed to delete category. Please try again."

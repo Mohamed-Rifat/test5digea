@@ -63,7 +63,7 @@ export const useFavorites = (
       const data = await getFavorites(params);
 
       setFavorites(data);
-    } catch (err) {
+    } catch {
       setError("Failed to load your favorites.");
     } finally {
       setLoading(false);

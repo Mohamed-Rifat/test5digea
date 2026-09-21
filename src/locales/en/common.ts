@@ -3,6 +3,10 @@ import type { Translation } from "../types";
 const common: Translation["common"] = {
   language: "Language",
   loading: "Loading...",
+  selectOption: "Select an option",
+  noOptions: "No options available.",
+  clear: "Clear",
+  open: "Open",
   save: "Save",
   cancel: "Cancel",
   confirm: "Confirm",

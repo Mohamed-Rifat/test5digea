@@ -34,7 +34,6 @@ export const useVendorReviews = (): UseVendorReviewsReturn => {
 
       setReviews(data);
     } catch (err) {
-      console.error("Failed to load vendor reviews:", err);
       setError(localizedError("vendor.errors.loadReviews", err));
     } finally {
       setLoading(false);

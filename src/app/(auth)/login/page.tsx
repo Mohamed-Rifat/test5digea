@@ -100,7 +100,7 @@ function LoginForm() {
       // Redirect according to the user's role
       router.replace(getHomePath(role));
     } catch (err: unknown) {
-      console.error("Login failed:", err);
+      
 
       setError(getApiErrorMessage(err, t("auth.loginPage.invalidCredentials")));
     } finally {

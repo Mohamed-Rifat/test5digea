@@ -48,7 +48,7 @@ export const useWriteReview = (
       const data = await fetchReviewableServices(roadmapItemId);
 
       setReviewableServices(data);
-    } catch (err) {
+    } catch {
       setError("Failed to load services available to review.");
     } finally {
       setLoading(false);
@@ -69,7 +69,7 @@ export const useWriteReview = (
         await fetchReviewable();
 
         return true;
-      } catch (err) {
+      } catch {
         setActionError("Failed to submit your review.");
         return false;
       } finally {

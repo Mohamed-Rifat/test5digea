@@ -34,6 +34,7 @@ import {
 import ImageLightbox from "@/components/shared/ImageLightbox";
 
 import type { Service } from "@/types/service";
+import { useToast } from "@/components/providers/ToastProvider";
 
 /* =========================
    Helpers
@@ -140,6 +141,7 @@ const getStatusStyles = (status: string) => {
 ========================= */
 
 export default function AdminServiceDetailsPage() {
+  const { confirm } = useToast();
   const { t } = useLanguage();
   const money = (value: number) => `${formatPrice(value)} ${t("common.currency")}`;
   const params = useParams();
@@ -192,11 +194,8 @@ export default function AdminServiceDetailsPage() {
       );
 
       setService(data);
-    } catch (err) {
-      console.error(
-        "Failed to fetch service:",
-        err
-      );
+    } catch {
+      
 
       setError(
         "Failed to load service details."
@@ -241,11 +240,8 @@ export default function AdminServiceDetailsPage() {
       );
 
       setService(data);
-    } catch (err) {
-      console.error(
-        "Failed to refresh service:",
-        err
-      );
+    } catch {
+      
     }
   };
 
@@ -256,7 +252,7 @@ export default function AdminServiceDetailsPage() {
   const handleApprove = async () => {
     if (!service) return;
 
-    const confirmed = window.confirm(
+    const confirmed = await confirm(
       `Are you sure you want to approve "${service.name}"?`
     );
 
@@ -273,12 +269,7 @@ export default function AdminServiceDetailsPage() {
         "success",
         "Service approved successfully."
       );
-    } catch (err) {
-      console.error(
-        "Failed to approve service:",
-        err
-      );
-
+    } catch (error) {
       showMessage(
         "error",
         "Failed to approve service."
@@ -338,12 +329,7 @@ export default function AdminServiceDetailsPage() {
         "success",
         "Service rejected successfully."
       );
-    } catch (err) {
-      console.error(
-        "Failed to reject service:",
-        err
-      );
-
+    } catch (error) {
       showMessage(
         "error",
         "Failed to reject service."
@@ -360,7 +346,7 @@ export default function AdminServiceDetailsPage() {
   const handleActivate = async () => {
     if (!service) return;
 
-    const confirmed = window.confirm(
+    const confirmed = await confirm(
       `Activate "${service.name}"?`
     );
 
@@ -377,12 +363,7 @@ export default function AdminServiceDetailsPage() {
         "success",
         "Service activated successfully."
       );
-    } catch (err) {
-      console.error(
-        "Failed to activate service:",
-        err
-      );
-
+    } catch (error) {
       showMessage(
         "error",
         "Failed to activate service."
@@ -399,8 +380,9 @@ export default function AdminServiceDetailsPage() {
   const handleDeactivate = async () => {
     if (!service) return;
 
-    const confirmed = window.confirm(
-      `Deactivate "${service.name}"?`
+    const confirmed = await confirm(
+      `Deactivate "${service.name}"?`,
+      { danger: true }
     );
 
     if (!confirmed) return;
@@ -416,12 +398,7 @@ export default function AdminServiceDetailsPage() {
         "success",
         "Service deactivated successfully."
       );
-    } catch (err) {
-      console.error(
-        "Failed to deactivate service:",
-        err
-      );
-
+    } catch (error) {
       showMessage(
         "error",
         "Failed to deactivate service."

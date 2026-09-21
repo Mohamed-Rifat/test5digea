@@ -1,6 +1,10 @@
 const common = {
   language: "اللغة",
   loading: "جارٍ التحميل...",
+  selectOption: "اختار من القايمة",
+  noOptions: "مفيش اختيارات متاحة.",
+  clear: "مسح",
+  open: "فتح",
   save: "حفظ",
   cancel: "إلغاء",
   confirm: "تأكيد",

@@ -56,7 +56,7 @@ export default function ServiceDetailPage() {
         const data = await getService(params.id);
 
         setService(data);
-      } catch (err) {
+      } catch {
         setError(true);
       } finally {
         setLoading(false);

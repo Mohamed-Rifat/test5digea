@@ -23,11 +23,8 @@ export const useAdminCategories =
         const data = await getAdminCategories();
 
         setCategories(data);
-      } catch (error) {
-        console.error(
-          "Failed to fetch admin categories:",
-          error
-        );
+      } catch {
+        
 
         setError("Failed to load admin categories.");
       } finally {

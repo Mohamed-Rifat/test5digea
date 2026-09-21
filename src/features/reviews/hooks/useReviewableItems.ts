@@ -34,8 +34,8 @@ export const useReviewableItems = (
       const data = await fetchReviewableServices(roadmapItemId);
 
       setItems(data);
-    } catch (err) {
-      console.error("Failed to load reviewable services:", err);
+    } catch {
+      
       setError("Failed to load reviewable services.");
     } finally {
       setLoading(false);
