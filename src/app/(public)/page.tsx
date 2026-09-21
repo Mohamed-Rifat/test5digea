@@ -51,7 +51,7 @@ const TESTIMONIAL_INTERVAL = 3000;
 const TESTIMONIAL_TILTS = [-3, 2.5, -2.5, 3, -1.5, 2, -3.5, 1.5];
 
 const HERO_VIDEO_URL =
-  "https://res.cloudinary.com/dqwoefi7l/video/upload/promo-Wedding_jvscmu.mp4";
+  "https://res.cloudinary.com/dqwoefi7l/video/upload/v1790028198/JEKA_zowofv.mp4";
 
 export default function Home() {
   const { isAuthenticated, isUser } = useAuth();
