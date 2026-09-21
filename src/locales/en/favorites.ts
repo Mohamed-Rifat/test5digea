@@ -26,6 +26,23 @@ const favorites: Translation["favorites"] = {
   loadError: "Failed to load your favorites.",
   removeError: "Failed to remove favorite.",
   updateError: "Failed to update favorites.",
+  compare: {
+    hint: "Tap the compare icon on a card to compare your picks from the same category.",
+    selectedServices: "{count} {category} services selected",
+    selectedVendors: "{count} {category} partners selected",
+    button: "Compare ({count})",
+    modalSubtitle: "Compare your picks side by side without leaving your favorites.",
+    openFullPage: "Open full comparison page",
+    lowestPrice: "Lowest price",
+    topRated: "Top rated",
+    removeFromCompare: "Remove {title} from comparison",
+    errors: {
+      mixedTypes:
+        "You can compare services with services, or partners with partners only.",
+      noCommonCategory:
+        "These partners don't share a category, so they can't be compared.",
+    },
+  },
   empty: {
     title: "Your collection is empty",
     filteredTitle: "Nothing here yet",

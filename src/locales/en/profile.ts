@@ -6,13 +6,21 @@ const profile: Translation["profile"] = {
     vendor: "Vendor",
     couple: "Couple",
   },
-  signedOut: {
-    eyebrow: "Digea Account",
-    title: "Your account",
-    description:
-      "Sign in to manage your wedding journey, saved vendors, and planning progress.",
-    signIn: "Sign in",
-    createAccount: "Create an account",
+  signedOut:
+  {
+    eyebrow:
+      "Your place is waiting",
+    title: "We’ve missed you 🤍",
+    description: "At Digea, we don’t just help you plan your wedding… we’re here for every step of the journey. Sign in and let’s continue together, from your first choice to the smallest detail of the day you’ve been dreaming about.",
+    benefits: {
+      favorites: "Save your favorites",
+      roadmap: "Track your journey",
+      planning:
+        "Keep it organized",
+    },
+    signIn: "Let’s continue",
+    createAccount: "Join Digea",
+    footer: "Every beautiful beginning deserves someone by your side",
   },
   header: {
     eyebrow: "My Account",
@@ -88,6 +96,15 @@ const profile: Translation["profile"] = {
       title: "Your perfect day starts here.",
       cta: "Continue your journey",
     },
+  },
+  contactUs: {
+    eyebrow: "Get in touch",
+    title: "Your feedback shapes what we do",
+    description:
+      "We're proud to be part of organizing the best day of your life — your wedding and every moment around it. Thank you for trusting us; we're working hard to deliver the very best for your very best day. Reach out and tell us what we can improve, what you loved, or any idea that would make your journey even better.",
+    cta: "Share your feedback",
+    emailLabel: "Or email us at",
+    note: "Your feedback helps us grow and improve with you.",
   },
   footerNote:
     "Your Digea account keeps your wedding planning journey organized, personal, and easy to revisit.",

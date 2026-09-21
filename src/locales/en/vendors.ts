@@ -31,6 +31,9 @@ const vendors: Translation["vendors"] = {
     emptyText: "Try adjusting your filters or search terms.",
     found: "vendors found",
     maxCompare: "You can compare up to {max} vendors at once.",
+    pickCategoryTitle: "Compare in which category?",
+    pickCategoryText:
+      "{vendor} works in more than one category. Pick the one you want to compare in and we'll show you every vendor in it.",
   },
   detail: {
     back: "Back",

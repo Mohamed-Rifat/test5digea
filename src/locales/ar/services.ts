@@ -24,6 +24,13 @@ const services = {
     selectedOne: "تم اختيار {count} من خدمات {category}",
     selectedMany: "تم اختيار {count} من خدمات {category}",
     compareButton: "قارن ({count})",
+    refineTitle: "حسّن بحثك",
+    refineSubtitle: "ضيّق الخدمات على اللي يناسب يومك وميزانيتك",
+    closeFilters: "قفل الفلاتر",
+    reset: "إعادة ضبط",
+    priceRange: "السعر",
+    clearAllFilters: "مسح كل الفلاتر",
+    showResults: "اعرض النتايج",
     found: "لقينا {count} خدمة",
     pageOf: "صفحة {page} من {total}",
   },
@@ -45,6 +52,14 @@ const services = {
     startRoadmapPrefix: "ابدأ",
     startRoadmapLink: "خطوات فرحك",
     startRoadmapSuffix: "علشان تحجز مقدمي الخدمات حسب التصنيف.",
+    similar: {
+      sameVendorTitle: "نفس مقدم الخدمة بيقدّم كمان",
+      sameVendorSubtitle: "{vendor} بيقدّم خدمات تانية من نفس التصنيف ({category}).",
+      otherVendorsTitle: "خدمات مشابهة",
+      otherVendorsSubtitle:
+        "مقدم الخدمة ده مبيقدمش خدمات تانية في {category}. دي خدمات مشابهة من مقدمي خدمات تانيين لو حابب تشوفها.",
+      viewMore: "المزيد من خدمات {category}",
+    },
   },
 };
 

@@ -18,6 +18,7 @@ import {
 import FavoriteButton from "@/components/shared/FavoriteButton";
 import ImageLightbox from "@/components/shared/ImageLightbox";
 import ReviewsSection from "@/components/reviews/ReviewsSection";
+import SimilarServices from "@/components/public/SimilarServices";
 import { useFavorites } from "@/features/favorites/hooks/useFavorites";
 import { useCompare } from "@/context/CompareContext";
 import { useRoadmap } from "@/features/roadmap/hooks/useRoadmap";
@@ -52,6 +53,9 @@ export default function ServiceDetailPage() {
       try {
         setLoading(true);
         setError(false);
+        setActiveImage(0);
+        setLightboxOpen(false);
+        setAddedToRoadmap(false);
 
         const data = await getService(params.id);
 
@@ -277,78 +281,84 @@ export default function ServiceDetailPage() {
 
           {/* Right: pricing + actions */}
           <div>
-            <div className="sticky top-24 rounded-2xl border border-[#eee7e1] bg-white p-6">
-              <h2 className="mb-4 font-serif text-lg text-[#30251f]">
-                {t("services.detail.pricing")}
-              </h2>
+            {/* The whole column sticks together; if it is taller than the
+                screen it scrolls on its own so nothing gets cut off. */}
+            <div className="space-y-6 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto">
+              <div className="rounded-2xl border border-[#eee7e1] bg-white p-6">
+                <h2 className="mb-4 font-serif text-lg text-[#30251f]">
+                  {t("services.detail.pricing")}
+                </h2>
 
-              {service.prices && service.prices.length > 0 ? (
-                <div className="space-y-3">
-                  {service.prices.map((price) => (
-                    <div
-                      key={price.id}
-                      className="flex items-center justify-between rounded-xl bg-[#faf7f4] px-4 py-3"
-                    >
-                      <span className="text-sm text-[#5f544d]">
-                        {price.label}
-                      </span>
-                      <span className="font-serif text-base text-[#a47e43]">
-                        {formatPrice(price.price)} {t("common.currency")}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-[#9b8f86]">
-                  {t("services.detail.contactForPricing")}
-                </p>
-              )}
-
-              <div className="mt-6 space-y-3 border-t border-[#f0e9e0] pt-6">
-                <Link
-                  href={`/vendors/${service.vendorId}`}
-                  className="flex w-full items-center justify-center rounded-full border border-[#e4dbd0] px-5 py-3 text-sm font-medium text-[#30251f] transition hover:border-[#b99a62]"
-                >
-                  {t("services.detail.viewVendorProfile")}
-                </Link>
-
-                {isAuthenticated && isUser && roadmapItem && (
-                  <button
-                    type="button"
-                    onClick={handleAddToRoadmap}
-                    disabled={
-                      roadmapActionLoading ===
-                        `select-${service.categoryId}` ||
-                      roadmapItem.selectedVendorId === service.vendorId
-                    }
-                    className="flex w-full items-center justify-center gap-2 rounded-full bg-[#30251f] px-5 py-3 text-sm font-medium text-white transition hover:bg-[#42332a] disabled:opacity-60"
-                  >
-                    {roadmapItem.selectedVendorId === service.vendorId ? (
-                      <>
-                        <CheckCircle2 size={16} />
-                        {t("services.detail.selectedInRoadmap")}
-                      </>
-                    ) : addedToRoadmap ? (
-                      <>
-                        <CheckCircle2 size={16} />
-                        {t("services.detail.addedToRoadmap")}
-                      </>
-                    ) : (
-                      t("services.detail.selectForRoadmap")
-                    )}
-                  </button>
-                )}
-
-                {isAuthenticated && isUser && !roadmapItem && (
-                  <p className="rounded-xl bg-[#f8f1e4] px-4 py-3 text-center text-xs text-[#9b8367]">
-                    {t("services.detail.startRoadmapPrefix")}{" "}
-                    <Link href="/roadmap" className="underline">
-                      {t("services.detail.startRoadmapLink")}
-                    </Link>{" "}
-                    {t("services.detail.startRoadmapSuffix")}
+                {service.prices && service.prices.length > 0 ? (
+                  <div className="space-y-3">
+                    {service.prices.map((price) => (
+                      <div
+                        key={price.id}
+                        className="flex items-center justify-between rounded-xl bg-[#faf7f4] px-4 py-3"
+                      >
+                        <span className="text-sm text-[#5f544d]">
+                          {price.label}
+                        </span>
+                        <span className="font-serif text-base text-[#a47e43]">
+                          {formatPrice(price.price)} {t("common.currency")}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-[#9b8f86]">
+                    {t("services.detail.contactForPricing")}
                   </p>
                 )}
+
+                <div className="mt-6 space-y-3 border-t border-[#f0e9e0] pt-6">
+                  <Link
+                    href={`/vendors/${service.vendorId}`}
+                    className="flex w-full items-center justify-center rounded-full border border-[#e4dbd0] px-5 py-3 text-sm font-medium text-[#30251f] transition hover:border-[#b99a62]"
+                  >
+                    {t("services.detail.viewVendorProfile")}
+                  </Link>
+
+                  {isAuthenticated && isUser && roadmapItem && (
+                    <button
+                      type="button"
+                      onClick={handleAddToRoadmap}
+                      disabled={
+                        roadmapActionLoading ===
+                          `select-${service.categoryId}` ||
+                        roadmapItem.selectedVendorId === service.vendorId
+                      }
+                      className="flex w-full items-center justify-center gap-2 rounded-full bg-[#30251f] px-5 py-3 text-sm font-medium text-white transition hover:bg-[#42332a] disabled:opacity-60"
+                    >
+                      {roadmapItem.selectedVendorId === service.vendorId ? (
+                        <>
+                          <CheckCircle2 size={16} />
+                          {t("services.detail.selectedInRoadmap")}
+                        </>
+                      ) : addedToRoadmap ? (
+                        <>
+                          <CheckCircle2 size={16} />
+                          {t("services.detail.addedToRoadmap")}
+                        </>
+                      ) : (
+                        t("services.detail.selectForRoadmap")
+                      )}
+                    </button>
+                  )}
+
+                  {isAuthenticated && isUser && !roadmapItem && (
+                    <p className="rounded-xl bg-[#f8f1e4] px-4 py-3 text-center text-xs text-[#9b8367]">
+                      {t("services.detail.startRoadmapPrefix")}{" "}
+                      <Link href="/roadmap" className="underline">
+                        {t("services.detail.startRoadmapLink")}
+                      </Link>{" "}
+                      {t("services.detail.startRoadmapSuffix")}
+                    </p>
+                  )}
+                </div>
               </div>
+
+              <SimilarServices service={service} />
             </div>
           </div>
         </div>

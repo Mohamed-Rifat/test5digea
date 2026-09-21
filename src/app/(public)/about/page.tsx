@@ -9,6 +9,8 @@ import {
     Search,
     Sparkles,
     Store,
+    Quote,
+    Star,
 } from "lucide-react";
 
 export default function AboutPage() {
@@ -56,7 +58,7 @@ export default function AboutPage() {
 
             <div className="relative z-10 mx-auto max-w-85% px-6 py-10 sm:px-12 sm:py-12 lg:px-16">
 
-                <section className="mx-auto flex flex-col items-center pb-20 pt-24 text-center sm:pb-28 sm:pt-32">
+                <section className="mx-auto flex flex-col items-center pb-20 pt-24 text-center sm:pb-28 sm:pt-2">
                     <div className="mb-6 flex items-center justify-center gap-4">
                         <span className="h-px w-8 bg-[#b99a62]/50 sm:w-14" />
 
@@ -99,23 +101,45 @@ export default function AboutPage() {
                         {t("about.intro")}
                     </p>
 
-                    <div className="mt-9 flex flex-col items-center gap-3 sm:flex-row">
-                        <Link
-                            href="/services"
-                            className="group inline-flex items-center gap-3 rounded-full border border-[#c6a66f] bg-[#30251f] px-7 py-3.5 text-sm font-medium text-white shadow-[0_8px_30px_rgba(48,37,31,0.15)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#42332a] hover:shadow-[0_14px_35px_rgba(48,37,31,0.22)]"
-                        >
-                            <Search className="h-4 w-4" />
-                            {t("about.exploreServices")}
-                        </Link>
+                    <div className="relative mx-auto mt-10 lg:max-w-10/12">
+                        <div className="mb-6 flex items-center justify-center gap-3">
+                            <span className="h-px w-12 bg-[#b99a62]/30" />
+                            <Heart className="h-4 w-4 text-[#b99a62]" />
+                            <span className="h-px w-12 bg-[#b99a62]/30" />
+                        </div>
 
-                        <Link
-                            href="/contact"
-                            className="inline-flex items-center gap-3 rounded-full border border-[#b99a62]/40 bg-white/40 px-7 py-3.5 text-sm font-medium text-[#493b32] backdrop-blur-sm transition-all duration-300 hover:border-[#b99a62] hover:bg-white/80"
-                        >
-                            {t("about.talkToUs")}
-                        </Link>
+                        <div className="relative rounded-2xl border border-[#b99a62]/20 bg-white/30 px-6 py-8 shadow-[0_10px_40px_rgba(185,154,98,0.08)] backdrop-blur-sm sm:px-10 sm:py-10">
+                            <Quote className="absolute -top-4 right-6 h-8 w-8 rotate-180 text-[#b99a62]/25 sm:right-10" />
+
+                            <p className="text-sm leading-8 text-[#5a4f48] sm:text-[15px] sm:leading-9">
+                                {t("about.dreamText")}
+                            </p>
+
+                            <div className="mt-6 flex items-center justify-center gap-2">
+                                <span className="h-px w-8 bg-[#b99a62]/40" />
+                                <span className="text-[10px] font-medium uppercase tracking-[0.3em] rtl:tracking-normal text-[#9b8367]">
+                                    {t("about.eyebrow")}
+                                </span>
+                                <span className="h-px w-8 bg-[#b99a62]/40" />
+                            </div>
+                        </div>
+
+                        <div className="mt-6 flex items-center justify-center gap-2">
+                            {[...Array(5)].map((_, i) => (
+                                <Star
+                                    key={i}
+                                    className="h-3 w-3 fill-[#b99a62]/30 text-[#b99a62]/40"
+                                />
+                            ))}
+                        </div>
                     </div>
                 </section>
+
+                <div className="mx-auto mt-4 flex max-w-10/12 items-center justify-center gap-4 pb-16">
+                    <span className="h-px w-16 bg-[#b99a62]/20" />
+                    <span className="h-1.5 w-1.5 rotate-45 border border-[#b99a62]/50" />
+                    <span className="h-px w-16 bg-[#b99a62]/20" />
+                </div>
 
                 <section className="mx-auto max-w-10/12 pb-20 sm:pb-28">
                     <div className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
@@ -235,8 +259,8 @@ export default function AboutPage() {
                     </div>
                 </section>
 
-                <section className="mx-auto  pb-8 text-center">
-                    <div className=" px-6 py-12 backdrop-blur-sm sm:px-12 sm:py-16">
+                <section className="mx-auto pb-8 text-center">
+                    <div className="px-6 py-12 backdrop-blur-sm sm:px-12 sm:py-16">
                         <Sparkles className="mx-auto h-5 w-5 text-[#b99a62]" />
 
                         <h2 className="mt-5 font-serif text-3xl font-light text-[#30251f] sm:text-4xl">

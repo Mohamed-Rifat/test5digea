@@ -26,6 +26,18 @@ const common = {
   previousImage: "الصورة السابقة",
   nextImage: "الصورة التالية",
   imageNumber: "صورة {number}",
+  governorate: {
+    placeholder: "اختار المحافظة",
+    searchHint: "اكتب اسم المحافظة...",
+    noResults: "مفيش محافظة بالاسم ده.",
+    clear: "مسح المحافظة",
+  },
+  pagination: {
+    label: "الترقيم",
+    previous: "الصفحة السابقة",
+    next: "الصفحة التالية",
+    page: "صفحة {page}",
+  },
   titleImageNumber: "{title} — صورة {number}",
   notifications: "الإشعارات",
   markAllRead: "تعليم الكل كمقروء",

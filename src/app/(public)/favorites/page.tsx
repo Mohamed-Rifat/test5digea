@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Heart,
   ImageOff,
@@ -13,12 +13,16 @@ import {
   ArrowRight,
   Compass,
   CalendarDays,
+  GitCompare,
 } from "lucide-react";
 
 import AuthGuard from "@/components/guards/AuthGuard";
+import FavoritesCompareModal from "@/components/public/FavoritesCompareModal";
 import ServiceCard from "@/components/public/ServiceCard";
 import VendorCard from "@/components/public/VendorCard";
+import { useToast } from "@/components/providers/ToastProvider";
 import { useLanguage } from "@/context/LanguageContext";
+import { useCategories } from "@/features/categories/hooks/useCategories";
 import { useFavoriteDetails } from "@/features/favorites/hooks/useFavoriteDetails";
 import { useFavorites } from "@/features/favorites/hooks/useFavorites";
 import { formatDate } from "@/lib/format";
@@ -26,12 +30,34 @@ import { LANGUAGE_DATE_LOCALE } from "@/locales";
 import { FavoriteTargetType } from "@/types/favorite";
 
 import type { Favorite } from "@/types/favorite";
+import type { Service } from "@/types/service";
+import type { Vendor } from "@/types/vendor";
 
 // ================================================================
 // TYPES
 // ================================================================
 
 type Tab = "all" | FavoriteTargetType.Vendor | FavoriteTargetType.Service;
+
+// Same limit as the services / vendors compare flows.
+const MAX_COMPARE = 4;
+
+// What the user picked for comparison: only one kind at a time.
+interface CompareSelection {
+  type: FavoriteTargetType.Vendor | FavoriteTargetType.Service | null;
+  ids: string[];
+}
+
+const EMPTY_COMPARE: CompareSelection = { type: null, ids: [] };
+
+/** Category names shared by every vendor in the list. */
+const commonCategoryNames = (vendors: Vendor[]): string[] => {
+  if (vendors.length === 0) return [];
+
+  return (vendors[0].categories ?? []).filter((name) =>
+    vendors.every((vendor) => (vendor.categories ?? []).includes(name))
+  );
+};
 
 // ================================================================
 // MAIN CONTENT
@@ -40,8 +66,12 @@ type Tab = "all" | FavoriteTargetType.Vendor | FavoriteTargetType.Service;
 function FavoritesContent() {
   const { favorites, loading, error, remove, actionLoading } = useFavorites();
   const { t } = useLanguage();
+  const { toast } = useToast();
+  const { categories } = useCategories();
   const { getDetail } = useFavoriteDetails(favorites);
   const [tab, setTab] = useState<Tab>("all");
+  const [compare, setCompare] = useState<CompareSelection>(EMPTY_COMPARE);
+  const [compareOpen, setCompareOpen] = useState(false);
 
   // ============================================================
   // COMPUTED
@@ -67,6 +97,157 @@ function FavoritesContent() {
     return favorites.filter((f) => f.targetType === tab);
   }, [favorites, tab]);
 
+  // ============================================================
+  // COMPARE
+  // ============================================================
+
+  // Selected items are loaded through the same details cache the cards use,
+  // so the popup never needs an extra request.
+  const selectedServices = useMemo<Service[]>(() => {
+    if (compare.type !== FavoriteTargetType.Service) return [];
+
+    return compare.ids.flatMap((id) => {
+      const favorite = favorites.find(
+        (f) => f.targetType === FavoriteTargetType.Service && f.targetId === id
+      );
+      const detail = favorite ? getDetail(favorite) : null;
+      return detail?.status === "ready" && detail.service ? [detail.service] : [];
+    });
+  }, [compare, favorites, getDetail]);
+
+  const selectedVendors = useMemo<Vendor[]>(() => {
+    if (compare.type !== FavoriteTargetType.Vendor) return [];
+
+    return compare.ids.flatMap((id) => {
+      const favorite = favorites.find(
+        (f) => f.targetType === FavoriteTargetType.Vendor && f.targetId === id
+      );
+      const detail = favorite ? getDetail(favorite) : null;
+      return detail?.status === "ready" && detail.vendor ? [detail.vendor] : [];
+    });
+  }, [compare, favorites, getDetail]);
+
+  const sharedVendorCategory = useMemo(
+    () => commonCategoryNames(selectedVendors)[0] ?? "",
+    [selectedVendors]
+  );
+
+  const compareCategoryLabel =
+    compare.type === FavoriteTargetType.Service
+      ? selectedServices[0]?.categoryName ?? ""
+      : sharedVendorCategory;
+
+  // Link to the full comparison page (needs a category id).
+  const compareFullPageHref = useMemo(() => {
+    if (compare.ids.length < 2) return undefined;
+
+    if (compare.type === FavoriteTargetType.Service) {
+      const categoryId = selectedServices[0]?.categoryId;
+      return categoryId
+        ? `/compare?type=service&ids=${compare.ids.join(",")}&categoryId=${categoryId}`
+        : undefined;
+    }
+
+    const categoryId = categories.find((c) => c.name === sharedVendorCategory)?.id;
+    return categoryId
+      ? `/compare?type=vendor&ids=${compare.ids.join(",")}&categoryId=${categoryId}`
+      : undefined;
+  }, [compare, selectedServices, categories, sharedVendorCategory]);
+
+  // Drop selected items that are no longer in the favorites (removed).
+  useEffect(() => {
+    setCompare((previous) => {
+      if (previous.ids.length === 0) return previous;
+
+      const ids = previous.ids.filter((id) =>
+        favorites.some(
+          (f) => f.targetType === previous.type && f.targetId === id
+        )
+      );
+
+      if (ids.length === previous.ids.length) return previous;
+      return ids.length > 0 ? { type: previous.type, ids } : EMPTY_COMPARE;
+    });
+  }, [favorites]);
+
+  // The popup needs at least two items.
+  useEffect(() => {
+    if (compareOpen && compare.ids.length < 2) setCompareOpen(false);
+  }, [compareOpen, compare.ids.length]);
+
+  const closeCompare = useCallback(() => setCompareOpen(false), []);
+
+  const clearCompare = useCallback(() => {
+    setCompare(EMPTY_COMPARE);
+    setCompareOpen(false);
+  }, []);
+
+  const removeFromCompare = useCallback((id: string) => {
+    setCompare((previous) => {
+      const ids = previous.ids.filter((item) => item !== id);
+      return ids.length > 0 ? { type: previous.type, ids } : EMPTY_COMPARE;
+    });
+  }, []);
+
+  const isCompareSelected = (type: FavoriteTargetType, id: string) =>
+    compare.type === type && compare.ids.includes(id);
+
+  const toggleCompareService = (service: Service) => {
+    if (isCompareSelected(FavoriteTargetType.Service, service.id)) {
+      removeFromCompare(service.id);
+      return;
+    }
+
+    if (compare.type === FavoriteTargetType.Vendor) {
+      toast(t("favorites.compare.errors.mixedTypes"), "error");
+      return;
+    }
+
+    const first = selectedServices[0];
+    if (first && first.categoryId !== service.categoryId) {
+      toast(t("compare.errors.sameCategory"), "error");
+      return;
+    }
+
+    if (compare.ids.length >= MAX_COMPARE) {
+      toast(t("compare.errors.maxItems", { max: MAX_COMPARE }), "error");
+      return;
+    }
+
+    setCompare({
+      type: FavoriteTargetType.Service,
+      ids: [...compare.ids, service.id],
+    });
+  };
+
+  const toggleCompareVendor = (vendor: Vendor) => {
+    if (isCompareSelected(FavoriteTargetType.Vendor, vendor.id)) {
+      removeFromCompare(vendor.id);
+      return;
+    }
+
+    if (compare.type === FavoriteTargetType.Service) {
+      toast(t("favorites.compare.errors.mixedTypes"), "error");
+      return;
+    }
+
+    // Vendors are compared inside one category, so they must share one.
+    if (commonCategoryNames([...selectedVendors, vendor]).length === 0) {
+      toast(t("favorites.compare.errors.noCommonCategory"), "error");
+      return;
+    }
+
+    if (compare.ids.length >= MAX_COMPARE) {
+      toast(t("compare.errors.maxItems", { max: MAX_COMPARE }), "error");
+      return;
+    }
+
+    setCompare({
+      type: FavoriteTargetType.Vendor,
+      ids: [...compare.ids, vendor.id],
+    });
+  };
+
   const tabs: { key: Tab; label: string; count: number }[] = [
     { key: "all", label: t("favorites.tabs.all"), count: counts.all },
     { key: FavoriteTargetType.Vendor, label: t("favorites.tabs.vendors"), count: counts.vendor },
@@ -85,7 +266,7 @@ function FavoritesContent() {
         <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-[#e8d7bd] opacity-30 blur-3xl" />
         <div className="pointer-events-none absolute -left-24 top-24 h-72 w-72 rounded-full bg-[#d9c9be] opacity-25 blur-3xl" />
 
-        <div className="relative mx-auto max-w-6xl">
+        <div className="relative mx-auto lg:max-w-10/12">
           <div className="mb-3 flex items-center gap-2">
             <Sparkles className="h-3.5 w-3.5 text-[#b99a62]" />
             <span className="text-[10px] font-medium uppercase tracking-[0.4em] rtl:tracking-normal text-[#9b8367]">
@@ -157,7 +338,7 @@ function FavoritesContent() {
       </section>
 
       {/* ===================== BODY ===================== */}
-      <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
+      <section className="mx-auto lg:max-w-10/12 px-4 py-12 sm:px-6 lg:px-8">
         {/* Loading — skeleton cards */}
         {loading && <FavoritesSkeleton />}
 
@@ -175,9 +356,66 @@ function FavoritesContent() {
           <EmptyState tab={tab} hasAny={favorites.length > 0} />
         )}
 
+        {/* Compare hint (shown until the first pick) */}
+        {!loading &&
+          !error &&
+          favorites.length >= 2 &&
+          compare.ids.length === 0 && (
+            <p className="mb-6 flex items-center gap-2 text-xs text-[#9b8f86]">
+              <GitCompare className="h-3.5 w-3.5 shrink-0 text-[#a47e43]" />
+              {t("favorites.compare.hint")}
+            </p>
+          )}
+
+        {/* Compare bar */}
+        {!loading && !error && compare.ids.length > 0 && (
+          <div className="sticky bottom-3 z-20 mb-6 flex flex-col gap-3 rounded-2xl bg-[#30251f] px-4 py-3 text-white shadow-[0_16px_40px_rgba(48,37,31,0.22)] sm:flex-row sm:items-center sm:justify-between sm:px-5">
+            <span className="text-sm">
+              {compare.type === FavoriteTargetType.Service
+                ? t("favorites.compare.selectedServices", {
+                    count: compare.ids.length,
+                    category: compareCategoryLabel,
+                  })
+                : t("favorites.compare.selectedVendors", {
+                    count: compare.ids.length,
+                    category: compareCategoryLabel,
+                  })}
+            </span>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={clearCompare}
+                className="rounded-lg px-3 py-2 text-xs font-semibold text-white/80 hover:text-white"
+              >
+                {t("compare.clearAll")}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setCompareOpen(true)}
+                disabled={compare.ids.length < 2}
+                title={
+                  compare.ids.length < 2
+                    ? t("compare.errors.selectTwo")
+                    : undefined
+                }
+                className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-semibold ${
+                  compare.ids.length >= 2
+                    ? "bg-white text-[#30251f]"
+                    : "cursor-not-allowed bg-white/30 text-white/60"
+                }`}
+              >
+                <GitCompare size={15} />
+                {t("favorites.compare.button", { count: compare.ids.length })}
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Grid */}
         {!loading && !error && filtered.length > 0 && (
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {filtered.map((favorite) => {
               const key = `${favorite.targetType}:${favorite.targetId}`;
               const isRemoving = actionLoading === key;
@@ -186,13 +424,20 @@ function FavoritesContent() {
               // Full vendor / service record loaded -> same card as the rest
               // of the site (rating, location, categories, prices, ...).
               if (detail.status === "ready" && detail.vendor) {
+                const vendorItem = detail.vendor;
+
                 return (
                   <VendorCard
                     key={favorite.id}
-                    vendor={detail.vendor}
+                    vendor={vendorItem}
                     favorited
                     favoriteLoading={isRemoving}
                     onToggleFavorite={remove}
+                    selected={isCompareSelected(
+                      FavoriteTargetType.Vendor,
+                      vendorItem.id
+                    )}
+                    onSelect={() => toggleCompareVendor(vendorItem)}
                   />
                 );
               }
@@ -205,6 +450,11 @@ function FavoritesContent() {
                     favorited
                     favoriteLoading={isRemoving}
                     onToggleFavorite={remove}
+                    selected={isCompareSelected(
+                      FavoriteTargetType.Service,
+                      detail.service.id
+                    )}
+                    onSelect={toggleCompareService}
                   />
                 );
               }
@@ -225,6 +475,18 @@ function FavoritesContent() {
           </div>
         )}
       </section>
+
+      {compare.type && (
+        <FavoritesCompareModal
+          open={compareOpen}
+          onClose={closeCompare}
+          type={compare.type === FavoriteTargetType.Service ? "service" : "vendor"}
+          services={selectedServices}
+          vendors={selectedVendors}
+          fullPageHref={compareFullPageHref}
+          onRemove={removeFromCompare}
+        />
+      )}
     </main>
   );
 }

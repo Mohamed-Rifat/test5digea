@@ -24,6 +24,23 @@ const favorites = {
   loadError: "تعذّر تحميل مفضلتك.",
   removeError: "تعذّر إزالة العنصر من المفضلة.",
   updateError: "تعذّر تحديث المفضلة.",
+  compare: {
+    hint: "دوس على أيقونة المقارنة في الكارت علشان تقارن بين اختياراتك من نفس التصنيف.",
+    selectedServices: "تم اختيار {count} من خدمات {category}",
+    selectedVendors: "تم اختيار {count} من مقدمي خدمات {category}",
+    button: "قارن ({count})",
+    modalSubtitle: "قارن اختياراتك جنبًا إلى جنب من غير ما تسيب المفضلة.",
+    openFullPage: "افتح صفحة المقارنة الكاملة",
+    lowestPrice: "أقل سعر",
+    topRated: "الأعلى تقييمًا",
+    removeFromCompare: "شيل {title} من المقارنة",
+    errors: {
+      mixedTypes:
+        "تقدر تقارن خدمات مع خدمات، أو مقدمي خدمات مع مقدمي خدمات بس.",
+      noCommonCategory:
+        "مقدمي الخدمات دول مالهمش تصنيف مشترك، فمينفعش نقارنهم.",
+    },
+  },
   empty: {
     title: "مجموعتك فاضية",
     filteredTitle: "لسه مفيش حاجة هنا",

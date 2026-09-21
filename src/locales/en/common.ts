@@ -28,6 +28,18 @@ const common: Translation["common"] = {
   previousImage: "Previous image",
   nextImage: "Next image",
   imageNumber: "Image {number}",
+  governorate: {
+    placeholder: "Select a governorate",
+    searchHint: "Type a governorate...",
+    noResults: "No governorate with that name.",
+    clear: "Clear governorate",
+  },
+  pagination: {
+    label: "Pagination",
+    previous: "Previous page",
+    next: "Next page",
+    page: "Page {page}",
+  },
   titleImageNumber: "{title} — image {number}",
   notifications: "Notifications",
   markAllRead: "Mark all read",

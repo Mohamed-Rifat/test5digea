@@ -14,8 +14,6 @@ import { useSearchParams } from "next/navigation";
 import {
   Search,
   SlidersHorizontal,
-  ChevronLeft,
-  ChevronRight,
   Sparkles,
   GitCompare,
   X,
@@ -25,13 +23,21 @@ import {
   Check,
 } from "lucide-react";
 
+import CompareCategoryDialog from "@/components/public/CompareCategoryDialog";
 import VendorCard from "@/components/public/VendorCard";
+import GovernorateSelect from "@/components/shared/GovernorateSelect";
+import Pagination from "@/components/shared/Pagination";
 import { useCategories } from "@/features/categories/hooks/useCategories";
 import { useFavorites } from "@/features/favorites/hooks/useFavorites";
 import { useToast } from "@/components/providers/ToastProvider";
 import { searchVendorList } from "@/features/vendors/api";
+import { findGovernorate, governorateLabel } from "@/lib/governorates";
 import { FavoriteTargetType } from "@/types/favorite";
-import type { VendorSearchParams, VendorSearchResponse } from "@/types/vendor";
+import type {
+  Vendor,
+  VendorSearchParams,
+  VendorSearchResponse,
+} from "@/types/vendor";
 
 const PAGE_SIZE = 12;
 const MAX_COMPARE = 4;
@@ -46,7 +52,7 @@ export default function VendorsPage() {
 
 function VendorsPageContent() {
   const searchParams = useSearchParams();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const initialCategoryId = searchParams.get("categoryId") || "";
   const initialSearch = searchParams.get("search") || "";
 
@@ -57,11 +63,23 @@ function VendorsPageContent() {
   const [searchInput, setSearchInput] = useState(initialSearch);
   const [searchTerm, setSearchTerm] = useState(initialSearch);
   const [categoryId, setCategoryId] = useState(initialCategoryId);
-  const [location, setLocation] = useState("");
+  // English name of the chosen governorate (the API gets it in the page language).
+  const [governorate, setGovernorate] = useState("");
   const [minRating, setMinRating] = useState("");
   const [page, setPage] = useState(1);
-  const [filtersOpen, setFiltersOpen] = useState(!!initialCategoryId);
+  // The panel only opens when the user asks for it. A category coming from
+  // the URL (navbar) is applied silently: it shows in the filter badge and in
+  // the category chip above the results.
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
+  // true when the category filter was set automatically by picking a vendor
+  // to compare (so it goes back to "All" once nothing is selected anymore).
+  const [categoryFromCompare, setCategoryFromCompare] = useState(false);
+  // vendor working in several categories: ask which one to compare in.
+  const [categoryPicker, setCategoryPicker] = useState<{
+    vendor: Vendor;
+    options: { id: string; name: string }[];
+  } | null>(null);
 
   const [result, setResult] = useState<VendorSearchResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -69,17 +87,22 @@ function VendorsPageContent() {
 
   const filtersRef = useRef<HTMLDivElement>(null);
 
+  const locationParam = useMemo(() => {
+    const match = findGovernorate(governorate);
+    return match ? governorateLabel(match, language) : "";
+  }, [governorate, language]);
+
   const params: VendorSearchParams = useMemo(
     () => ({
       searchTerm: searchTerm || undefined,
       categoryId: categoryId || undefined,
-      location: location || undefined,
+      location: locationParam || undefined,
       minRating: minRating ? Number(minRating) : undefined,
       sortBy: 0,
       page,
       pageSize: PAGE_SIZE,
     }),
-    [searchTerm, categoryId, location, minRating, page]
+    [searchTerm, categoryId, locationParam, minRating, page]
   );
 
   const fetchResults = useCallback(async () => {
@@ -112,7 +135,7 @@ function VendorsPageContent() {
     const searchFromUrl = searchParams.get("search") || "";
 
     setCategoryId(categoryFromUrl);
-    setFiltersOpen((prev) => prev || !!categoryFromUrl);
+    setCategoryFromCompare(false);
 
     if (searchFromUrl) {
       setSearchInput(searchFromUrl);
@@ -154,16 +177,72 @@ function VendorsPageContent() {
     setSearchTerm(searchInput.trim());
   };
 
+  // Goes back to "All categories" if that filter only exists because of a
+  // comparison that is now over.
+  const releaseCompareCategory = () => {
+    if (!categoryFromCompare) return;
+
+    setCategoryFromCompare(false);
+    setCategoryId("");
+    setPage(1);
+  };
+
+  const startCompareInCategory = (vendorId: string, newCategoryId: string) => {
+    setPage(1);
+    setCategoryId(newCategoryId);
+    setCategoryFromCompare(true);
+    setSelected([vendorId]);
+    setCategoryPicker(null);
+  };
+
+  const clearSelected = () => {
+    setSelected([]);
+    releaseCompareCategory();
+  };
+
+  // Manual category choice from the filters panel.
+  const chooseCategory = (newCategoryId: string) => {
+    setPage(1);
+    setCategoryId(newCategoryId);
+    setCategoryFromCompare(false);
+    setSelected([]);
+  };
+
   const toggleSelected = (vendorId: string) => {
     if (selected.includes(vendorId)) {
-      setSelected((previous) => previous.filter((id) => id !== vendorId));
+      const remaining = selected.filter((id) => id !== vendorId);
+      setSelected(remaining);
+      if (remaining.length === 0) releaseCompareCategory();
       return;
     }
 
     // Toasts must not be fired from inside a state updater (React warns
     // "Cannot update a component while rendering a different component").
     if (!categoryId) {
-      toast(t("compare.errors.selectCategory"), "error");
+      // No category filter yet: use the vendor's own category, so the list
+      // narrows down to the vendors it can be compared with.
+      const vendor = (result?.items ?? []).find((item) => item.id === vendorId);
+      const options = categories.filter((category) =>
+        (vendor?.categories ?? []).includes(category.name)
+      );
+
+      if (!vendor || options.length === 0) {
+        toast(t("compare.errors.selectCategory"), "error");
+        return;
+      }
+
+      if (options.length === 1) {
+        startCompareInCategory(vendorId, options[0].id);
+        return;
+      }
+
+      setCategoryPicker({
+        vendor,
+        options: options.map((category) => ({
+          id: category.id,
+          name: category.name,
+        })),
+      });
       return;
     }
 
@@ -178,14 +257,15 @@ function VendorsPageContent() {
   const clearAllFilters = () => {
     setPage(1);
     setCategoryId("");
-    setLocation("");
+    setCategoryFromCompare(false);
+    setGovernorate("");
     setMinRating("");
     setSearchInput("");
     setSearchTerm("");
     setSelected([]);
   };
 
-  const activeFiltersCount = [categoryId, location, minRating, searchTerm].filter(
+  const activeFiltersCount = [categoryId, governorate, minRating, searchTerm].filter(
     Boolean
   ).length;
 
@@ -266,7 +346,7 @@ function VendorsPageContent() {
 
             {/* ============ FILTERS PANEL ============ */}
             {filtersOpen && (
-              <div className="relative z-30 mt-3 overflow-hidden rounded-3xl border border-[#eee7e1] bg-white shadow-[0_24px_60px_-12px_rgba(48,37,31,0.18)]">
+              <div className="relative z-30 mt-3 rounded-3xl border border-[#eee7e1] bg-white shadow-[0_24px_60px_-12px_rgba(48,37,31,0.18)]">
                 {/* Header */}
                 <div className="flex items-center justify-between border-b border-[#f1ece6] px-6 py-4">
                   <div className="flex items-center gap-2.5">
@@ -307,11 +387,7 @@ function VendorsPageContent() {
                       {categoryId && (
                         <button
                           type="button"
-                          onClick={() => {
-                            setPage(1);
-                            setCategoryId("");
-                            setSelected([]);
-                          }}
+                          onClick={() => chooseCategory("")}
                           className="text-[11px] font-medium text-[#a47e43] transition hover:text-[#8c6a3c]"
                         >
                           {t("vendors.list.reset")}
@@ -322,11 +398,7 @@ function VendorsPageContent() {
                     <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                       <button
                         type="button"
-                        onClick={() => {
-                          setPage(1);
-                          setCategoryId("");
-                          setSelected([]);
-                        }}
+                        onClick={() => chooseCategory("")}
                         className={`group flex items-center justify-between rounded-xl border px-3.5 py-2.5 text-start text-xs font-medium transition ${
                           !categoryId
                             ? "border-[#30251f] bg-[#30251f] text-white"
@@ -343,11 +415,7 @@ function VendorsPageContent() {
                           <button
                             key={c.id}
                             type="button"
-                            onClick={() => {
-                              setPage(1);
-                              setCategoryId(c.id);
-                              setSelected([]);
-                            }}
+                            onClick={() => chooseCategory(c.id)}
                             className={`group flex items-center justify-between rounded-xl border px-3.5 py-2.5 text-start text-xs font-medium transition ${
                               active
                                 ? "border-[#a47e43] bg-[#f9f1e9] text-[#8c6a3c]"
@@ -374,18 +442,13 @@ function VendorsPageContent() {
                           {t("vendors.list.location")}
                         </label>
                       </div>
-                      <div className="relative">
-                        <MapPin className="pointer-events-none absolute start-3.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#b0a69c]" />
-                        <input
-                          value={location}
-                          onChange={(e) => {
-                            setPage(1);
-                            setLocation(e.target.value);
-                          }}
-                          placeholder={t("vendors.list.locationPlaceholder")}
-                          className="w-full rounded-xl border border-[#eee7e1] bg-[#faf7f4] py-2.5 ps-10 pe-3 text-sm text-[#30251f] outline-none transition placeholder:text-[#b0a69c] focus:border-[#b99a62] focus:bg-white focus:ring-4 focus:ring-[#b99a62]/10"
-                        />
-                      </div>
+                      <GovernorateSelect
+                        value={governorate}
+                        onChange={(value) => {
+                          setPage(1);
+                          setGovernorate(value);
+                        }}
+                      />
                     </div>
 
                     {/* Rating */}
@@ -438,7 +501,7 @@ function VendorsPageContent() {
                 </div>
 
                 {/* Footer */}
-                <div className="flex items-center justify-between border-t border-[#f1ece6] bg-[#faf7f4] px-6 py-4">
+                <div className="flex items-center justify-between rounded-b-3xl border-t border-[#f1ece6] bg-[#faf7f4] px-6 py-4">
                   <button
                     type="button"
                     onClick={clearAllFilters}
@@ -480,7 +543,7 @@ function VendorsPageContent() {
             <div className="mt-3 flex items-center gap-2 sm:mt-0">
               <button
                 type="button"
-                onClick={() => setSelected([])}
+                onClick={clearSelected}
                 className="rounded-lg px-3 py-2 text-xs font-semibold text-white/70 transition hover:text-white"
               >
                 {t("compare.clearAll")}
@@ -507,24 +570,29 @@ function VendorsPageContent() {
           </div>
         )}
 
-        {/* Loading Skeleton */}
+        {/* Loading skeleton: a full page of cards, so the layout doesn't jump */}
         {loading && (
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <div
-                key={i}
-                className="overflow-hidden rounded-2xl border border-[#eee7e1] bg-white"
-              >
-                <div className="aspect-4/3 animate-pulse bg-[#f0e9e2]" />
-                <div className="space-y-3 p-4">
-                  <div className="h-4 w-3/4 animate-pulse rounded bg-[#f0e9e2]" />
-                  <div className="h-3 w-1/2 animate-pulse rounded bg-[#f0e9e2]" />
-                  <div className="h-3 w-full animate-pulse rounded bg-[#f0e9e2]" />
-                  <div className="h-3 w-2/3 animate-pulse rounded bg-[#f0e9e2]" />
+          <>
+            <div className="mb-6 h-5 w-40 animate-pulse rounded bg-[#f0e9e2]" />
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {Array.from({ length: PAGE_SIZE }).map((_, i) => (
+                <div
+                  key={i}
+                  className={`overflow-hidden rounded-2xl border border-[#eee7e1] bg-white ${
+                    i >= 4 ? "hidden sm:block" : ""
+                  }`}
+                >
+                  <div className="h-36 animate-pulse bg-[#f0e9e2] sm:h-40" />
+                  <div className="space-y-3 p-4 pt-11">
+                    <div className="h-4 w-3/4 animate-pulse rounded bg-[#f0e9e2]" />
+                    <div className="h-3 w-1/2 animate-pulse rounded bg-[#f0e9e2]" />
+                    <div className="h-3 w-full animate-pulse rounded bg-[#f0e9e2]" />
+                    <div className="h-3 w-2/3 animate-pulse rounded bg-[#f0e9e2]" />
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          </>
         )}
 
         {/* Error */}
@@ -596,61 +664,39 @@ function VendorsPageContent() {
                   onSelect={toggleSelected}
                 />
               ))}
+
+              {/* Invisible placeholders that fill a short last page up to a
+                  full page, so the pagination below never moves up. */}
+              {totalPages > 1 &&
+                Array.from({ length: Math.max(0, PAGE_SIZE - items.length) }).map(
+                  (_, i) => (
+                    <div
+                      key={`placeholder-${i}`}
+                      aria-hidden="true"
+                      className="pointer-events-none invisible hidden sm:block"
+                    >
+                      <VendorCard vendor={items[0]} />
+                    </div>
+                  )
+                )}
             </div>
-
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="mt-12 flex items-center justify-center gap-2">
-                <button
-                  type="button"
-                  disabled={page <= 1}
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  className="flex h-10 w-10 items-center justify-center rounded-full border border-[#e4dbd0] bg-white text-[#5f544d] transition hover:border-[#b99a62] hover:bg-[#f9f1e9] disabled:opacity-40 disabled:hover:border-[#e4dbd0] disabled:hover:bg-white"
-                >
-                  <ChevronLeft size={16} className="rtl:rotate-180" />
-                </button>
-
-                <div className="flex items-center gap-1">
-                  {Array.from({ length: Math.min(totalPages, 5) }).map((_, i) => {
-                    let pageNum: number;
-                    if (totalPages <= 5) {
-                      pageNum = i + 1;
-                    } else if (page <= 3) {
-                      pageNum = i + 1;
-                    } else if (page >= totalPages - 2) {
-                      pageNum = totalPages - 4 + i;
-                    } else {
-                      pageNum = page - 2 + i;
-                    }
-
-                    return (
-                      <button
-                        key={pageNum}
-                        type="button"
-                        onClick={() => setPage(pageNum)}
-                        className={`flex h-10 min-w-10 items-center justify-center rounded-full px-3 text-sm font-semibold transition ${
-                          page === pageNum
-                            ? "bg-[#30251f] text-white"
-                            : "border border-[#e4dbd0] bg-white text-[#5f544d] hover:border-[#b99a62] hover:bg-[#f9f1e9]"
-                        }`}
-                      >
-                        {pageNum}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <button
-                  type="button"
-                  disabled={page >= totalPages}
-                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  className="flex h-10 w-10 items-center justify-center rounded-full border border-[#e4dbd0] bg-white text-[#5f544d] transition hover:border-[#b99a62] hover:bg-[#f9f1e9] disabled:opacity-40 disabled:hover:border-[#e4dbd0] disabled:hover:bg-white"
-                >
-                  <ChevronRight size={16} className="rtl:rotate-180" />
-                </button>
-              </div>
-            )}
           </>
+        )}
+
+        {/* Pagination: always at the bottom, in the same place */}
+        {!error && totalPages > 1 && (
+          <div className="mt-12">
+            <Pagination page={page} totalPages={totalPages} onChange={setPage} disabled={loading} />
+          </div>
+        )}
+
+        {categoryPicker && (
+          <CompareCategoryDialog
+            vendorName={categoryPicker.vendor.businessName}
+            options={categoryPicker.options}
+            onPick={(id) => startCompareInCategory(categoryPicker.vendor.id, id)}
+            onClose={() => setCategoryPicker(null)}
+          />
         )}
       </section>
     </main>

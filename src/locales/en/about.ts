@@ -7,8 +7,8 @@ const about: Translation["about"] = {
   titleSuffix: "Deserves a Perfect Beginning.",
   intro:
     "5digea is a wedding marketplace created to make discovering the right people, places, and services for your special day feel effortless, beautiful, and truly personal.",
-  exploreServices: "Explore Services",
-  talkToUs: "Talk to Us",
+  dreamText:
+    "Our dream is to be part of your day, to plan with you, and to be the reason your day turns out exactly as you've always imagined. We're young Nubian founders with a big heart, and we pour all our love and passion into making your day the best it can possibly be. Because every love story deserves a beginning worthy of it.",
   mission: {
     label: "Our Mission",
     titlePrefix: "Turning wedding planning into a",

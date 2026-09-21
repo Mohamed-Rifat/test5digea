@@ -26,6 +26,13 @@ const services: Translation["services"] = {
     selectedOne: "{count} {category} service selected",
     selectedMany: "{count} {category} services selected",
     compareButton: "Compare ({count})",
+    refineTitle: "Refine your search",
+    refineSubtitle: "Narrow services down to what fits your day and budget",
+    closeFilters: "Close filters",
+    reset: "Reset",
+    priceRange: "Price",
+    clearAllFilters: "Clear all filters",
+    showResults: "Show results",
     found: "{count} services found",
     pageOf: "Page {page} of {total}",
   },
@@ -47,6 +54,14 @@ const services: Translation["services"] = {
     startRoadmapPrefix: "Start your",
     startRoadmapLink: "wedding roadmap",
     startRoadmapSuffix: "to book vendors by category.",
+    similar: {
+      sameVendorTitle: "More from this vendor",
+      sameVendorSubtitle: "{vendor} also offers other services in the same category ({category}).",
+      otherVendorsTitle: "Similar services",
+      otherVendorsSubtitle:
+        "This vendor doesn't offer other services in {category}. Here are similar services from other vendors, if you'd like to explore.",
+      viewMore: "More {category} services",
+    },
   },
 };
 
