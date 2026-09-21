@@ -31,7 +31,7 @@ export const useUnreadCount = (
       const data = await getUnreadNotificationsCount();
 
       setCount(data);
-    } catch (error) {
+    } catch {
       // Silent — a stale/missing badge isn't worth surfacing an error for.
     } finally {
       setLoading(false);

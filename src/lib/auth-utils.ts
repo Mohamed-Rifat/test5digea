@@ -29,8 +29,8 @@ export const getRoleFromToken = (
     }
 
     return null;
-  } catch {
-    
+  } catch (error) {
+    console.error("Failed to decode JWT role:", error);
     return null;
   }
 };

@@ -113,7 +113,7 @@ function ResetPasswordForm() {
         router.push("/login?reset=success");
       }, 1200);
     } catch (err: unknown) {
-      
+      console.error("Reset password failed:", err);
 
       setError(
         getApiErrorMessage(

@@ -26,8 +26,8 @@ export const useCurrentUser = (enabled = true): UseCurrentUserReturn => {
       setError(null);
 
       setCurrentUser(await getCurrentUser());
-    } catch {
-      
+    } catch (err) {
+      console.error("Failed to fetch current user:", err);
       setError("Failed to load account details.");
     } finally {
       setLoading(false);

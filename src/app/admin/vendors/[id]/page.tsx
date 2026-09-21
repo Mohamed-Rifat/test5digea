@@ -193,7 +193,7 @@ export default function AdminVendorDetailsPage({
             .map((category) => category.id)
         );
       } catch (err: unknown) {
-        
+        console.error("Failed to load vendor details:", err);
 
         if (isMounted()) {
           setError(
@@ -334,7 +334,7 @@ export default function AdminVendorDetailsPage({
 
       setCategoriesSuccess(t("admin.vendorDetails.categories.updated"));
     } catch (err: unknown) {
-      
+      console.error("Failed to update vendor categories:", err);
 
       setCategoriesError(
         getApiErrorMessage(err, t("admin.vendorDetails.categories.failed"))

@@ -164,7 +164,7 @@ export const ContactAdminDialog = ({
       setIsSending(false);
       onSuccess?.();
       onClose();
-    } catch {
+    } catch (err) {
       setSendError(t("vendor.services.detail.dialog.sendFailed"));
       setIsSending(false);
     }

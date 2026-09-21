@@ -97,8 +97,8 @@ export const useVendorsWithPendingChanges =
                   );
                 }
               }
-            } catch {
-              
+            } catch (err) {
+              console.error("Failed to check vendor for pending edits:", err);
               failed += 1;
             } finally {
               done += 1;
@@ -118,8 +118,8 @@ export const useVendorsWithPendingChanges =
         );
 
         if (!cancelled()) setFailedCount(failed);
-      } catch {
-        
+      } catch (err) {
+        console.error("Failed to load vendors:", err);
 
         if (!cancelled()) setError("Failed to load partners.");
       } finally {

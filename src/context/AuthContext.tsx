@@ -5,7 +5,6 @@ import {
   createContext,
   useContext,
   useState,
-  useEffect,
   type ReactNode,
 } from "react";
 
@@ -39,13 +38,11 @@ interface AuthProviderProps {
 export function AuthProvider({
   children,
 }: AuthProviderProps) {
-  const [user, setUser] = useState<LoginResponse | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState<LoginResponse | null>(() => {
+    return authStorage.get();
+  });
 
-  useEffect(() => {
-    setUser(authStorage.get());
-    setIsLoading(false);
-  }, []);
+  const [isLoading] = useState(false);
 
   /**
    * Get the current user's role from the JWT.

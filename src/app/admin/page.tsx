@@ -559,7 +559,7 @@ export default function AdminPage() {
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 rounded-xl border border-[#e8dfd9] bg-white px-4 py-2.5 text-sm font-medium text-[#665951] shadow-sm">
             <CalendarDays size={16} />
-            <span>{new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" })}</span>
+            <span>September 2026</span>
           </div>
         </div>
       </div>

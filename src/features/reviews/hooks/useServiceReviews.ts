@@ -49,7 +49,7 @@ export const useServiceReviews = (
       });
 
       setData(result);
-    } catch {
+    } catch (err) {
       setError("Failed to load reviews.");
     } finally {
       setLoading(false);

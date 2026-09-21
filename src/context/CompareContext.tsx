@@ -66,11 +66,7 @@ export function CompareProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!hydrated) return;
-    try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(selected));
-    } catch {
-      // Ignore storage failures; comparison remains available in memory.
-    }
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(selected));
   }, [selected, hydrated]);
 
   const isSelected = useCallback(
@@ -86,29 +82,30 @@ export function CompareProvider({ children }: { children: React.ReactNode }) {
 
   const toggleService = useCallback(
     (service: CompareServiceItem) => {
-      const alreadySelected = selected.some((item) => item.id === service.id);
+      setSelected((prev) => {
+        const alreadySelected = prev.some((s) => s.id === service.id);
 
-      if (alreadySelected) {
-        setSelected((prev) => prev.filter((item) => item.id !== service.id));
-        return;
-      }
+        if (alreadySelected) {
+          return prev.filter((s) => s.id !== service.id);
+        }
 
-      if (selected.length > 0 && selected[0].categoryId !== service.categoryId) {
-        toast(t("compare.errors.sameCategory"), "error");
-        return;
-      }
+        if (prev.length > 0 && prev[0].categoryId !== service.categoryId) {
+          toast(t("compare.errors.sameCategory"), "error");
+          return prev;
+        }
 
-      if (selected.length >= MAX_COMPARE_SERVICES) {
-        toast(
-          t("compare.errors.maxServices", { max: MAX_COMPARE_SERVICES }),
-          "error"
-        );
-        return;
-      }
+        if (prev.length >= MAX_COMPARE_SERVICES) {
+          toast(
+            t("compare.errors.maxServices", { max: MAX_COMPARE_SERVICES }),
+            "error"
+          );
+          return prev;
+        }
 
-      setSelected((prev) => [...prev, service].slice(0, MAX_COMPARE_SERVICES));
+        return [...prev, service];
+      });
     },
-    [selected, toast, t]
+    [toast, t]
   );
 
   const value = useMemo(

@@ -45,7 +45,7 @@ export default function ForgotPasswordPage() {
         router.push(`/verify-otp?email=${encodeURIComponent(email)}`);
       }, 900);
     } catch (err: unknown) {
-      
+      console.error("Forgot password request failed:", err);
 
       setError(
         getApiErrorMessage(

@@ -36,7 +36,7 @@ export const useAdminReviews = (): UseAdminReviewsReturn => {
       const data = await fetchPendingReviews();
 
       setReviews(data);
-    } catch {
+    } catch (err) {
       setError("Failed to load pending reviews.");
     } finally {
       setLoading(false);
@@ -56,7 +56,7 @@ export const useAdminReviews = (): UseAdminReviewsReturn => {
         await fetchReviews();
 
         return true;
-      } catch {
+      } catch (err) {
         return false;
       } finally {
         setActionLoading(null);
@@ -74,7 +74,7 @@ export const useAdminReviews = (): UseAdminReviewsReturn => {
         await fetchReviews();
 
         return true;
-      } catch {
+      } catch (err) {
         return false;
       } finally {
         setActionLoading(null);
@@ -95,7 +95,7 @@ export const useAdminReviews = (): UseAdminReviewsReturn => {
         await fetchReviews();
 
         return true;
-      } catch {
+      } catch (err) {
         return false;
       } finally {
         setActionLoading(null);

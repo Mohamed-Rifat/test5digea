@@ -29,8 +29,11 @@ export const useServices = (
       const data = await getServices(params);
 
       setServices(data);
-    } catch {
-      
+    } catch (error) {
+      console.error(
+        "Failed to fetch services:",
+        error
+      );
 
       setError("Failed to load services.");
     } finally {

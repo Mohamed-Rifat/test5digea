@@ -18,8 +18,7 @@ export const getNotifications = async (
 
 export const getUnreadNotificationsCount = async (): Promise<number> => {
   const response = await api.get<number>(
-    "/api/notifications/unread-count",
-    { skipGlobalLoader: true }
+    "/api/notifications/unread-count"
   );
 
   return response.data;

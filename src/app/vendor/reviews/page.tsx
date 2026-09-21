@@ -51,11 +51,11 @@ import { useVendor } from "@/features/vendors/hooks/useVendor";
 import { formatDate } from "@/lib/format";
 import { useLanguage } from "@/context/LanguageContext";
 import { LANGUAGE_DATE_LOCALE } from "@/locales/config";
-import { useToast } from "@/components/providers/ToastProvider";
 import type { Language, TranslationKey } from "@/locales";
 import { ReviewStatus } from "@/types/review";
 import type { Review } from "@/types/review";
 
+import * as XLSX from 'xlsx';
 
 /* =========================================================
    Constants
@@ -175,19 +175,18 @@ function makeSheetName(raw: string | null | undefined, used: Set<string>): strin
   return name;
 }
 
-function exportReviewsToCsv(
+function exportReviewsToExcel(
   reviews: Review[],
   t: TFn,
   language: Language,
-  vendorName?: string,
-  notify?: (message: string, type?: "success" | "error" | "info") => void
+  vendorName?: string
 ) {
   const x = (key: string, params?: Record<string, string | number>) =>
     t(`vendor.reviews.excel.${key}` as TranslationKey, params);
   const dateLocale = LANGUAGE_DATE_LOCALE[language];
 
   if (reviews.length === 0) {
-    notify?.(x("nothingToExport"), "info");
+    alert(x("nothingToExport"));
     return;
   }
 
@@ -200,6 +199,11 @@ function exportReviewsToCsv(
     return acc;
   }, {});
 
+  const workbook = XLSX.utils.book_new();
+  const usedSheetNames = new Set<string>(
+    [x("sheetSummary"), x("sheetAll")].map((name) => name.toLowerCase())
+  );
+
   const totalApproved = reviews.filter(r => r.status === ReviewStatus.Approved).length;
   const totalPending = reviews.filter(r => r.status === ReviewStatus.Pending).length;
   const totalRejected = reviews.filter(r => r.status === ReviewStatus.Rejected).length;
@@ -209,12 +213,12 @@ function exportReviewsToCsv(
     .filter(r => r.status === ReviewStatus.Approved)
     .reduce((acc, r) => acc + r.rating, 0) / (totalApproved || 1);
 
-  const rows: (string | number)[][] = [
+  const summaryData: any[][] = [
     [x("summaryTitle")],
-    [],
+    [''],
     [x("vendor"), vendorName || x("na")],
-    [x("reportDate"), new Date().toLocaleString(dateLocale, { dateStyle: "full", timeStyle: "medium" })],
-    [],
+    [x("reportDate"), new Date().toLocaleString(dateLocale, { dateStyle: 'full', timeStyle: 'medium' })],
+    [''],
     [x("statistics")],
     [x("metric"), x("value")],
     [x("totalReviews"), reviews.length],
@@ -223,20 +227,66 @@ function exportReviewsToCsv(
     [x("rejectedReviews"), totalRejected],
     [x("visibleReviews"), totalVisible],
     [x("hiddenReviews"), totalHidden],
-    [x("averageRating"), `${avgRating.toFixed(1)} ⭐`],
-    [x("approvalRate"), `${((totalApproved / (reviews.length || 1)) * 100).toFixed(1)}%`],
-    [],
-    [x("no"), x("customer"), x("service"), x("rating"), x("status"), x("visibility"), x("comment"), x("date")],
+    [x("averageRating"), String(avgRating.toFixed(1)) + ' ⭐'],
+    [x("approvalRate"), String(((totalApproved / reviews.length) * 100).toFixed(1)) + '%'],
+    [''],
+    [x("servicesOverview")],
+    [x("serviceName"), x("reviewsCount"), x("avgRating")],
   ];
+
+  Object.values(reviewsByService).forEach(({ serviceName, reviews: r }) => {
+    const avg = r.filter(rev => rev.status === ReviewStatus.Approved)
+      .reduce((acc, rev) => acc + rev.rating, 0) / (r.filter(rev => rev.status === ReviewStatus.Approved).length || 1);
+    summaryData.push([serviceName, r.length, String(avg.toFixed(1)) + ' ⭐']);
+  });
+
+  const summaryWS = XLSX.utils.aoa_to_sheet(summaryData);
+  summaryWS['!cols'] = [{ wch: 30 }, { wch: 25 }, { wch: 20 }];
+  summaryWS['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 2 } }];
+  XLSX.utils.book_append_sheet(workbook, summaryWS, x("sheetSummary"));
 
   const visibilityLabel = (review: Review) =>
     review.status === ReviewStatus.Approved
       ? (review.isDisplayed ? x("visible") : x("hidden"))
       : "—";
 
+  Object.values(reviewsByService).forEach(({ serviceName, reviews: serviceReviews }) => {
+    const rows: any[][] = [
+      [x("serviceReportTitle", { service: serviceName })],
+      [""],
+      [x("no"), x("customer"), x("rating"), x("status"), x("visibility"), x("comment"), x("date")],
+    ];
+
+    serviceReviews.forEach((review, index) => {
+      const stars = '⭐'.repeat(Math.round(review.rating));
+
+      rows.push([
+        index + 1,
+        review.userFullName || t("vendor.reviews.card.anonymous"),
+        `${review.rating} ${stars}`,
+        t(getStatusMeta(review.status).labelKey),
+        visibilityLabel(review),
+        review.comment || x("noComment"),
+        formatDate(review.createdAt, dateLocale),
+      ]);
+    });
+
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols'] = [{ wch: 6 }, { wch: 28 }, { wch: 22 }, { wch: 16 }, { wch: 16 }, { wch: 50 }, { wch: 22 }];
+    ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 6 } }];
+    XLSX.utils.book_append_sheet(workbook, ws, makeSheetName(serviceName, usedSheetNames));
+  });
+
+  const allReviewsData: any[][] = [
+    [x("allTitle")],
+    [''],
+    [x("no"), x("customer"), x("service"), x("rating"), x("status"), x("visibility"), x("comment"), x("date")],
+  ];
+
   reviews.forEach((review, index) => {
-    const stars = "⭐".repeat(Math.round(review.rating));
-    rows.push([
+    const stars = '⭐'.repeat(Math.round(review.rating));
+
+    allReviewsData.push([
       index + 1,
       review.userFullName || t("vendor.reviews.card.anonymous"),
       review.serviceName,
@@ -248,23 +298,13 @@ function exportReviewsToCsv(
     ]);
   });
 
-  const escapeCsv = (value: string | number) => {
-    const text = String(value);
-    return /["\n,]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
-  };
+  const allWS = XLSX.utils.aoa_to_sheet(allReviewsData);
+  allWS['!cols'] = [{ wch: 6 }, { wch: 28 }, { wch: 32 }, { wch: 22 }, { wch: 16 }, { wch: 16 }, { wch: 50 }, { wch: 22 }];
+  allWS['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 7 } }];
+  XLSX.utils.book_append_sheet(workbook, allWS, x("sheetAll"));
 
-  const csv = rows.map(row => row.map(escapeCsv).join(",")).join("\r\n");
-  const blob = new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = `${x("fileName")}_${new Date().toISOString().split("T")[0]}.csv`;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  URL.revokeObjectURL(url);
+  XLSX.writeFile(workbook, `${x("fileName")}_${new Date().toISOString().split('T')[0]}.xlsx`);
 }
-
 
 /* =========================================================
    Components
@@ -355,7 +395,6 @@ const ReviewCard = memo(function ReviewCard({
   onViewDetails?: (review: Review) => void;
 }) {
   const { t, language } = useLanguage();
-  const { toast } = useToast();
   const ratingLabel = t(getRatingLabelKey(review.rating));
   const timeAgo = getTimeAgo(review.createdAt, t, language);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -725,9 +764,6 @@ function MobileFilterDrawer({
             getOptionLabel={(option) => option.name}
             isOptionEqualToValue={(option, value) => option.id === value.id}
             noOptionsText={t("vendor.reviews.filters.noServices")}
-            clearText={t("common.clear")}
-            openText={t("common.open")}
-            closeText={t("common.close")}
             popupIcon={<ChevronDown size={17} />}
             fullWidth
             renderInput={(params) => (
@@ -1068,14 +1104,14 @@ function VendorReviewsContent() {
   const vendorDisplayName = vendor?.businessName || t("vendor.header.vendor");
 
   const handleExportAll = useCallback(() => {
-    exportReviewsToCsv(reviews, t, language, vendorDisplayName, toast);
+    exportReviewsToExcel(reviews, t, language, vendorDisplayName);
     handleExportClose();
-  }, [reviews, vendorDisplayName, handleExportClose, t, language, toast]);
+  }, [reviews, vendorDisplayName, handleExportClose, t, language]);
 
   const handleExportFiltered = useCallback(() => {
-    exportReviewsToCsv(filteredReviews, t, language, vendorDisplayName, toast);
+    exportReviewsToExcel(filteredReviews, t, language, vendorDisplayName);
     handleExportClose();
-  }, [filteredReviews, vendorDisplayName, handleExportClose, t, language, toast]);
+  }, [filteredReviews, vendorDisplayName, handleExportClose, t, language]);
 
   /* =======================================================
      Render
@@ -1265,9 +1301,6 @@ function VendorReviewsContent() {
               getOptionLabel={(option) => option.name}
               isOptionEqualToValue={(option, value) => option.id === value.id}
               noOptionsText={t("vendor.reviews.filters.noServices")}
-              clearText={t("common.clear")}
-              openText={t("common.open")}
-              closeText={t("common.close")}
               popupIcon={<ChevronDown size={17} />}
               renderInput={(params) => (
                 <TextField

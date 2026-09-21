@@ -6,21 +6,17 @@ export const authStorage = {
   set(data: LoginResponse) {
     if (typeof window === "undefined") return;
 
-    try {
-      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(data));
-    } catch {
-      // Storage may be blocked or unavailable (private mode/quota).
-    }
+    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(data));
   },
 
   get(): LoginResponse | null {
     if (typeof window === "undefined") return null;
 
+    const data = localStorage.getItem(AUTH_STORAGE_KEY);
+
+    if (!data) return null;
+
     try {
-      const data = localStorage.getItem(AUTH_STORAGE_KEY);
-
-      if (!data) return null;
-
       return JSON.parse(data) as LoginResponse;
     } catch {
       return null;
@@ -30,10 +26,6 @@ export const authStorage = {
   remove() {
     if (typeof window === "undefined") return;
 
-    try {
-      localStorage.removeItem(AUTH_STORAGE_KEY);
-    } catch {
-      // Ignore storage failures during logout.
-    }
+    localStorage.removeItem(AUTH_STORAGE_KEY);
   },
 };

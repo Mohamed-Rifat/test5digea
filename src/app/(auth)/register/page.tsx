@@ -206,7 +206,7 @@ export default function RegisterPage() {
       setAuth(data);
       router.push("/");
     } catch (err: unknown) {
-      
+      console.error("Registration failed:", err);
 
       setError(getApiErrorMessage(err, t("auth.registerPage.failed")));
     } finally {

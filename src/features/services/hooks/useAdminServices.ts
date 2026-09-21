@@ -44,8 +44,8 @@ export const useAdminServices = (
       const data = await getAdminServices(params);
 
       setServices(data);
-    } catch {
-      
+    } catch (error) {
+      console.error("Failed to fetch admin services:", error);
 
       setError("Failed to load services.");
     } finally {
@@ -67,8 +67,8 @@ export const useAdminServices = (
         await fetchServices();
 
         return true;
-      } catch {
-        
+      } catch (error) {
+        console.error("Failed to approve service:", error);
 
         return false;
       } finally {
@@ -90,8 +90,8 @@ export const useAdminServices = (
         await fetchServices();
 
         return true;
-      } catch {
-        
+      } catch (error) {
+        console.error("Failed to reject service:", error);
 
         return false;
       } finally {
@@ -110,8 +110,8 @@ export const useAdminServices = (
         await fetchServices();
 
         return true;
-      } catch {
-        
+      } catch (error) {
+        console.error("Failed to activate service:", error);
 
         return false;
       } finally {
@@ -130,8 +130,8 @@ export const useAdminServices = (
         await fetchServices();
 
         return true;
-      } catch {
-        
+      } catch (error) {
+        console.error("Failed to deactivate service:", error);
 
         return false;
       } finally {

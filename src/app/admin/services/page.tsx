@@ -21,7 +21,6 @@ import { useAdminServices } from "@/features/services/hooks/useAdminServices";
 import { useAdminCategories } from "@/features/categories/hooks/useAdminCategories";
 
 import type { Service } from "@/types/service";
-import { useToast } from "@/components/providers/ToastProvider";
 
 /* =========================
    Helpers
@@ -116,7 +115,6 @@ const getStartingPrice = (service: Service) => {
 ========================= */
 
 export default function AdminServicesPage() {
-  const { confirm } = useToast();
   const { t } = useLanguage();
   const money = (value: number) => `${formatPrice(value)} ${t("common.currency")}`;
   const {
@@ -270,7 +268,7 @@ export default function AdminServicesPage() {
   const handleApprove = async (
     service: Service
   ) => {
-    const confirmed = await confirm(
+    const confirmed = window.confirm(
       `Are you sure you want to approve "${service.name}"?`
     );
 
@@ -353,7 +351,7 @@ export default function AdminServicesPage() {
   const handleActivate = async (
     service: Service
   ) => {
-    const confirmed = await confirm(
+    const confirmed = window.confirm(
       `Activate "${service.name}"?`
     );
 
@@ -381,9 +379,8 @@ export default function AdminServicesPage() {
   const handleDeactivate = async (
     service: Service
   ) => {
-    const confirmed = await confirm(
-      `Deactivate "${service.name}"?`,
-      { danger: true }
+    const confirmed = window.confirm(
+      `Deactivate "${service.name}"?`
     );
 
     if (!confirmed) return;

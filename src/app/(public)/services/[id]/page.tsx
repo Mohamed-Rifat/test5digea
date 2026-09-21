@@ -56,7 +56,7 @@ export default function ServiceDetailPage() {
         const data = await getService(params.id);
 
         setService(data);
-      } catch {
+      } catch (err) {
         setError(true);
       } finally {
         setLoading(false);
@@ -110,7 +110,7 @@ export default function ServiceDetailPage() {
   return (
     <main className="min-h-screen bg-[#faf8f6]">
 
-      <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
+      <div className="mx-auto lg:max-w-10/12 px-4 py-10 sm:px-6 lg:px-8">
         <Link
           href="/services"
           className="mb-6 inline-flex items-center gap-2 text-sm font-medium text-[#766d67] hover:text-[#30251f]"
