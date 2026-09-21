@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useId, useState } from "react";
 import { isAxiosError } from "axios";
 
 import {
@@ -12,6 +12,16 @@ import {
   deleteVendorGalleryImage,
 } from "@/features/vendors/api";
 import { getNotifications } from "@/features/notifications/api";
+import { useLanguage } from "@/context/LanguageContext";
+import {
+  localizedError,
+  resolveLocalizedError,
+  type LocalizedError,
+} from "@/lib/error";
+import {
+  announceVendorDataChange,
+  subscribeToVendorDataChange,
+} from "@/lib/vendor-sync";
 import {
   clearMarker,
   hasVendorChangedSince,
@@ -80,12 +90,15 @@ const decisionNotificationArrived = async (
 };
 
 export const useVendor = (): UseVendorReturn => {
+  const { t } = useLanguage();
+  const instanceId = useId();
+
   const [vendor, setVendor] = useState<Vendor | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<LocalizedError | null>(null);
 
   const [actionLoading, setActionLoading] = useState<string | null>(null);
-  const [actionError, setActionError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<LocalizedError | null>(null);
 
   // Local record of an edit that is still awaiting review (fallback for when
   // the API response doesn't carry `pendingChanges`).
@@ -148,7 +161,7 @@ export const useVendor = (): UseVendorReturn => {
         await syncMarker(data, !!options.rebaseline);
       } catch (error) {
         console.error("Failed to fetch current vendor:", error);
-        setError("Failed to load vendor information.");
+        setError(localizedError("vendor.errors.loadVendor", error));
       } finally {
         if (!options.silent) setLoading(false);
       }
@@ -161,6 +174,16 @@ export const useVendor = (): UseVendorReturn => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchVendor();
   }, [fetchVendor]);
+
+  // Another component changed the vendor (photo, resubmit, ...): refresh
+  // quietly so the header, sidebar and status banner never go stale.
+  useEffect(
+    () =>
+      subscribeToVendorDataChange("vendor", instanceId, () => {
+        void fetchVendor({ silent: true });
+      }),
+    [instanceId, fetchVendor]
+  );
 
   const refetch = useCallback(() => fetchVendor(), [fetchVendor]);
   const refreshSilently = useCallback(
@@ -199,17 +222,16 @@ export const useVendor = (): UseVendorReturn => {
           setMarker(created);
         }
 
+        announceVendorDataChange("vendor", instanceId);
+
         return true;
       } catch (error) {
         console.error("Failed to update vendor:", error);
 
         // The server may refuse an edit (e.g. one is already awaiting
-        // review). Show its reason and resync so the UI locks accordingly.
-        const body = isAxiosError(error)
-          ? (error.response?.data as { detail?: string; message?: string } | undefined)
-          : undefined;
-
-        setActionError(body?.detail || body?.message || "Failed to update your profile.");
+        // review). Show its reason (if it gave one) and resync so the UI
+        // locks accordingly.
+        setActionError(localizedError("vendor.errors.updateProfile", error));
 
         if (isAxiosError(error) && error.response?.status === 409) {
           await fetchVendor({ silent: true });
@@ -220,7 +242,7 @@ export const useVendor = (): UseVendorReturn => {
         setActionLoading(null);
       }
     },
-    [vendor, fetchVendor]
+    [vendor, fetchVendor, instanceId]
   );
 
   const resubmit = useCallback(async (): Promise<boolean> => {
@@ -231,18 +253,19 @@ export const useVendor = (): UseVendorReturn => {
       setActionError(null);
 
       await resubmitVendor(vendor.id);
-      await fetchVendor();
+      await fetchVendor({ silent: true });
+      announceVendorDataChange("vendor", instanceId);
 
       return true;
     } catch (error) {
       console.error("Failed to resubmit vendor:", error);
-      setActionError("Failed to resubmit your profile.");
+      setActionError(localizedError("vendor.errors.resubmitProfile", error));
 
       return false;
     } finally {
       setActionLoading(null);
     }
-  }, [vendor, fetchVendor]);
+  }, [vendor, fetchVendor, instanceId]);
 
   const uploadProfileImage = useCallback(
     async (file: File): Promise<boolean> => {
@@ -253,19 +276,20 @@ export const useVendor = (): UseVendorReturn => {
         setActionError(null);
 
         await uploadVendorProfileImage(vendor.id, file);
-        await fetchVendor();
+        await fetchVendor({ silent: true });
+        announceVendorDataChange("vendor", instanceId);
 
         return true;
       } catch (error) {
         console.error("Failed to upload vendor profile image:", error);
-        setActionError("Failed to upload your profile photo.");
+        setActionError(localizedError("vendor.errors.uploadProfilePhoto", error));
 
         return false;
       } finally {
         setActionLoading(null);
       }
     },
-    [vendor, fetchVendor]
+    [vendor, fetchVendor, instanceId]
   );
 
   const uploadGalleryImages = useCallback(
@@ -283,19 +307,20 @@ export const useVendor = (): UseVendorReturn => {
         // GET payload may or may not include gallery images (see the NOTE
         // on Vendor.galleryImages in types/vendor.ts).
         setVendor((prev) => (prev ? { ...prev, galleryImages: images } : prev));
-        await fetchVendor({ rebaseline: true });
+        await fetchVendor({ rebaseline: true, silent: true });
+        announceVendorDataChange("vendor", instanceId);
 
         return true;
       } catch (error) {
         console.error("Failed to upload vendor gallery images:", error);
-        setActionError("Failed to upload gallery photos.");
+        setActionError(localizedError("vendor.errors.uploadGallery", error));
 
         return false;
       } finally {
         setActionLoading(null);
       }
     },
-    [vendor, fetchVendor]
+    [vendor, fetchVendor, instanceId]
   );
 
   const deleteGalleryImage = useCallback(
@@ -333,25 +358,27 @@ export const useVendor = (): UseVendorReturn => {
           }
         }
 
+        announceVendorDataChange("vendor", instanceId);
+
         return true;
       } catch (error) {
         console.error("Failed to delete vendor gallery image:", error);
-        setActionError("Failed to delete gallery photo.");
+        setActionError(localizedError("vendor.errors.deleteGalleryPhoto", error));
 
         return false;
       } finally {
         setActionLoading(null);
       }
     },
-    [vendor]
+    [vendor, instanceId]
   );
 
   return {
     vendor,
     loading,
-    error,
+    error: resolveLocalizedError(error, t),
     actionLoading,
-    actionError,
+    actionError: resolveLocalizedError(actionError, t),
     isPendingReview:
       !!vendor?.pendingChanges || !!vendor?.hasPendingRecord || !!marker,
     pendingSubmitted: marker?.submitted ?? null,

@@ -7,7 +7,13 @@ import {
   markAllNotificationsRead,
   markNotificationRead,
 } from "@/features/notifications/api";
-import { getApiErrorMessage } from "@/lib/error";
+import { useLanguage } from "@/context/LanguageContext";
+import {
+  getApiErrorMessage,
+  localizedError,
+  resolveLocalizedError,
+  type LocalizedError,
+} from "@/lib/error";
 import { useToast } from "@/components/providers/ToastProvider";
 
 import type {
@@ -31,6 +37,7 @@ export const useNotifications = (
   params?: GetNotificationsParams
 ): UseNotificationsReturn => {
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   const [notifications, setNotifications] = useState<Notification[]>(
     []
@@ -38,7 +45,7 @@ export const useNotifications = (
   const [totalCount, setTotalCount] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<LocalizedError | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(
     null
   );
@@ -53,8 +60,8 @@ export const useNotifications = (
       setNotifications(data.items);
       setTotalCount(data.totalCount);
       setTotalPages(data.totalPages);
-    } catch {
-      setError("Failed to load notifications.");
+    } catch (err) {
+      setError(localizedError("common.notificationsPage.loadError", err));
     } finally {
       setLoading(false);
     }
@@ -80,14 +87,14 @@ export const useNotifications = (
         );
       } catch (err) {
         toast(
-          getApiErrorMessage(err, "Failed to mark as read."),
+          getApiErrorMessage(err, t("common.notificationsPage.markReadError")),
           "error"
         );
       } finally {
         setActionLoading(null);
       }
     },
-    [toast]
+    [toast, t]
   );
 
   const markAllAsRead = useCallback(async () => {
@@ -101,20 +108,20 @@ export const useNotifications = (
       );
     } catch (err) {
       toast(
-        getApiErrorMessage(err, "Failed to mark all as read."),
+        getApiErrorMessage(err, t("common.notificationsPage.markAllReadError")),
         "error"
       );
     } finally {
       setActionLoading(null);
     }
-  }, [toast]);
+  }, [toast, t]);
 
   return {
     notifications,
     totalCount,
     totalPages,
     loading,
-    error,
+    error: resolveLocalizedError(error, t),
     actionLoading,
     refetch: fetchNotifications,
     markAsRead,

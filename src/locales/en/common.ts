@@ -39,6 +39,9 @@ const common: Translation["common"] = {
     emptyTitle: "No notifications yet",
     emptyText: "You'll see updates about approvals, reviews and other activity here.",
     page: "Page {page} of {total}",
+    loadError: "We couldn't load your notifications.",
+    markReadError: "We couldn't mark the notification as read.",
+    markAllReadError: "We couldn't mark all notifications as read.",
     types: {
       vendorApproved: "Vendor approved",
       vendorRejected: "Vendor rejected",

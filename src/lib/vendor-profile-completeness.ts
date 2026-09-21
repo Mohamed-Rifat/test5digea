@@ -8,7 +8,6 @@ export type ProfileCheckKey =
   | "phone"
   | "email"
   | "categories"
-  | "gallery"
   | "hours"
   | "social";
 
@@ -79,16 +78,6 @@ export function getVendorProfileCompleteness(
       href: PROFILE_HREF,
     },
   ];
-
-  // The gallery is optional in the Vendor type (the GET payload may omit
-  // it), so only count it when the API actually returned the field.
-  if (Array.isArray(vendor.galleryImages)) {
-    checks.push({
-      key: "gallery",
-      done: vendor.galleryImages.length > 0,
-      href: PROFILE_HREF,
-    });
-  }
 
   const done = checks.filter((check) => check.done).length;
   const total = checks.length;

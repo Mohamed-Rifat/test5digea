@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useState, useMemo, useCallback } from "react";
+import { Suspense, useState, useMemo, useCallback } from "react";
 import {
   AlertCircle,
   BriefcaseBusiness,
@@ -84,7 +84,7 @@ const STATUS_FILTERS: {
   { value: "Inactive", labelKey: "vendor.services.list.stats.inactive", icon: XCircle },
 ];
 
-export default function VendorServicesPage() {
+function VendorServicesContent() {
   const { t } = useLanguage();
   const {
     services,
@@ -99,9 +99,16 @@ export default function VendorServicesPage() {
   const searchParams = useSearchParams();
 
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("All");
-  const [searchQuery, setSearchQuery] = useState(
-    () => searchParams.get("q") ?? ""
-  );
+  const urlQuery = searchParams.get("q") ?? "";
+  const [searchQuery, setSearchQuery] = useState(urlQuery);
+  const [lastUrlQuery, setLastUrlQuery] = useState(urlQuery);
+
+  // The header search box navigates to /vendor/services?q=... - follow it
+  // even when this page is already open (state initialised only once).
+  if (urlQuery !== lastUrlQuery) {
+    setLastUrlQuery(urlQuery);
+    setSearchQuery(urlQuery);
+  }
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   // ✅ إحصائيات سريعة
@@ -197,7 +204,7 @@ export default function VendorServicesPage() {
                 aria-label={t("vendor.services.list.refresh")}
                 className="inline-flex items-center gap-1.5 rounded-xl border border-[#e3d9d1] bg-white px-2.5 py-1.5 text-[10px] font-medium text-[#665950] transition-all hover:border-[#cfc1b7] hover:bg-[#faf8f6] disabled:opacity-50 sm:gap-2 sm:px-3.5 sm:py-2 sm:text-sm"
               >
-                <RefreshCw size={13} className={isRefreshing ? "animate-spin" : "sm:h-5 sm:w-5"} />
+                <RefreshCw size={13} className={isRefreshing ? "animate-spin sm:h-5 sm:w-5" : "sm:h-5 sm:w-5"} />
               </button>
 
               <Link
@@ -618,5 +625,14 @@ export default function VendorServicesPage() {
         )}
       </div>
     </main>
+  );
+}
+
+export default function VendorServicesPage() {
+  // useSearchParams() must be inside a Suspense boundary.
+  return (
+    <Suspense fallback={null}>
+      <VendorServicesContent />
+    </Suspense>
   );
 }

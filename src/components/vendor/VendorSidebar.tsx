@@ -201,7 +201,7 @@ export default function VendorSidebar({
               ) : vendor?.profileImageUrl ? (
                 <img
                   src={vendor.profileImageUrl}
-                  alt={vendor.businessName || "Vendor"}
+                  alt={vendor.businessName || t("vendor.header.vendor")}
                   className="h-full w-full object-cover"
                 />
               ) : (

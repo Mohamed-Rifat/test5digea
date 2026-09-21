@@ -3,6 +3,12 @@
 import { useCallback, useEffect, useState } from "react";
 
 import { fetchVendorReviews } from "@/features/reviews/api";
+import { useLanguage } from "@/context/LanguageContext";
+import {
+  localizedError,
+  resolveLocalizedError,
+  type LocalizedError,
+} from "@/lib/error";
 import type { Review } from "@/types/review";
 
 interface UseVendorReviewsReturn {
@@ -14,9 +20,10 @@ interface UseVendorReviewsReturn {
 
 // Reviews left on the currently authenticated vendor's own services.
 export const useVendorReviews = (): UseVendorReviewsReturn => {
+  const { t } = useLanguage();
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<LocalizedError | null>(null);
 
   const fetchReviews = useCallback(async () => {
     try {
@@ -27,7 +34,8 @@ export const useVendorReviews = (): UseVendorReviewsReturn => {
 
       setReviews(data);
     } catch (err) {
-      setError("Failed to load your reviews.");
+      console.error("Failed to load vendor reviews:", err);
+      setError(localizedError("vendor.errors.loadReviews", err));
     } finally {
       setLoading(false);
     }
@@ -40,7 +48,7 @@ export const useVendorReviews = (): UseVendorReviewsReturn => {
   return {
     reviews,
     loading,
-    error,
+    error: resolveLocalizedError(error, t),
     refetch: fetchReviews,
   };
 };

@@ -8,16 +8,13 @@ import {
   Clock3,
   Edit3,
   Globe2,
-  Images as ImagesIcon,
   Loader2,
   Mail,
   MapPin,
   Phone,
-  Plus,
   RotateCcw,
   Save,
   Settings2,
-  Trash2,
   X,
   CalendarOff,
   Calendar,
@@ -30,6 +27,7 @@ import {
 import { useVendor } from "@/features/vendors/hooks/useVendor";
 import { useLanguage } from "@/context/LanguageContext";
 import type { TranslationKey } from "@/locales";
+import { normalizeExternalUrl } from "@/lib/safe-url";
 import type { UpdateVendorRequest } from "@/types/vendor";
 
 // ================================================================
@@ -67,6 +65,14 @@ const STATUS_KEYS: Record<string, TranslationKey> = {
   Inactive: "vendor.status.inactive",
 };
 
+// Badge colours per vendor status (the badge used to be green for everything).
+const STATUS_BADGE_CLASSES: Record<string, string> = {
+  Approved: "bg-emerald-50 text-emerald-700",
+  Pending: "bg-amber-50 text-amber-700",
+  Rejected: "bg-red-50 text-red-700",
+  Inactive: "bg-gray-100 text-gray-700",
+};
+
 // ================================================================
 // TYPES
 // ================================================================
@@ -98,8 +104,6 @@ export default function VendorProfilePage() {
     update,
     resubmit,
     uploadProfileImage,
-    uploadGalleryImages,
-    deleteGalleryImage,
   } = useVendor();
 
   const [form, setForm] = useState<UpdateVendorRequest>(emptyForm);
@@ -376,14 +380,44 @@ export default function VendorProfilePage() {
         return;
       }
 
-      const ok = await update(form);
+      // Social links must be real http(s) links (no "javascript:" etc.).
+      // A missing scheme ("instagram.com/x") is completed with https://.
+      const cleanedLinks: SocialLinks = {};
+      let hasInvalidLink = false;
+
+      (Object.keys(socialLinks) as (keyof SocialLinks)[]).forEach((key) => {
+        const raw = (socialLinks[key] ?? "").trim();
+
+        if (!raw) return;
+
+        const normalized = normalizeExternalUrl(raw);
+
+        if (normalized === null) {
+          hasInvalidLink = true;
+        } else {
+          cleanedLinks[key] = normalized;
+        }
+      });
+
+      if (hasInvalidLink) {
+        setFormError("vendor.profile.errors.urlInvalid");
+        return;
+      }
+
+      const socialLinksJson = Object.keys(cleanedLinks).length
+        ? JSON.stringify(cleanedLinks)
+        : form.socialLinksJson
+          ? JSON.stringify({})
+          : "";
+
+      const ok = await update({ ...form, socialLinksJson });
 
       if (ok) {
         setSuccess(true);
         setIsEditing(false);
       }
     },
-    [form, update]
+    [form, update, socialLinks]
   );
 
   const handleCancel = useCallback(() => {
@@ -426,34 +460,7 @@ export default function VendorProfilePage() {
     [uploadProfileImage]
   );
 
-  const handleGalleryImagesSelected = useCallback(
-    async (event: React.ChangeEvent<HTMLInputElement>) => {
-      const files = Array.from(event.target.files || []);
-      event.target.value = "";
-      if (files.length === 0) return;
-
-      await uploadGalleryImages(files);
-    },
-    [uploadGalleryImages]
-  );
-
-  const handleDeleteGalleryImage = useCallback(
-    async (imageId: string) => {
-      await deleteGalleryImage(imageId);
-    },
-    [deleteGalleryImage]
-  );
-
   const isUploadingProfileImage = actionLoading === "profile-image";
-  const isUploadingGalleryImages = actionLoading === "gallery-upload";
-  const galleryImages = useMemo(
-    () =>
-      (vendor?.galleryImages || [])
-        .slice()
-        .sort((a, b) => a.displayOrder - b.displayOrder),
-    [vendor?.galleryImages]
-  );
-
   const errorText = (field: string): string => {
     const key = validationErrors[field];
     return key ? t(key) : "";
@@ -588,7 +595,7 @@ export default function VendorProfilePage() {
             EDIT MODE
         ========================================================== */}
         {isEditingActive ? (
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} noValidate className="space-y-6">
             {(formError || actionError) && (
               <div className="flex items-center gap-3 rounded-2xl border border-red-100 bg-red-50 p-4 text-sm text-red-700">
                 <AlertCircle className="h-5 w-5 shrink-0" />
@@ -937,7 +944,11 @@ export default function VendorProfilePage() {
                         </h2>
 
                         {vendor?.status && (
-                          <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                          <span
+                            className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                              STATUS_BADGE_CLASSES[vendor.status] ?? "bg-gray-100 text-gray-700"
+                            }`}
+                          >
                             {STATUS_KEYS[vendor.status] ? t(STATUS_KEYS[vendor.status]) : vendor.status}
                           </span>
                         )}
@@ -1321,9 +1332,14 @@ function SocialCard({
   handle: string;
   href: string;
 }) {
+  // Only ever link to http(s) addresses.
+  const safeHref = normalizeExternalUrl(href);
+
+  if (!safeHref) return null;
+
   return (
     <a
-      href={href}
+      href={safeHref}
       target="_blank"
       rel="noopener noreferrer"
       className="group flex items-center justify-between rounded-2xl border border-[#eee7e2] bg-[#fcfaf8] p-5 transition-all duration-300 hover:-translate-y-0.5 hover:border-[#d9c9be] hover:bg-white hover:shadow-[0_12px_30px_rgba(48,37,31,0.07)]"

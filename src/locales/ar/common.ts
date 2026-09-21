@@ -37,6 +37,9 @@ const common = {
     emptyTitle: "مفيش إشعارات لحد دلوقتي",
     emptyText: "هتلاقي هنا آخر التحديثات عن الاعتمادات والتقييمات وأي نشاط تاني.",
     page: "صفحة {page} من {total}",
+    loadError: "معرفناش نحمّل الإشعارات.",
+    markReadError: "معرفناش نعلّم الإشعار كمقروء.",
+    markAllReadError: "معرفناش نعلّم كل الإشعارات كمقروءة.",
     types: {
       vendorApproved: "تم اعتماد مقدم الخدمة",
       vendorRejected: "تم رفض مقدم الخدمة",

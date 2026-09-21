@@ -9,6 +9,11 @@
   --gold: #a47e43;
 }
 
+@theme {
+  /* Extra-small breakpoint (used as `xs:` in the vendor pages). */
+  --breakpoint-xs: 30rem;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

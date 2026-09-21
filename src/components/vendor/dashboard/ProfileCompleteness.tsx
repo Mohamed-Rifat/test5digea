@@ -20,7 +20,6 @@ const LABEL_KEYS: Record<ProfileCheckKey, TranslationKey> = {
   phone: "vendor.dashboard.profile.items.phone",
   email: "vendor.dashboard.profile.items.email",
   categories: "vendor.dashboard.profile.items.categories",
-  gallery: "vendor.dashboard.profile.items.gallery",
   hours: "vendor.dashboard.profile.items.hours",
   social: "vendor.dashboard.profile.items.social",
 };

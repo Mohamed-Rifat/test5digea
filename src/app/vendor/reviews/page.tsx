@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState, useCallback, memo } from "react";
+import { Suspense, useEffect, useMemo, useState, useCallback, memo } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   AlertCircle,
   CheckCircle2,
@@ -150,6 +151,30 @@ function getTimeAgo(date: string, t: TFn, language: Language): string {
    Excel Export
 ========================================================= */
 
+// Excel sheet names: max 31 chars, must be unique (case-insensitive) and may
+// not contain \ / ? * [ ] :  - a service called "Photo/Video" would otherwise
+// make the whole export throw.
+function makeSheetName(raw: string | null | undefined, used: Set<string>): string {
+  const base =
+    String(raw ?? "")
+      .replace(/[\\/?*[\]:]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+      .replace(/^'+|'+$/g, "")
+      .slice(0, 27) || "Sheet";
+
+  let name = base;
+  let counter = 2;
+
+  while (used.has(name.toLowerCase())) {
+    const suffix = ` (${counter++})`;
+    name = base.slice(0, 31 - suffix.length) + suffix;
+  }
+
+  used.add(name.toLowerCase());
+  return name;
+}
+
 function exportReviewsToExcel(
   reviews: Review[],
   t: TFn,
@@ -175,6 +200,9 @@ function exportReviewsToExcel(
   }, {});
 
   const workbook = XLSX.utils.book_new();
+  const usedSheetNames = new Set<string>(
+    [x("sheetSummary"), x("sheetAll")].map((name) => name.toLowerCase())
+  );
 
   const totalApproved = reviews.filter(r => r.status === ReviewStatus.Approved).length;
   const totalPending = reviews.filter(r => r.status === ReviewStatus.Pending).length;
@@ -246,7 +274,7 @@ function exportReviewsToExcel(
     const ws = XLSX.utils.aoa_to_sheet(rows);
     ws['!cols'] = [{ wch: 6 }, { wch: 28 }, { wch: 22 }, { wch: 16 }, { wch: 16 }, { wch: 50 }, { wch: 22 }];
     ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 6 } }];
-    XLSX.utils.book_append_sheet(workbook, ws, serviceName.slice(0, 27));
+    XLSX.utils.book_append_sheet(workbook, ws, makeSheetName(serviceName, usedSheetNames));
   });
 
   const allReviewsData: any[][] = [
@@ -884,7 +912,9 @@ function MobileFilterDrawer({
    Main Page
 ========================================================= */
 
-export default function VendorReviewsPage() {
+function VendorReviewsContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const { t, language } = useLanguage();
   const { vendor } = useVendor();
   const { services } = useVendorServices();
@@ -899,10 +929,46 @@ export default function VendorReviewsPage() {
   const [sortBy, setSortBy] = useState<"newest" | "oldest" | "highest" | "lowest">("newest");
   const [searchQuery, setSearchQuery] = useState("");
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
-  const [selectedReview, setSelectedReview] = useState<Review | null>(null);
+  const [pickedReview, setPickedReview] = useState<Review | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [exportMenuAnchor, setExportMenuAnchor] = useState<null | HTMLElement>(null);
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
+
+  /* =======================================================
+     Review details (opened by the "View" button or by a link
+     such as /vendor/reviews?review=<id> from the dashboard)
+  ======================================================= */
+
+  const deepLinkId = searchParams.get("review");
+
+  const linkedReview = useMemo(
+    () =>
+      deepLinkId
+        ? reviews.find((review) => review.id === deepLinkId) ?? null
+        : null,
+    [deepLinkId, reviews]
+  );
+
+  const selectedReview = pickedReview ?? linkedReview;
+
+  const closeReview = useCallback(() => {
+    setPickedReview(null);
+
+    if (deepLinkId) {
+      router.replace("/vendor/reviews", { scroll: false });
+    }
+  }, [deepLinkId, router]);
+
+  useEffect(() => {
+    if (!selectedReview) return;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") closeReview();
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [selectedReview, closeReview]);
 
   /* =======================================================
      Stats
@@ -1077,7 +1143,7 @@ export default function VendorReviewsPage() {
                 aria-label={t("vendor.reviews.refresh")}
                 className="inline-flex items-center gap-1.5 rounded-xl border border-[#e3d9d1] bg-white px-2.5 py-1.5 text-[10px] font-medium text-[#665950] transition-all hover:border-[#cfc1b7] hover:bg-[#faf8f6] disabled:opacity-50 sm:gap-2 sm:px-3.5 sm:py-2 sm:text-sm"
               >
-                <RefreshCw size={13} className={isRefreshing ? "animate-spin" : "sm:h-5 sm:w-5"} />
+                <RefreshCw size={13} className={isRefreshing ? "animate-spin sm:h-5 sm:w-5" : "sm:h-5 sm:w-5"} />
               </button>
 
               <div>
@@ -1513,7 +1579,7 @@ export default function VendorReviewsPage() {
                     key={review.id}
                     review={review}
                     index={index}
-                    onViewDetails={setSelectedReview}
+                    onViewDetails={setPickedReview}
                   />
                 ))}
               </div>
@@ -1556,16 +1622,18 @@ export default function VendorReviewsPage() {
         {selectedReview && (
           <div
             className="fixed inset-0 z-50 flex items-end justify-center p-2 sm:items-center sm:p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200"
-            onClick={() => setSelectedReview(null)}
+            onClick={closeReview}
           >
             <div
+              role="dialog"
+              aria-modal="true"
               className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-4 shadow-2xl animate-in slide-in-from-bottom-10 duration-300 sm:max-h-[90vh] sm:p-6 sm:zoom-in-95"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-start justify-between gap-3 mb-3 sm:gap-4 sm:mb-4">
                 <h3 className="text-base font-semibold text-[#30251f] sm:text-lg">{t("vendor.reviews.detail.title")}</h3>
                 <button
-                  onClick={() => setSelectedReview(null)}
+                  onClick={closeReview}
                   className="rounded-lg p-1 hover:bg-[#f5eee9] transition-colors"
                 >
                   <X size={18} className="text-[#8d8077] sm:h-5 sm:w-5" />
@@ -1625,5 +1693,14 @@ export default function VendorReviewsPage() {
         )}
       </div>
     </main>
+  );
+}
+
+export default function VendorReviewsPage() {
+  // useSearchParams() must be inside a Suspense boundary.
+  return (
+    <Suspense fallback={null}>
+      <VendorReviewsContent />
+    </Suspense>
   );
 }

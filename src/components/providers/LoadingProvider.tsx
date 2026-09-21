@@ -3,6 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { loadingBus } from "@/lib/loading-bus";
 import Loader5Digea from "@/components/shared/Loader5Digea";
+import { useLanguage } from "@/context/LanguageContext";
 
 type LoadingState = { loading: boolean; label?: string };
 
@@ -16,6 +17,7 @@ type LoadingContextValue = {
 const LoadingContext = createContext<LoadingContextValue | null>(null);
 
 export function LoadingProvider({ children }: { children: React.ReactNode }) {
+  const { t } = useLanguage();
   const [state, setState] = useState<LoadingState>({ loading: false, label: undefined });
 
   useEffect(() => {
@@ -57,7 +59,7 @@ export function LoadingProvider({ children }: { children: React.ReactNode }) {
         aria-busy={state.loading}
       >
         <Loader5Digea label={state.label} />
-        <span className="sr-only">Loading</span>
+        <span className="sr-only">{t("common.loading")}</span>
       </div>
     </LoadingContext.Provider>
   );

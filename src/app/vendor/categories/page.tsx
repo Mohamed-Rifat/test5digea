@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import {
   Info,
   Tags,
@@ -134,7 +135,7 @@ export default function VendorCategoriesPage() {
                 aria-label={t("vendor.categories.refresh")}
                 className="inline-flex items-center gap-1.5 rounded-xl border border-[#e3d9d1] bg-white px-2.5 py-1.5 text-[10px] font-medium text-[#665950] transition-all hover:border-[#cfc1b7] hover:bg-[#faf8f6] disabled:opacity-50 sm:gap-2 sm:px-3.5 sm:py-2 sm:text-sm"
               >
-                <RefreshCw size={13} className={isRefreshing ? "animate-spin" : "sm:h-5 sm:w-5"} />
+                <RefreshCw size={13} className={isRefreshing ? "animate-spin sm:h-5 sm:w-5" : "sm:h-5 sm:w-5"} />
               </button>
 
               {!loading && sortedCategories.length > 0 && (
@@ -202,9 +203,9 @@ export default function VendorCategoriesPage() {
               slots={{
                 bold: <strong className="text-[#a47e43]">{t("vendor.categories.infoBold")}</strong>,
                 link: (
-                  <a href="/vendor/support" className="font-semibold text-[#a47e43] hover:underline">
+                  <Link href="/vendor/support" className="font-semibold text-[#a47e43] hover:underline">
                     {t("vendor.categories.infoLink")}
-                  </a>
+                  </Link>
                 ),
               }}
             />
@@ -424,13 +425,13 @@ export default function VendorCategoriesPage() {
                 </div>
               </div>
 
-              <a
+              <Link
                 href="/vendor/support"
                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#30251f] px-4 py-2 text-xs font-semibold text-white transition hover:bg-[#46382f] sm:px-5 sm:py-2.5 sm:text-sm"
               >
                 {t("vendor.categories.contactSupport")}
                 <ChevronRight size={14} className="sm:h-4 sm:w-4 rtl:rotate-180" />
-              </a>
+              </Link>
             </div>
           </div>
         )}

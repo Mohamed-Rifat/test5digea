@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useId, useState } from "react";
 
 import {
   getMyServices,
@@ -11,7 +11,16 @@ import {
   uploadServiceImages,
   deleteServiceImage,
 } from "@/features/services/api";
-import { getApiErrorMessage } from "@/lib/error";
+import { useLanguage } from "@/context/LanguageContext";
+import {
+  localizedError,
+  resolveLocalizedError,
+  type LocalizedError,
+} from "@/lib/error";
+import {
+  announceVendorDataChange,
+  subscribeToVendorDataChange,
+} from "@/lib/vendor-sync";
 
 import type {
   Service,
@@ -40,17 +49,25 @@ interface UseVendorServicesReturn {
   deleteImage: (id: string, imageId: string) => Promise<boolean>;
 }
 
+interface FetchOptions {
+  /** Refresh in the background without flipping `loading` on. */
+  silent?: boolean;
+}
+
 export const useVendorServices = (): UseVendorServicesReturn => {
+  const { t } = useLanguage();
+  const instanceId = useId();
+
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<LocalizedError | null>(null);
 
   const [actionLoading, setActionLoading] = useState<string | null>(null);
-  const [actionError, setActionError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<LocalizedError | null>(null);
 
-  const fetchServices = useCallback(async () => {
+  const fetchServices = useCallback(async (options: FetchOptions = {}) => {
     try {
-      setLoading(true);
+      if (!options.silent) setLoading(true);
       setError(null);
 
       const data = await getMyServices();
@@ -58,15 +75,29 @@ export const useVendorServices = (): UseVendorServicesReturn => {
       setServices(data);
     } catch (error) {
       console.error("Failed to fetch vendor services:", error);
-      setError(getApiErrorMessage(error, "Failed to load services."));
+      setError(localizedError("vendor.errors.loadServices", error));
     } finally {
-      setLoading(false);
+      if (!options.silent) setLoading(false);
     }
   }, []);
 
   useEffect(() => {
     fetchServices();
   }, [fetchServices]);
+
+  // Another component changed the vendor's services (e.g. the edit page):
+  // refresh quietly so counts in the sidebar / dashboard never go stale.
+  useEffect(
+    () =>
+      subscribeToVendorDataChange("services", instanceId, () => {
+        void fetchServices({ silent: true });
+      }),
+    [instanceId, fetchServices]
+  );
+
+  // Public refetch: never forwards its arguments (it is safe to pass
+  // straight to an onClick handler).
+  const refetch = useCallback(() => fetchServices(), [fetchServices]);
 
   const create = useCallback(
     async (data: CreateServiceRequest): Promise<string | null> => {
@@ -75,19 +106,20 @@ export const useVendorServices = (): UseVendorServicesReturn => {
         setActionError(null);
 
         const id = await createService(data);
-        await fetchServices();
+        await fetchServices({ silent: true });
+        announceVendorDataChange("services", instanceId);
 
         return id;
       } catch (error) {
         console.error("Failed to create service:", error);
-        setActionError(getApiErrorMessage(error, "Failed to create service."));
+        setActionError(localizedError("vendor.errors.createService", error));
 
         return null;
       } finally {
         setActionLoading(null);
       }
     },
-    [fetchServices]
+    [fetchServices, instanceId]
   );
 
   const update = useCallback(
@@ -97,19 +129,20 @@ export const useVendorServices = (): UseVendorServicesReturn => {
         setActionError(null);
 
         await updateService(id, data);
-        await fetchServices();
+        await fetchServices({ silent: true });
+        announceVendorDataChange("services", instanceId);
 
         return true;
       } catch (error) {
         console.error("Failed to update service:", error);
-        setActionError(getApiErrorMessage(error, "Failed to update service."));
+        setActionError(localizedError("vendor.errors.updateService", error));
 
         return false;
       } finally {
         setActionLoading(null);
       }
     },
-    [fetchServices]
+    [fetchServices, instanceId]
   );
 
   const updatePrices = useCallback(
@@ -122,19 +155,20 @@ export const useVendorServices = (): UseVendorServicesReturn => {
         setActionError(null);
 
         await updateServicePrices(id, data);
-        await fetchServices();
+        await fetchServices({ silent: true });
+        announceVendorDataChange("services", instanceId);
 
         return true;
       } catch (error) {
         console.error("Failed to update service prices:", error);
-        setActionError(getApiErrorMessage(error, "Failed to update prices."));
+        setActionError(localizedError("vendor.errors.updatePrices", error));
 
         return false;
       } finally {
         setActionLoading(null);
       }
     },
-    [fetchServices]
+    [fetchServices, instanceId]
   );
 
   const resubmit = useCallback(
@@ -144,19 +178,20 @@ export const useVendorServices = (): UseVendorServicesReturn => {
         setActionError(null);
 
         await resubmitService(id);
-        await fetchServices();
+        await fetchServices({ silent: true });
+        announceVendorDataChange("services", instanceId);
 
         return true;
       } catch (error) {
         console.error("Failed to resubmit service:", error);
-        setActionError(getApiErrorMessage(error, "Failed to resubmit service."));
+        setActionError(localizedError("vendor.errors.resubmitService", error));
 
         return false;
       } finally {
         setActionLoading(null);
       }
     },
-    [fetchServices]
+    [fetchServices, instanceId]
   );
 
   const uploadImages = useCallback(
@@ -166,19 +201,20 @@ export const useVendorServices = (): UseVendorServicesReturn => {
         setActionError(null);
 
         await uploadServiceImages(id, files);
-        await fetchServices();
+        await fetchServices({ silent: true });
+        announceVendorDataChange("services", instanceId);
 
         return true;
       } catch (error) {
         console.error("Failed to upload service images:", error);
-        setActionError(getApiErrorMessage(error, "Failed to upload images."));
+        setActionError(localizedError("vendor.errors.uploadImages", error));
 
         return false;
       } finally {
         setActionLoading(null);
       }
     },
-    [fetchServices]
+    [fetchServices, instanceId]
   );
 
   const deleteImage = useCallback(
@@ -188,28 +224,29 @@ export const useVendorServices = (): UseVendorServicesReturn => {
         setActionError(null);
 
         await deleteServiceImage(id, imageId);
-        await fetchServices();
+        await fetchServices({ silent: true });
+        announceVendorDataChange("services", instanceId);
 
         return true;
       } catch (error) {
         console.error("Failed to delete service image:", error);
-        setActionError(getApiErrorMessage(error, "Failed to delete image."));
+        setActionError(localizedError("vendor.errors.deleteImage", error));
 
         return false;
       } finally {
         setActionLoading(null);
       }
     },
-    [fetchServices]
+    [fetchServices, instanceId]
   );
 
   return {
     services,
     loading,
-    error,
+    error: resolveLocalizedError(error, t),
     actionLoading,
-    actionError,
-    refetch: fetchServices,
+    actionError: resolveLocalizedError(actionError, t),
+    refetch,
     create,
     update,
     updatePrices,

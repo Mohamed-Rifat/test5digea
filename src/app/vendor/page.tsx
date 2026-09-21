@@ -48,6 +48,8 @@ import {
   AvatarGroup,
 } from "@mui/material";
 
+import AttentionPanel from "@/components/vendor/dashboard/AttentionPanel";
+import ProfileCompleteness from "@/components/vendor/dashboard/ProfileCompleteness";
 import { useVendor } from "@/features/vendors/hooks/useVendor";
 import { useVendorServices } from "@/features/services/hooks/useVendorServices";
 import { useVendorReviews } from "@/features/reviews/hooks/useVendorReviews";
@@ -279,27 +281,31 @@ const MonthlyActivity = ({ reviews }: { reviews: any[] }) => {
   const { t, language } = useLanguage();
   const dateLocale = LANGUAGE_DATE_LOCALE[language];
   const data = useMemo(() => {
-    const months: Record<string, { total: number; approved: number; pending: number; rejected: number }> = {};
+    // Buckets are keyed by year + month so a review from the same month of
+    // last year is never counted in this year's bar.
+    const bucketKey = (d: Date) => `${d.getFullYear()}-${d.getMonth()}`;
+    const months: Record<string, { month: string; total: number; approved: number; pending: number; rejected: number }> = {};
     const now = new Date();
     for (let i = 5; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const key = d.toLocaleString(dateLocale, { month: "short" });
-      months[key] = { total: 0, approved: 0, pending: 0, rejected: 0 };
+      months[bucketKey(d)] = {
+        month: d.toLocaleString(dateLocale, { month: "short" }),
+        total: 0,
+        approved: 0,
+        pending: 0,
+        rejected: 0,
+      };
     }
     reviews.forEach((r) => {
-      const d = new Date(r.createdAt);
-      const key = d.toLocaleString(dateLocale, { month: "short" });
-      if (months[key]) {
-        months[key].total++;
-        if (r.status === ReviewStatus.Approved) months[key].approved++;
-        else if (r.status === ReviewStatus.Pending) months[key].pending++;
-        else if (r.status === ReviewStatus.Rejected) months[key].rejected++;
+      const bucket = months[bucketKey(new Date(r.createdAt))];
+      if (bucket) {
+        bucket.total++;
+        if (r.status === ReviewStatus.Approved) bucket.approved++;
+        else if (r.status === ReviewStatus.Pending) bucket.pending++;
+        else if (r.status === ReviewStatus.Rejected) bucket.rejected++;
       }
     });
-    return Object.entries(months).map(([month, data]) => ({
-      month,
-      ...data,
-    }));
+    return Object.values(months);
   }, [reviews, dateLocale]);
 
   if (data.every(d => d.total === 0)) {
@@ -599,6 +605,18 @@ export default function VendorDashboardPage() {
     };
   }, [services, reviews]);
 
+  // "Latest reviews" must really be the newest ones, whatever order the API returns.
+  const recentReviews = useMemo(
+    () =>
+      [...reviews]
+        .sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        )
+        .slice(0, 4),
+    [reviews]
+  );
+
   const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
     await Promise.all([refetchVendor(), refetchServices(), refetchReviews()]);
@@ -649,7 +667,7 @@ export default function VendorDashboardPage() {
                 aria-label={t("vendor.dashboard.refresh")}
                 className="inline-flex items-center gap-1.5 rounded-xl border border-[#e3d9d1] bg-white px-2.5 py-1.5 text-[10px] font-medium text-[#665950] transition-all hover:border-[#cfc1b7] hover:bg-[#faf8f6] disabled:opacity-50 sm:gap-2 sm:px-3.5 sm:py-2 sm:text-sm"
               >
-                <RefreshCw size={13} className={isRefreshing ? "animate-spin" : "sm:h-5 sm:w-5"} />
+                <RefreshCw size={13} className={isRefreshing ? "animate-spin sm:h-5 sm:w-5" : "sm:h-5 sm:w-5"} />
               </button>
 
               <Link
@@ -727,6 +745,15 @@ export default function VendorDashboardPage() {
             color="#f59e0b"
             badge={stats.pendingReviews > 0 ? t("vendor.dashboard.kpi.actionRequired") : t("vendor.dashboard.kpi.allClear")}
           />
+        </div>
+
+        {/* =================================================
+            NEEDS ATTENTION + PROFILE COMPLETENESS
+        ================================================= */}
+
+        <div className="mb-6 grid gap-6 lg:grid-cols-3">
+          <AttentionPanel services={services} />
+          <ProfileCompleteness vendor={vendor} />
         </div>
 
         {/* =================================================
@@ -822,7 +849,7 @@ export default function VendorDashboardPage() {
               </div>
             ) : (
               <div className="space-y-3">
-                {reviews.slice(0, 4).map((review) => (
+                {recentReviews.map((review) => (
                   <div
                     key={review.id}
                     className="flex flex-col gap-2 rounded-xl border border-[#f0eae5] bg-[#fcfaf8] p-3 transition hover:border-[#e3d9d1] sm:flex-row sm:items-center sm:justify-between"
@@ -848,7 +875,7 @@ export default function VendorDashboardPage() {
                       )}
                     </div>
                     <Link
-                      href={`/vendor/services/${review.serviceId}`}
+                      href={`/vendor/reviews?review=${encodeURIComponent(review.id)}`}
                       className="text-xs font-medium text-[#a47e43] hover:text-[#8b6d55] whitespace-nowrap"
                     >
                       {t("vendor.dashboard.reviews.view")}

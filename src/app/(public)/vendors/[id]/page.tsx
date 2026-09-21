@@ -38,6 +38,7 @@ import { fetchServiceReviews } from "@/features/reviews/api";
 import { formatDate, formatPrice, startingPrice } from "@/lib/format";
 import { useLanguage } from "@/context/LanguageContext";
 import { LANGUAGE_DATE_LOCALE, type TranslationKey } from "@/locales";
+import { normalizeExternalUrl } from "@/lib/safe-url";
 import { FavoriteTargetType } from "@/types/favorite";
 import type { Review } from "@/types/review";
 import type { Vendor } from "@/types/vendor";
@@ -376,9 +377,23 @@ export default function VendorDetailPage() {
 
   const socialLinks = useMemo<SocialLinks>(() => {
     try {
-      return vendor?.socialLinksJson
+      const parsed = vendor?.socialLinksJson
         ? JSON.parse(vendor.socialLinksJson)
         : {};
+
+      // Vendors type these links themselves: keep only real http(s) links so
+      // a "javascript:" value can never end up in an href.
+      const safe: SocialLinks = {};
+
+      (["instagram", "facebook", "tiktok", "website"] as const).forEach((key) => {
+        const link = normalizeExternalUrl(
+          typeof parsed?.[key] === "string" ? parsed[key] : ""
+        );
+
+        if (link) safe[key] = link;
+      });
+
+      return safe;
     } catch {
       return {};
     }

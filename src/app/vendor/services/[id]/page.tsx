@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, use, useEffect, useMemo, useState } from "react";
+import { FormEvent, use, useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertCircle,
   ArrowLeft,
@@ -28,6 +28,8 @@ import {
   Mail,
   Phone,
   Shield,
+  X,
+  Images as ImagesIcon,
 } from "lucide-react";
 
 import {
@@ -114,8 +116,6 @@ export default function EditVendorServicePage({ params }: PageProps) {
   const [description, setDescription] = useState("");
   const [prices, setPrices] = useState<CreateServicePriceRequest[]>([]);
 
-  const [detailsSuccess, setDetailsSuccess] = useState(false);
-  const [pricesSuccess, setPricesSuccess] = useState(false);
   const [formError, setFormError] = useState("");
 
   const [categorySearch, setCategorySearch] = useState("");
@@ -123,36 +123,114 @@ export default function EditVendorServicePage({ params }: PageProps) {
   const [selectedCategory, setSelectedCategory] = useState<any>(null);
   const [toastMessage, setToastMessage] = useState("");
 
+  // Each form is re-synced only when ITS OWN server value changes. Syncing
+  // on the whole `service` object wiped unsaved edits in one form whenever the
+  // other one was saved (every save refetches the services list).
+  const serverName = service?.name;
+  const serverDescription = service?.description;
+  const serverPricesKey = service
+    ? JSON.stringify(service.prices.map((price) => [price.label, price.price]))
+    : "";
+
   useEffect(() => {
-    if (service) {
-      setName(service.name);
-      setDescription(service.description);
-      setPrices(
-        service.prices.map((price) => ({
-          label: price.label,
-          price: price.price,
-        }))
-      );
-    }
-  }, [service]);
+    if (serverName !== undefined) setName(serverName);
+  }, [serverName]);
 
-  const isSavingDetails = actionLoading === `update-${id}`;
-  const isSavingPrices = actionLoading === `prices-${id}`;
+  useEffect(() => {
+    if (serverDescription !== undefined) setDescription(serverDescription);
+  }, [serverDescription]);
+
+  useEffect(() => {
+    if (!serverPricesKey) return;
+
+    const rows = JSON.parse(serverPricesKey) as [string, number][];
+    setPrices(rows.map(([label, price]) => ({ label, price })));
+  }, [serverPricesKey]);
+
   const isResubmitting = actionLoading === `resubmit-${id}`;
-  const isUploadingImages = actionLoading === `images-${id}`;
 
-  const handleImagesSelected = async (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  // Everything the vendor changes here stays local until they press
+  // "Save all changes": details, prices, photos to add and photos to remove.
+  const [newImages, setNewImages] = useState<{ file: File; preview: string }[]>([]);
+  const [removedImageIds, setRemovedImageIds] = useState<string[]>([]);
+  const [saving, setSaving] = useState(false);
+  // null = nothing saved yet; otherwise how many new photos were just sent for review.
+  const [savedImagesCount, setSavedImagesCount] = useState<number | null>(null);
+
+  // Free the preview URLs of photos that were never saved.
+  const newImagesRef = useRef(newImages);
+
+  useEffect(() => {
+    newImagesRef.current = newImages;
+  }, [newImages]);
+
+  useEffect(
+    () => () => {
+      newImagesRef.current.forEach((item) => URL.revokeObjectURL(item.preview));
+    },
+    []
+  );
+
+  const currentPricesKey = JSON.stringify(
+    prices
+      .filter((price) => price.label.trim() !== "" && price.price >= 0)
+      .map((price) => [price.label, price.price])
+  );
+
+  const detailsChanged =
+    serverName !== undefined &&
+    (name.trim() !== serverName.trim() ||
+      description.trim() !== (serverDescription ?? "").trim());
+
+  const pricesChanged = serverPricesKey !== "" && currentPricesKey !== serverPricesKey;
+
+  const hasChanges =
+    detailsChanged ||
+    pricesChanged ||
+    newImages.length > 0 ||
+    removedImageIds.length > 0;
+
+  const handleImagesSelected = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files ?? []);
     event.target.value = "";
     if (files.length === 0) return;
 
-    await uploadImages(id, files);
+    setSavedImagesCount(null);
+    setNewImages((prev) => [
+      ...prev,
+      ...files.map((file) => ({ file, preview: URL.createObjectURL(file) })),
+    ]);
   };
 
-  const handleDeleteImage = async (imageId: string) => {
-    await deleteImage(id, imageId);
+  const removeNewImage = (index: number) => {
+    const item = newImages[index];
+    if (item) URL.revokeObjectURL(item.preview);
+
+    setNewImages((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const toggleRemoveExistingImage = (imageId: string) => {
+    setSavedImagesCount(null);
+    setRemovedImageIds((prev) =>
+      prev.includes(imageId)
+        ? prev.filter((value) => value !== imageId)
+        : [...prev, imageId]
+    );
+  };
+
+  const handleDiscard = () => {
+    newImages.forEach((item) => URL.revokeObjectURL(item.preview));
+    setNewImages([]);
+    setRemovedImageIds([]);
+    setFormError("");
+
+    if (service) {
+      setName(service.name);
+      setDescription(service.description);
+      setPrices(
+        service.prices.map((price) => ({ label: price.label, price: price.price }))
+      );
+    }
   };
 
   // =======================================================
@@ -211,28 +289,22 @@ export default function EditVendorServicePage({ params }: PageProps) {
     );
   };
 
-  const handleSaveDetails = async (event: FormEvent) => {
+  const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
+
+  // One button saves everything, in order: details, prices, removed photos,
+  // then the new photos (which go to the admin for review).
+  const handleSaveAll = async (event: FormEvent) => {
     event.preventDefault();
+    if (saving || !hasChanges) return;
+
     setFormError("");
-    setDetailsSuccess(false);
+    setSavedImagesCount(null);
 
     if (!name.trim() || !description.trim()) {
       setFormError(t("vendor.services.detail.errors.fillDetails"));
+      scrollToTop();
       return;
     }
-
-    const success = await update(id, {
-      name: name.trim(),
-      description: description.trim(),
-    });
-
-    setDetailsSuccess(success);
-  };
-
-  const handleSavePrices = async (event: FormEvent) => {
-    event.preventDefault();
-    setFormError("");
-    setPricesSuccess(false);
 
     const validPrices = prices.filter(
       (price) => price.label.trim() !== "" && price.price >= 0
@@ -240,11 +312,71 @@ export default function EditVendorServicePage({ params }: PageProps) {
 
     if (validPrices.length === 0) {
       setFormError(t("vendor.services.detail.errors.keepOnePrice"));
+      scrollToTop();
       return;
     }
 
-    const success = await updatePrices(id, { prices: validPrices });
-    setPricesSuccess(success);
+    setSaving(true);
+
+    try {
+      if (detailsChanged) {
+        const ok = await update(id, {
+          name: name.trim(),
+          description: description.trim(),
+        });
+
+        if (!ok) {
+          scrollToTop();
+          return;
+        }
+
+        setName(name.trim());
+        setDescription(description.trim());
+      }
+
+      if (pricesChanged) {
+        const ok = await updatePrices(id, { prices: validPrices });
+
+        if (!ok) {
+          scrollToTop();
+          return;
+        }
+
+        setPrices(validPrices);
+      }
+
+      for (const imageId of removedImageIds) {
+        const ok = await deleteImage(id, imageId);
+
+        if (!ok) {
+          scrollToTop();
+          return;
+        }
+
+        setRemovedImageIds((prev) => prev.filter((value) => value !== imageId));
+      }
+
+      const sentImages = newImages.length;
+
+      if (sentImages > 0) {
+        const ok = await uploadImages(
+          id,
+          newImages.map((item) => item.file)
+        );
+
+        if (!ok) {
+          scrollToTop();
+          return;
+        }
+
+        newImages.forEach((item) => URL.revokeObjectURL(item.preview));
+        setNewImages([]);
+      }
+
+      setSavedImagesCount(sentImages);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleResubmit = async () => {
@@ -316,6 +448,11 @@ export default function EditVendorServicePage({ params }: PageProps) {
   const status = getStatusConfig(service.status);
   const StatusIcon = status.icon;
 
+  const existingImages = (service.images ?? [])
+    .slice()
+    .sort((a, b) => a.displayOrder - b.displayOrder);
+
+
   // =======================================================
   // Render
   // =======================================================
@@ -377,7 +514,7 @@ export default function EditVendorServicePage({ params }: PageProps) {
               <div className="mt-2 flex flex-wrap items-center gap-2 sm:mt-3">
                 <Chip
                   icon={<Tag size={12} />}
-                  label={service.categoryName}
+                  label={service.categoryName || t("vendor.dashboard.services.uncategorized")}
                   size="small"
                   sx={{
                     height: 26,
@@ -442,13 +579,14 @@ export default function EditVendorServicePage({ params }: PageProps) {
         ================================================= */}
 
         <div className="grid gap-4 sm:gap-6 lg:grid-cols-3">
-          {/* LEFT: Forms */}
-          <div className="space-y-4 sm:space-y-6 lg:col-span-2">
-            {/* Service Details Form */}
-            <form
-              onSubmit={handleSaveDetails}
-              className="rounded-3xl border border-[#e8dfd8] bg-white p-4 shadow-sm sm:p-6 lg:p-8"
-            >
+          {/* LEFT: one form - everything on the page saves together */}
+          <form
+            onSubmit={handleSaveAll}
+            noValidate
+            className="space-y-4 sm:space-y-6 lg:col-span-2"
+          >
+            {/* Service Details */}
+            <div className="rounded-3xl border border-[#e8dfd8] bg-white p-4 shadow-sm sm:p-6 lg:p-8">
               <div className="mb-5 flex items-center gap-2 sm:mb-6 sm:gap-3">
                 <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#f5eee9] sm:h-9 sm:w-9">
                   <FileText size={14} className="text-[#a47e43] sm:h-4.5 sm:w-4.5" />
@@ -513,39 +651,10 @@ export default function EditVendorServicePage({ params }: PageProps) {
                 </div>
               </div>
 
-              <div className="mt-5 flex flex-col gap-2 border-t border-[#eee7e2] pt-4 sm:mt-6 sm:flex-row sm:items-center sm:gap-3 sm:pt-6">
-                <button
-                  type="submit"
-                  disabled={isSavingDetails}
-                  className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-[#30251f] px-4 text-xs font-medium text-white transition hover:bg-[#463831] disabled:opacity-60 sm:h-11 sm:px-6 sm:text-sm"
-                >
-                  {isSavingDetails ? (
-                    <>
-                      <Loader2 className="h-3.5 w-3.5 animate-spin sm:h-4 sm:w-4" />
-                      {t("vendor.services.detail.saving")}
-                    </>
-                  ) : (
-                    <>
-                      <Save className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                      {t("vendor.services.detail.saveDetails")}
-                    </>
-                  )}
-                </button>
+            </div>
 
-                {detailsSuccess && (
-                  <span className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700 sm:text-sm">
-                    <CheckCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                    {t("vendor.services.detail.saved")}
-                  </span>
-                )}
-              </div>
-            </form>
-
-            {/* Pricing Form */}
-            <form
-              onSubmit={handleSavePrices}
-              className="rounded-3xl border border-[#e8dfd8] bg-white p-4 shadow-sm sm:p-6 lg:p-8"
-            >
+            {/* Pricing */}
+            <div className="rounded-3xl border border-[#e8dfd8] bg-white p-4 shadow-sm sm:p-6 lg:p-8">
               <div className="mb-5 flex items-center justify-between gap-3 sm:mb-6">
                 <div className="flex items-center gap-2 sm:gap-3">
                   <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#f5eee9] sm:h-9 sm:w-9">
@@ -653,39 +762,13 @@ export default function EditVendorServicePage({ params }: PageProps) {
                 ))}
               </div>
 
-              <div className="mt-5 flex flex-col gap-2 border-t border-[#eee7e2] pt-4 sm:mt-6 sm:flex-row sm:items-center sm:gap-3 sm:pt-6">
-                <button
-                  type="submit"
-                  disabled={isSavingPrices}
-                  className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-[#30251f] px-4 text-xs font-medium text-white transition hover:bg-[#463831] disabled:opacity-60 sm:h-11 sm:px-6 sm:text-sm"
-                >
-                  {isSavingPrices ? (
-                    <>
-                      <Loader2 className="h-3.5 w-3.5 animate-spin sm:h-4 sm:w-4" />
-                      {t("vendor.services.detail.saving")}
-                    </>
-                  ) : (
-                    <>
-                      <Save className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                      {t("vendor.services.detail.savePrices")}
-                    </>
-                  )}
-                </button>
-
-                {pricesSuccess && (
-                  <span className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700 sm:text-sm">
-                    <CheckCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                    {t("vendor.services.detail.saved")}
-                  </span>
-                )}
-              </div>
-            </form>
+            </div>
 
             {/* Images */}
             <div className="rounded-3xl border border-[#e8dfd8] bg-white p-4 shadow-sm sm:p-6 lg:p-8">
               <div className="mb-5 flex items-center gap-2 sm:mb-6 sm:gap-3">
                 <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#f5eee9] sm:h-9 sm:w-9">
-                  <FileText size={14} className="text-[#a47e43] sm:h-4.5 sm:w-4.5" />
+                  <ImagesIcon size={14} className="text-[#a47e43] sm:h-4.5 sm:w-4.5" />
                 </div>
                 <div>
                   <h2 className="text-sm font-semibold text-[#30251f] sm:text-base">
@@ -697,61 +780,190 @@ export default function EditVendorServicePage({ params }: PageProps) {
                 </div>
               </div>
 
-              <div className="flex flex-wrap gap-2.5 sm:gap-3">
-                {service.images
-                  ?.slice()
-                  .sort((a, b) => a.displayOrder - b.displayOrder)
-                  .map((image) => (
-                    <div
-                      key={image.id}
-                      className="group relative h-20 w-20 overflow-hidden rounded-xl border border-[#e3d9d1] sm:h-24 sm:w-24"
-                    >
+              <div className="mb-4 flex items-start gap-2 rounded-xl bg-[#faf6f1] px-3 py-2.5 text-[11px] leading-5 text-[#6f5f52] sm:text-xs">
+                <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#a47e43]" />
+                {t("vendor.services.detail.imagesReviewNote")}
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+                {existingImages.map((image) => {
+                  const isRemoving = removedImageIds.includes(image.id);
+
+                  return (
+                    <div key={image.id} className="space-y-1.5">
+                      <div className="group relative aspect-square overflow-hidden rounded-xl border-2 border-[#e3d9d1]">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={image.url}
+                          alt={service.name}
+                          className={`h-full w-full object-cover transition ${
+                            isRemoving ? "opacity-30 grayscale" : ""
+                          }`}
+                        />
+
+                        <button
+                          type="button"
+                          onClick={() => toggleRemoveExistingImage(image.id)}
+                          disabled={saving}
+                          aria-label={
+                            isRemoving
+                              ? t("vendor.services.detail.imageStatus.undoRemove")
+                              : t("vendor.services.detail.imageStatus.remove")
+                          }
+                          title={
+                            isRemoving
+                              ? t("vendor.services.detail.imageStatus.undoRemove")
+                              : t("vendor.services.detail.imageStatus.remove")
+                          }
+                          className="absolute end-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white transition hover:bg-black/75 focus-visible:opacity-100 disabled:opacity-60 sm:opacity-0 sm:group-hover:opacity-100"
+                        >
+                          {isRemoving ? (
+                            <RotateCcw className="h-3.5 w-3.5" />
+                          ) : (
+                            <Trash2 className="h-3.5 w-3.5" />
+                          )}
+                        </button>
+                      </div>
+
+                      {isRemoving && (
+                        <p className="text-[10px] leading-4 text-red-600">
+                          {t("vendor.services.detail.imageStatus.removeOnSave")}
+                        </p>
+                      )}
+
+                    </div>
+                  );
+                })}
+
+                {newImages.map((item, index) => (
+                  <div key={item.preview} className="space-y-1.5">
+                    <div className="relative aspect-square overflow-hidden rounded-xl border-2 border-dashed border-[#a47e43]">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
-                        src={image.url}
+                        src={item.preview}
                         alt={service.name}
                         className="h-full w-full object-cover"
                       />
+
+                      <span className="absolute bottom-1.5 start-1.5 inline-flex items-center gap-1 rounded-full bg-[#a47e43] px-2 py-0.5 text-[10px] font-semibold text-white shadow-sm">
+                        <Plus className="h-3 w-3" />
+                        {t("vendor.services.detail.imageStatus.new")}
+                      </span>
+
                       <button
                         type="button"
-                        onClick={() => handleDeleteImage(image.id)}
-                        disabled={actionLoading === `delete-image-${image.id}`}
-                        className="absolute end-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition group-hover:opacity-100 disabled:opacity-100"
+                        onClick={() => removeNewImage(index)}
+                        disabled={saving}
+                        aria-label={t("vendor.services.detail.imageStatus.removeNew")}
+                        title={t("vendor.services.detail.imageStatus.removeNew")}
+                        className="absolute end-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white transition hover:bg-black/75 disabled:opacity-60"
                       >
-                        {actionLoading === `delete-image-${image.id}` ? (
-                          <Loader2 className="h-3 w-3 animate-spin" />
-                        ) : (
-                          <Trash2 className="h-3 w-3" />
-                        )}
+                        <X className="h-3.5 w-3.5" />
                       </button>
                     </div>
-                  ))}
 
-                <label className="flex h-20 w-20 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-[#d5c8be] bg-[#fcfaf8] text-[#9b8f86] transition hover:border-[#a47e43] hover:text-[#a47e43] sm:h-24 sm:w-24">
-                  {isUploadingImages ? (
-                    <Loader2 className="h-4 w-4 animate-spin sm:h-5 sm:w-5" />
-                  ) : (
-                    <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
-                  )}
-                  <span className="text-[10px]">{t("vendor.services.form.addPhoto")}</span>
+                    <p className="text-[10px] leading-4 text-[#a47e43]">
+                      {t("vendor.services.detail.imageStatus.willBeSent")}
+                    </p>
+                  </div>
+                ))}
+
+                <label
+                  className={`flex aspect-square flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-[#d5c8be] bg-[#fcfaf8] text-[#9b8f86] transition hover:border-[#a47e43] hover:text-[#a47e43] ${
+                    saving ? "cursor-not-allowed opacity-60" : "cursor-pointer"
+                  }`}
+                >
+                  <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
+                  <span className="px-1 text-center text-[10px]">
+                    {t("vendor.services.form.addPhoto")}
+                  </span>
                   <input
                     type="file"
                     accept="image/*"
                     multiple
-                    disabled={isUploadingImages}
+                    disabled={saving}
                     onChange={handleImagesSelected}
                     className="hidden"
                   />
                 </label>
               </div>
 
-              {(!service.images || service.images.length === 0) && (
+              {existingImages.length === 0 && newImages.length === 0 && (
                 <p className="mt-3 text-[10px] text-[#9b8f86] sm:text-xs">
                   {t("vendor.services.detail.noImages")}
                 </p>
               )}
             </div>
-          </div>
+
+            {/* Save bar: one button for everything on this page */}
+            <div className="sticky bottom-3 z-20 flex flex-col gap-3 rounded-2xl border border-[#e8dfd8] bg-white/95 p-4 shadow-lg backdrop-blur sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0">
+                {hasChanges ? (
+                  <>
+                    <p className="text-sm font-semibold text-[#30251f]">
+                      {t("vendor.services.detail.unsavedTitle")}
+                    </p>
+                    <p className="mt-0.5 text-xs text-[#756b65]">
+                      {t("vendor.services.detail.unsavedText")}
+                    </p>
+                  </>
+                ) : savedImagesCount !== null ? (
+                  <div className="flex items-start gap-2 text-emerald-700">
+                    <CheckCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                    <div>
+                      <p className="text-sm font-semibold">
+                        {t("vendor.services.detail.savedAll")}
+                      </p>
+                      {savedImagesCount > 0 && (
+                        <p className="mt-0.5 text-xs text-[#756b65]">
+                          {t(
+                            savedImagesCount === 1
+                              ? "vendor.services.detail.savedImagesOne"
+                              : "vendor.services.detail.savedImagesMany",
+                            { count: savedImagesCount }
+                          )}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-sm text-[#9b8f86]">
+                    {t("vendor.services.detail.noChanges")}
+                  </p>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2">
+                {hasChanges && !saving && (
+                  <button
+                    type="button"
+                    onClick={handleDiscard}
+                    className="h-10 rounded-xl px-4 text-xs font-medium text-[#514740] transition hover:bg-[#f7f2ef] sm:h-11 sm:text-sm"
+                  >
+                    {t("vendor.services.detail.discard")}
+                  </button>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={!hasChanges || saving}
+                  className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-[#30251f] px-5 text-xs font-medium text-white transition hover:bg-[#463831] disabled:opacity-50 sm:h-11 sm:px-6 sm:text-sm"
+                >
+                  {saving ? (
+                    <>
+                      <Loader2 className="h-3.5 w-3.5 animate-spin sm:h-4 sm:w-4" />
+                      {t("vendor.services.detail.saving")}
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                      {t("vendor.services.detail.saveAll")}
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </form>
 
           {/* RIGHT: Available Categories (عرض فقط) */}
           <aside className="space-y-4 lg:sticky lg:top-4 lg:h-fit">

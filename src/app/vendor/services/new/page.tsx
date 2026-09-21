@@ -40,7 +40,7 @@ export default function NewVendorServicePage() {
   const router = useRouter();
   const { t } = useLanguage();
 
-  const { create, uploadImages, actionLoading, actionError } = useVendorServices();
+  const { create, uploadImages, actionError } = useVendorServices();
   const { categories, loading: categoriesLoading } = useCategories();
   const { vendor, loading: vendorLoading } = useVendor();
 
@@ -79,8 +79,12 @@ export default function NewVendorServicePage() {
   const [images, setImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [formError, setFormError] = useState("");
+  // Covers the whole create + upload-images sequence. `actionLoading` alone
+  // goes back to null between the two steps, which re-enabled the button and
+  // allowed a double click to create the service twice.
+  const [submitting, setSubmitting] = useState(false);
 
-  const isSubmitting = actionLoading === "create";
+  const isSubmitting = submitting;
 
   const handleImagesSelected = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -101,7 +105,10 @@ export default function NewVendorServicePage() {
 
   const removeImage = useCallback((index: number) => {
     setImages((prev) => prev.filter((_, i) => i !== index));
-    setImagePreviews((prev) => prev.filter((_, i) => i !== index));
+    setImagePreviews((prev) => {
+      if (prev[index]) URL.revokeObjectURL(prev[index]);
+      return prev.filter((_, i) => i !== index);
+    });
   }, []);
 
   const addPriceRow = useCallback(() => {
@@ -131,6 +138,7 @@ export default function NewVendorServicePage() {
 
   const handleSubmit = useCallback(async (event: FormEvent) => {
     event.preventDefault();
+    if (submitting) return;
     setFormError("");
 
     if (!name.trim() || !description.trim() || !categoryId) {
@@ -147,27 +155,33 @@ export default function NewVendorServicePage() {
       return;
     }
 
-    const id = await create({
-      categoryId,
-      name: name.trim(),
-      description: description.trim(),
-      prices: validPrices,
-    });
+    setSubmitting(true);
 
-    if (id) {
-      if (images.length > 0) {
-        const uploaded = await uploadImages(id, images);
-        if (!uploaded) {
-          // Service was created, but images failed — let the vendor add
-          // them from the edit page instead of losing the service.
-          router.push(`/vendor/services/${id}`);
-          return;
+    try {
+      const id = await create({
+        categoryId,
+        name: name.trim(),
+        description: description.trim(),
+        prices: validPrices,
+      });
+
+      if (id) {
+        if (images.length > 0) {
+          const uploaded = await uploadImages(id, images);
+          if (!uploaded) {
+            // Service was created, but images failed — let the vendor add
+            // them from the edit page instead of losing the service.
+            router.push(`/vendor/services/${id}`);
+            return;
+          }
         }
-      }
 
-      router.push("/vendor/services");
+        router.push("/vendor/services");
+      }
+    } finally {
+      setSubmitting(false);
     }
-  }, [name, description, categoryId, prices, images, create, uploadImages, router, t]);
+  }, [name, description, categoryId, prices, images, create, uploadImages, router, t, submitting]);
 
   const handleCancel = useCallback(() => {
     router.push("/vendor/services");
@@ -285,9 +299,9 @@ export default function NewVendorServicePage() {
                     text={t("vendor.services.form.noAssigned")}
                     token="{link}"
                     slot={
-                      <a href="/support" className="font-semibold underline hover:no-underline">
+                      <Link href="/vendor/support" className="font-semibold underline hover:no-underline">
                         {t("vendor.services.form.contactSupportLink")}
-                      </a>
+                      </Link>
                     }
                   />
                 </span>
@@ -532,9 +546,9 @@ export default function NewVendorServicePage() {
             <span className="leading-5">
               <span className="font-medium text-[#40352f]">{t("vendor.services.form.needHelp")}</span>{" "}
               {t("vendor.services.form.needHelpText")}
-              <a href="/vendor/support" className="ms-1 font-medium text-[#a47e43] hover:underline">
+              <Link href="/vendor/support" className="ms-1 font-medium text-[#a47e43] hover:underline">
                 {t("vendor.services.form.contactSupport")}
-              </a>
+              </Link>
             </span>
           </div>
         </form>
