@@ -38,6 +38,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import { LANGUAGE_DATE_LOCALE } from "@/locales/config";
 import NotificationBell from "@/components/notifications/NotificationBell";
 import LanguageSwitcher from "@/components/layout/LanguageSwitcher";
+import SessionCountdownBadge from "@/components/shared/SessionCountdownBadge";
 
 interface VendorHeaderProps {
   onMenuClick: () => void;
@@ -290,6 +291,8 @@ export default function VendorHeader({ onMenuClick }: VendorHeaderProps) {
             />
           </button>
         </Tooltip>
+
+        <SessionCountdownBadge compact />
 
         {/* Language switcher: compact code on phones, globe + name from sm up */}
         <LanguageSwitcher variant="compact" className="sm:hidden" />

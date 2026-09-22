@@ -27,6 +27,7 @@ import { useAuth } from "@/context/AuthContext";
 import { getHomePath } from "@/lib/auth-utils";
 import { useCategories } from "@/features/categories/hooks/useCategories";
 import LanguageSwitcher from "@/components/layout/LanguageSwitcher";
+import SessionCountdownBadge from "@/components/shared/SessionCountdownBadge";
 import { useLanguage } from "@/context/LanguageContext";
 import type { TranslationKey } from "@/locales";
 
@@ -358,6 +359,8 @@ export default function SiteNavbar() {
             </>
           )}
 
+          {isAuthenticated && <SessionCountdownBadge compact />}
+
           <LanguageSwitcher />
 
           {!isAuthenticated ? (
@@ -563,6 +566,8 @@ export default function SiteNavbar() {
               </div>
             </>
           )}
+
+          {isAuthenticated && <SessionCountdownBadge compact />}
 
           {/* Language switcher (hidden on very narrow phones, where it lives
               in the drawer instead so the header row never overflows). */}

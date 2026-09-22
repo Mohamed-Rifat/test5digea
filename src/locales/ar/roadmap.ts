@@ -63,11 +63,11 @@ const roadmap = {
       step: "الخطوة {number}",
     },
     noVendorHint:
-      "اختار مقدم خدمة من هنا، أو علّم الخطوة دي مكتملة لو حجزتها من برا Wedistry.",
+      "اختار مقدم خدمة من هنا، أو علّم الخطوة دي مكتملة لو حجزتها من برا 5digea.",
     tooltip: {
       reopen: "إعادة فتح الفئة",
       markComplete: "علّم كمكتمل",
-      markCompleteExternal: "علّم كمكتمل (حجزته من برا Wedistry؟)",
+      markCompleteExternal: "علّم كمكتمل (حجزته من برا 5digea؟)",
       writeReview: "اكتب تقييم",
       removeVendor: "احذف مقدم الخدمة",
     },
@@ -80,10 +80,10 @@ const roadmap = {
     complete: "مكتمل",
   },
   externalModal: {
-    title: "حجزت من برا Wedistry؟",
+    title: "حجزت من برا 5digea؟",
     bodyBefore: "محدش هيزعل خالص — لسه تقدر تعلّم",
     bodyAfter:
-      "كمكتملة. لو تجربتك كانت حلوة، شاركنا شوية تفاصيل عن اللي اشتغلت معاه وممكن نتواصل معاه ندعوه ينضم لـ Wedistry.",
+      "كمكتملة. لو تجربتك كانت حلوة، شاركنا شوية تفاصيل عن اللي اشتغلت معاه وممكن نتواصل معاه ندعوه ينضم لـ 5digea.",
     fields: {
       vendorName: {
         label: "اسم مقدم الخدمة أو المكان",

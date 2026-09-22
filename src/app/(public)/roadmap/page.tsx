@@ -999,7 +999,7 @@ function JourneyCard({
                     if (!hasVendor) {
                       // No vendor selected from our platform — ask the
                       // couple whether they'd like to tell us about the
-                      // provider they used outside Wedistry before we
+                      // provider they used outside 5digea before we
                       // mark this step complete.
                       onRequestExternalComplete(item);
                       return;
@@ -1767,7 +1767,7 @@ function RoadmapContent() {
     setExternalCompleteItem(item);
   };
 
-  // Finalizes completion for a step booked outside Wedistry, optionally
+  // Finalizes completion for a step booked outside 5digea, optionally
   // sending along whatever vendor details the couple chose to share.
   const finalizeExternalComplete = async (feedback?: {
     vendorName: string;

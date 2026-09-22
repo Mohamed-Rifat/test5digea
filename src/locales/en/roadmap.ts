@@ -65,11 +65,11 @@ const roadmap: Translation["roadmap"] = {
       step: "Step {number}",
     },
     noVendorHint:
-      "Choose a vendor here, or mark this step complete if you booked it outside Wedistry.",
+      "Choose a vendor here, or mark this step complete if you booked it outside 5digea.",
     tooltip: {
       reopen: "Reopen category",
       markComplete: "Mark as complete",
-      markCompleteExternal: "Mark as complete (booked outside Wedistry?)",
+      markCompleteExternal: "Mark as complete (booked outside 5digea?)",
       writeReview: "Write a review",
       removeVendor: "Remove vendor",
     },
@@ -82,10 +82,10 @@ const roadmap: Translation["roadmap"] = {
     complete: "Complete",
   },
   externalModal: {
-    title: "Booked outside Wedistry?",
+    title: "Booked outside 5digea?",
     bodyBefore: "No problem at all — you can still mark",
     bodyAfter:
-      "as complete. If your experience was good, share a few details about who you worked with and we may reach out to invite them to join Wedistry.",
+      "as complete. If your experience was good, share a few details about who you worked with and we may reach out to invite them to join 5digea.",
     fields: {
       vendorName: {
         label: "Vendor name or location",

@@ -11,6 +11,7 @@ import { VendorProvider, useVendorContext } from "@/context/VendorContext";
 import { useAuth } from "@/context/AuthContext";
 import { useLanguage } from "@/context/LanguageContext";
 import LanguageSwitcher from "@/components/layout/LanguageSwitcher";
+import SessionCountdownBadge from "@/components/shared/SessionCountdownBadge";
 
 const PROFILE_PATH = "/vendor/profile";
 
@@ -141,6 +142,8 @@ function PendingReviewHeader({
         </div>
 
         <div className="flex items-center gap-2">
+          <SessionCountdownBadge compact />
+
           <LanguageSwitcher variant="compact" className="sm:hidden" />
           <LanguageSwitcher className="hidden sm:block" />
 
