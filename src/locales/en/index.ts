@@ -17,6 +17,7 @@ import compare from "./compare";
 import profile from "./profile";
 import support from "./support";
 import notFound from "./notFound";
+import becomeVendor from "./becomeVendor";
 
 const en: Translation = {
   common,
@@ -37,6 +38,7 @@ const en: Translation = {
   profile,
   support,
   notFound,
+  becomeVendor,
 };
 
 export default en;

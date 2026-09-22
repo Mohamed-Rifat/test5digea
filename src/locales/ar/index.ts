@@ -16,6 +16,7 @@ import compare from "./compare";
 import profile from "./profile";
 import support from "./support";
 import notFound from "./notFound";
+import becomeVendor from "./becomeVendor";
 
 const ar = {
   common,
@@ -36,6 +37,7 @@ const ar = {
   profile,
   support,
   notFound,
+  becomeVendor,
 };
 
 export default ar;

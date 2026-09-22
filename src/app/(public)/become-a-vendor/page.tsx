@@ -15,7 +15,6 @@ import {
     Check,
     CheckCircle2,
     ChevronDown,
-    Handshake,
     Loader2,
     Mail,
     MapPin,
@@ -31,57 +30,13 @@ import {
 import { useCategories } from "@/features/categories/hooks/useCategories";
 import { submitVendorApplication } from "@/features/vendorApplications/api";
 import { getApiErrorMessage } from "@/lib/error";
-
-const GOVERNORATES = [
-    "Cairo",
-    "Giza",
-    "Alexandria",
-    "Qalyubia",
-    "Port Said",
-    "Suez",
-    "Dakahlia",
-    "Sharqia",
-    "Gharbia",
-    "Monufia",
-    "Beheira",
-    "Kafr El Sheikh",
-    "Damietta",
-    "Ismailia",
-    "North Sinai",
-    "South Sinai",
-    "Faiyum",
-    "Beni Suef",
-    "Minya",
-    "Asyut",
-    "Sohag",
-    "Qena",
-    "Luxor",
-    "Aswan",
-    "Red Sea",
-    "New Valley",
-    "Matrouh",
-];
-
-const PERKS = [
-    {
-        icon: Users2,
-        title: "Reach real couples",
-        description:
-            "Get discovered by couples actively planning their wedding and looking for trusted vendors.",
-    },
-    {
-        icon: BadgeCheck,
-        title: "A verified badge",
-        description:
-            "Once approved, your profile carries the 5digea seal of trust — reviewed and vetted.",
-    },
-    {
-        icon: TrendingUp,
-        title: "Grow with us",
-        description:
-            "Showcase your services, collect real reviews, and build your reputation on the platform.",
-    },
-];
+import { useLanguage } from "@/context/LanguageContext";
+import {
+    GOVERNORATES,
+    governorateLabel,
+    searchGovernorates,
+    type Governorate,
+} from "@/lib/governorates";
 
 type FormState = {
     fullName: string;
@@ -94,6 +49,7 @@ type FormState = {
 type TouchedState = Partial<Record<keyof FormState | "categories", boolean>>;
 
 export default function BecomeAVendorPage() {
+    const { t, language, isArabic } = useLanguage();
     const { categories, loading: categoriesLoading } = useCategories();
     const activeCategories = categories.filter((category) => category.isActive);
     const [loading, setLoading] = useState(false);
@@ -131,15 +87,17 @@ export default function BecomeAVendorPage() {
         };
     }, []);
 
-    const filteredGovernorates = useMemo(() => {
-        const search = governorateSearch.trim().toLowerCase();
+    // `form.governorate` keeps storing the stable English key (unchanged
+    // logic) — only the label shown to the person switches with language.
+    const selectedGovernorate: Governorate | undefined = useMemo(
+        () => GOVERNORATES.find((governorate) => governorate.en === form.governorate),
+        [form.governorate]
+    );
 
-        if (!search) return GOVERNORATES;
-
-        return GOVERNORATES.filter((governorate) =>
-            governorate.toLowerCase().includes(search)
-        );
-    }, [governorateSearch]);
+    const filteredGovernorates = useMemo(
+        () => searchGovernorates(governorateSearch),
+        [governorateSearch]
+    );
 
     const validateField = (
         name: keyof FormState,
@@ -150,31 +108,31 @@ export default function BecomeAVendorPage() {
         if (!trimmed) {
             switch (name) {
                 case "fullName":
-                    return "Please enter your full name.";
+                    return t("becomeVendor.validation.fullNameRequired");
                 case "whatsappNumber":
-                    return "Please enter your WhatsApp number.";
+                    return t("becomeVendor.validation.whatsappRequired");
                 case "personalEmail":
-                    return "Please enter your email address.";
+                    return t("becomeVendor.validation.emailRequired");
                 case "brandName":
-                    return "Please enter your business name.";
+                    return t("becomeVendor.validation.brandNameRequired");
                 case "governorate":
-                    return "Please select your governorate.";
+                    return t("becomeVendor.validation.governorateRequired");
             }
         }
 
         if (name === "fullName" && trimmed.length < 3) {
-            return "Your name should be at least 3 characters.";
+            return t("becomeVendor.validation.fullNameMin");
         }
 
         if (name === "brandName" && trimmed.length < 2) {
-            return "Your business name should be at least 2 characters.";
+            return t("becomeVendor.validation.brandNameMin");
         }
 
         if (name === "personalEmail") {
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
             if (!emailRegex.test(trimmed)) {
-                return "Please enter a valid email address.";
+                return t("becomeVendor.validation.emailInvalid");
             }
         }
 
@@ -182,7 +140,7 @@ export default function BecomeAVendorPage() {
             const digits = value.replace(/\D/g, "");
 
             if (digits.length < 8) {
-                return "Please enter a valid WhatsApp number.";
+                return t("becomeVendor.validation.whatsappInvalid");
             }
         }
 
@@ -249,10 +207,10 @@ export default function BecomeAVendorPage() {
         setError("");
     };
 
-    const selectGovernorate = (governorate: string) => {
+    const selectGovernorate = (governorate: Governorate) => {
         setForm((previous) => ({
             ...previous,
-            governorate,
+            governorate: governorate.en,
         }));
 
         setTouched((previous) => ({
@@ -300,7 +258,7 @@ export default function BecomeAVendorPage() {
             setError(
                 getApiErrorMessage(
                     err,
-                    "Couldn't submit your info. Please try again."
+                    t("becomeVendor.validation.submitError")
                 )
             );
         } finally {
@@ -331,15 +289,14 @@ export default function BecomeAVendorPage() {
                 <section className="mx-auto max-w-3xl text-center">
 
                     <h1 className="mt-5 font-serif text-3xl font-light leading-[1.15] tracking-tight text-[#30251f] sm:text-4xl lg:text-[46px]">
-                        Turn your wedding business
+                        {t("becomeVendor.hero.titleLine1")}
                         <span className="block italic text-[#a47e43]">
-                            into something unforgettable.
+                            {t("becomeVendor.hero.titleLine2")}
                         </span>
                     </h1>
 
                     <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-[#766d67] sm:text-[15px]">
-                        Connect with couples who are actively planning their special day,
-                        showcase your work, and grow your business with 5digea.
+                        {t("becomeVendor.hero.subtitle")}
                     </p>
                 </section>
 
@@ -358,17 +315,15 @@ export default function BecomeAVendorPage() {
 
                                 <div className="mt-6">
                                     <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#a47e43]">
-                                        Application received
+                                        {t("becomeVendor.success.eyebrow")}
                                     </p>
 
                                     <h2 className="mt-2 font-serif text-2xl font-light text-[#30251f] sm:text-3xl">
-                                        Thank you for reaching out.
+                                        {t("becomeVendor.success.heading")}
                                     </h2>
 
                                     <p className="mx-auto mt-3 max-w-md text-sm leading-7 text-[#766d67]">
-                                        We&apos;ve received your information. Our team will reach
-                                        out via WhatsApp or email soon to set up your vendor
-                                        account and guide you through the next steps.
+                                        {t("becomeVendor.success.body")}
                                     </p>
                                 </div>
 
@@ -376,8 +331,8 @@ export default function BecomeAVendorPage() {
                                     href="/"
                                     className="mt-7 inline-flex items-center gap-2 rounded-full border border-[#ded3ca] bg-white px-6 py-3 text-xs font-semibold text-[#5f544d] transition hover:border-[#b99a62] hover:bg-[#faf7f4] hover:text-[#30251f]"
                                 >
-                                    Back to home
-                                    <ArrowRight size={14} />
+                                    {t("becomeVendor.success.backHome")}
+                                    <ArrowRight size={14} className={isArabic ? "rotate-180" : ""} />
                                 </Link>
                             </div>
                         ) : (
@@ -391,17 +346,17 @@ export default function BecomeAVendorPage() {
 
                                             <div>
                                                 <h2 className="text-sm font-semibold text-[#30251f]">
-                                                    Tell us about your business
+                                                    {t("becomeVendor.formCard.heading")}
                                                 </h2>
 
                                                 <p className="mt-0.5 text-[11px] text-[#958980]">
-                                                    It only takes about a minute.
+                                                    {t("becomeVendor.formCard.subheading")}
                                                 </p>
                                             </div>
                                         </div>
 
                                         <span className="hidden rounded-full bg-[#faf6f1] px-3 py-1.5 text-[10px] font-medium text-[#8d796b] sm:block">
-                                            Step 1 of 1
+                                            {t("becomeVendor.formCard.step")}
                                         </span>
                                     </div>
                                 </div>
@@ -415,7 +370,7 @@ export default function BecomeAVendorPage() {
                                             />
 
                                             <div className="min-w-0">
-                                                <p className="font-semibold">Something went wrong</p>
+                                                <p className="font-semibold">{t("becomeVendor.error.heading")}</p>
                                                 <p className="mt-0.5 leading-5">{error}</p>
                                             </div>
 
@@ -423,7 +378,7 @@ export default function BecomeAVendorPage() {
                                                 type="button"
                                                 onClick={() => setError("")}
                                                 className="ml-auto shrink-0 rounded-md p-1 text-[#a3453c]/60 transition hover:bg-[#f4dedb] hover:text-[#a3453c]"
-                                                aria-label="Dismiss error"
+                                                aria-label={t("becomeVendor.error.dismiss")}
                                             >
                                                 <X size={14} />
                                             </button>
@@ -441,7 +396,7 @@ export default function BecomeAVendorPage() {
                                                     htmlFor="fullName"
                                                     className="mb-2 block text-xs font-semibold text-[#493b32]"
                                                 >
-                                                    Full name
+                                                    {t("becomeVendor.fields.fullName.label")}
                                                     <span className="ml-1 text-[#b77b70]">*</span>
                                                 </label>
 
@@ -459,7 +414,7 @@ export default function BecomeAVendorPage() {
                                                         value={form.fullName}
                                                         onChange={handleChange}
                                                         onBlur={() => handleBlur("fullName")}
-                                                        placeholder="Your Name"
+                                                        placeholder={t("becomeVendor.fields.fullName.placeholder")}
                                                         autoComplete="name"
                                                         className={`${getInputClass(
                                                             "fullName"
@@ -481,7 +436,7 @@ export default function BecomeAVendorPage() {
                                                     htmlFor="brandName"
                                                     className="mb-2 block text-xs font-semibold text-[#493b32]"
                                                 >
-                                                    Brand / business name
+                                                    {t("becomeVendor.fields.brandName.label")}
                                                     <span className="ml-1 text-[#b77b70]">*</span>
                                                 </label>
 
@@ -492,7 +447,7 @@ export default function BecomeAVendorPage() {
                                                     value={form.brandName}
                                                     onChange={handleChange}
                                                     onBlur={() => handleBlur("brandName")}
-                                                    placeholder="Rexos"
+                                                    placeholder={t("becomeVendor.fields.brandName.placeholder")}
                                                     autoComplete="organization"
                                                     className={getInputClass("brandName")}
                                                 />
@@ -512,7 +467,7 @@ export default function BecomeAVendorPage() {
                                                     htmlFor="whatsappNumber"
                                                     className="mb-2 block text-xs font-semibold text-[#493b32]"
                                                 >
-                                                    WhatsApp number
+                                                    {t("becomeVendor.fields.whatsapp.label")}
                                                     <span className="ml-1 text-[#b77b70]">*</span>
                                                 </label>
 
@@ -532,7 +487,7 @@ export default function BecomeAVendorPage() {
                                                         onBlur={() =>
                                                             handleBlur("whatsappNumber")
                                                         }
-                                                        placeholder="+20 123 456 7890"
+                                                        placeholder={t("becomeVendor.fields.whatsapp.placeholder")}
                                                         autoComplete="tel"
                                                         className={`${getInputClass(
                                                             "whatsappNumber"
@@ -554,7 +509,7 @@ export default function BecomeAVendorPage() {
                                                     htmlFor="personalEmail"
                                                     className="mb-2 block text-xs font-semibold text-[#493b32]"
                                                 >
-                                                    Email address
+                                                    {t("becomeVendor.fields.email.label")}
                                                     <span className="ml-1 text-[#b77b70]">*</span>
                                                 </label>
 
@@ -574,7 +529,7 @@ export default function BecomeAVendorPage() {
                                                         onBlur={() =>
                                                             handleBlur("personalEmail")
                                                         }
-                                                        placeholder="you@example.com"
+                                                        placeholder={t("becomeVendor.fields.email.placeholder")}
                                                         autoComplete="email"
                                                         className={`${getInputClass(
                                                             "personalEmail"
@@ -597,7 +552,7 @@ export default function BecomeAVendorPage() {
                                                 htmlFor="governorate"
                                                 className="mb-2 block text-xs font-semibold text-[#493b32]"
                                             >
-                                                Governorate
+                                                {t("becomeVendor.fields.governorate.label")}
                                                 <span className="ml-1 text-[#b77b70]">*</span>
                                             </label>
 
@@ -629,8 +584,9 @@ export default function BecomeAVendorPage() {
                                                                 : "flex-1 text-[#b3a9a2]"
                                                         }
                                                     >
-                                                        {form.governorate ||
-                                                            "Select your governorate"}
+                                                        {selectedGovernorate
+                                                            ? governorateLabel(selectedGovernorate, language)
+                                                            : t("becomeVendor.fields.governorate.placeholder")}
                                                     </span>
 
                                                     <ChevronDown
@@ -656,7 +612,7 @@ export default function BecomeAVendorPage() {
                                                                         event.target.value
                                                                     )
                                                                 }
-                                                                placeholder="Search governorate..."
+                                                                placeholder={t("becomeVendor.fields.governorate.searchPlaceholder")}
                                                                 autoFocus
                                                                 className="w-full rounded-xl border border-[#eee6df] bg-[#faf7f4] py-2.5 pl-9 pr-3 text-xs text-[#30251f] outline-none transition focus:border-[#c8ab79] focus:bg-white"
                                                             />
@@ -665,18 +621,18 @@ export default function BecomeAVendorPage() {
                                                         <div className="max-h-56 overflow-y-auto pr-1">
                                                             {filteredGovernorates.length === 0 ? (
                                                                 <div className="px-3 py-8 text-center text-xs text-[#9a8f87]">
-                                                                    No governorate found.
+                                                                    {t("becomeVendor.fields.governorate.empty")}
                                                                 </div>
                                                             ) : (
                                                                 filteredGovernorates.map(
                                                                     (governorate) => {
                                                                         const selected =
                                                                             form.governorate ===
-                                                                            governorate;
+                                                                            governorate.en;
 
                                                                         return (
                                                                             <button
-                                                                                key={governorate}
+                                                                                key={governorate.en}
                                                                                 type="button"
                                                                                 onClick={() =>
                                                                                     selectGovernorate(
@@ -688,7 +644,7 @@ export default function BecomeAVendorPage() {
                                                                                     : "text-[#554940] hover:bg-[#faf6f1]"
                                                                                     }`}
                                                                             >
-                                                                                <span>{governorate}</span>
+                                                                                <span>{governorateLabel(governorate, language)}</span>
 
                                                                                 {selected && (
                                                                                     <Check size={14} />
@@ -716,19 +672,20 @@ export default function BecomeAVendorPage() {
                                             <div className="mb-3 flex items-end justify-between gap-3">
                                                 <div>
                                                     <p className="text-xs font-semibold text-[#493b32]">
-                                                        What do you offer?
+                                                        {t("becomeVendor.fields.categories.label")}
                                                         <span className="ml-1 text-[#b77b70]">*</span>
                                                     </p>
 
                                                     <p className="mt-1 text-[10px] leading-5 text-[#9a8f87]">
-                                                        Select all categories that match your
-                                                        wedding services.
+                                                        {t("becomeVendor.fields.categories.helper")}
                                                     </p>
                                                 </div>
 
                                                 {selectedCategoryIds.length > 0 && (
                                                     <span className="shrink-0 rounded-full bg-[#f5efe7] px-2.5 py-1 text-[9px] font-semibold text-[#8e7044]">
-                                                        {selectedCategoryIds.length} selected
+                                                        {t("becomeVendor.fields.categories.selectedCount", {
+                                                            count: selectedCategoryIds.length,
+                                                        })}
                                                     </span>
                                                 )}
                                             </div>
@@ -744,7 +701,7 @@ export default function BecomeAVendorPage() {
                                                 </div>
                                             ) : activeCategories.length === 0 ? (
                                                 <div className="rounded-xl border border-dashed border-[#e4dbd3] bg-[#faf7f4] px-4 py-6 text-center text-xs text-[#9a8f87]">
-                                                    No categories are available yet.
+                                                    {t("becomeVendor.fields.categories.empty")}
                                                 </div>
                                             ) : (
                                                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
@@ -791,7 +748,7 @@ export default function BecomeAVendorPage() {
                                                 activeCategories.length > 0 && (
                                                     <p className="mt-2 flex items-center gap-1 text-[10px] font-medium text-[#b45b51]">
                                                         <AlertCircle size={11} />
-                                                        Please select at least one category.
+                                                        {t("becomeVendor.fields.categories.error")}
                                                     </p>
                                                 )}
                                         </div>
@@ -811,12 +768,12 @@ export default function BecomeAVendorPage() {
                                                             size={16}
                                                             className="animate-spin"
                                                         />
-                                                        Sending your application...
+                                                        {t("becomeVendor.submit.sending")}
                                                     </>
                                                 ) : (
                                                     <>
-                                                        Send my information
-                                                        <ArrowRight size={16} />
+                                                        {t("becomeVendor.submit.button")}
+                                                        <ArrowRight size={16} className={isArabic ? "rotate-180" : ""} />
                                                     </>
                                                 )}
                                             </button>
@@ -827,8 +784,7 @@ export default function BecomeAVendorPage() {
                                                     className="shrink-0 text-[#b99a62]"
                                                 />
                                                 <span>
-                                                    Your information is reviewed by our team before
-                                                    your vendor account is created.
+                                                    {t("becomeVendor.submit.note")}
                                                 </span>
                                             </div>
                                         </div>
@@ -841,15 +797,31 @@ export default function BecomeAVendorPage() {
                     <aside className="space-y-3">
                         <div className="mb-5 hidden px-1 lg:block">
                             <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#a28d7e]">
-                                Why join us
+                                {t("becomeVendor.perks.eyebrow")}
                             </p>
 
                             <h2 className="mt-2 font-serif text-2xl font-light text-[#30251f]">
-                                Built for wedding businesses.
+                                {t("becomeVendor.perks.heading")}
                             </h2>
                         </div>
 
-                        {PERKS.map((perk, index) => {
+                        {[
+                            {
+                                icon: Users2,
+                                title: t("becomeVendor.perks.reach.title"),
+                                description: t("becomeVendor.perks.reach.description"),
+                            },
+                            {
+                                icon: BadgeCheck,
+                                title: t("becomeVendor.perks.verified.title"),
+                                description: t("becomeVendor.perks.verified.description"),
+                            },
+                            {
+                                icon: TrendingUp,
+                                title: t("becomeVendor.perks.grow.title"),
+                                description: t("becomeVendor.perks.grow.description"),
+                            },
+                        ].map((perk, index) => {
                             const Icon = perk.icon;
 
                             return (
@@ -886,20 +858,19 @@ export default function BecomeAVendorPage() {
                             <div className="relative">
                                 <p className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#d8bd89]">
                                     <Sparkles size={13} />
-                                    Already a vendor?
+                                    {t("becomeVendor.alreadyVendor.eyebrow")}
                                 </p>
 
                                 <p className="mt-2 max-w-sm text-xs leading-6 text-white/65">
-                                    If your account is already set up, head straight to your
-                                    vendor dashboard.
+                                    {t("becomeVendor.alreadyVendor.body")}
                                 </p>
 
                                 <Link
                                     href="/login"
                                     className="mt-4 inline-flex items-center gap-2 text-xs font-semibold text-white transition hover:text-[#d8bd89]"
                                 >
-                                    Log in to your account
-                                    <ArrowRight size={13} />
+                                    {t("becomeVendor.alreadyVendor.cta")}
+                                    <ArrowRight size={13} className={isArabic ? "rotate-180" : ""} />
                                 </Link>
                             </div>
                         </div>

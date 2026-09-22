@@ -47,6 +47,9 @@ import { formatDate } from "@/lib/format";
 import { RoadmapItemStatus } from "@/types/roadmap";
 import WriteReviewModal from "@/components/reviews/WriteReviewModal";
 import { authStorage } from "@/lib/auth-storage";
+import { useCurrentUser } from "@/features/auth/hooks/useCurrentUser";
+import { useLanguage } from "@/context/LanguageContext";
+import type { TranslationKey } from "@/locales";
 
 /* =========================================================
    CONSTANTS
@@ -162,6 +165,49 @@ const getFirstName = (name: string | null | undefined) => {
 };
 
 /* =========================================================
+   GENDER-AWARE COPY
+   ---------------------------------------------------------
+   The signed-in user's gender (from GET /api/Auth/me) tells us
+   whether they're the groom (planning with a bride) or the
+   bride (planning with a groom), so the roadmap can speak to
+   them — and about their partner — in the right voice, with a
+   small stylistic touch either way.
+========================================================= */
+
+type JourneyGender = "Male" | "Female" | null | undefined;
+
+const getJourneyCopy = (
+  gender: JourneyGender,
+  t: (key: TranslationKey, params?: Record<string, string | number>) => string
+) => {
+  const normalized = (gender ?? "").toLowerCase();
+
+  const touch =
+    normalized === "male"
+      ? ("groom" as const)
+      : normalized === "female"
+        ? ("bride" as const)
+        : ("neutral" as const);
+
+  const accentColor =
+    touch === "groom" ? "#a9773c" : touch === "bride" ? "#c68a72" : "#b27a3d";
+
+  return {
+    isSpecified: touch !== "neutral",
+    touch,
+    accentColor,
+    partnerLabel: t(`roadmap.create.${touch}.partnerLabel`),
+    partnerPlaceholder: t(`roadmap.create.${touch}.partnerPlaceholder`),
+    partnerFallback: t(`roadmap.create.${touch}.partnerFallback`),
+    eyebrow: t(`roadmap.create.${touch}.eyebrow`),
+    heading: t("roadmap.create.heading"),
+    subheading: t(`roadmap.create.${touch}.subheading`),
+    noDateReassurance: t(`roadmap.create.${touch}.noDateReassurance`),
+    partnerHeaderFallback: t(`roadmap.create.${touch}.partnerHeaderFallback`),
+  };
+};
+
+/* =========================================================
    COUNTDOWN
 ========================================================= */
 
@@ -247,6 +293,7 @@ function RomanticHero({
   eventDate,
   progress,
   coverImageUrl,
+  gender,
 }: {
   partnerName: string;
   eventDate: string;
@@ -255,15 +302,23 @@ function RomanticHero({
    * hero background instead of the abstract gradient. Pass a URL from your
    * own storage/CDN — nothing is fetched automatically. */
   coverImageUrl?: string;
+  /** Signed-in user's gender ("Male" / "Female"), used to personalize the
+   * partner fallback name and the missing-date message. */
+  gender?: JourneyGender;
 }) {
+  const { t } = useLanguage();
   const [userName, setUserName] = useState("You");
 
   useEffect(() => {
     setUserName(getCurrentUserName());
   }, []);
 
+  const copy = getJourneyCopy(gender, t);
+
   const firstUserName = getFirstName(userName);
-  const firstPartnerName = getFirstName(partnerName || "Your Love");
+  const firstPartnerName = getFirstName(partnerName || copy.partnerFallback);
+
+  const hasEventDate = Boolean(eventDate) && !Number.isNaN(new Date(eventDate).getTime());
 
   return (
     <section className="relative isolate min-h-140 overflow-hidden bg-[#241916] shadow-[0_35px_100px_rgba(48,34,29,0.3)] sm:min-h-160 lg:min-h-180">
@@ -376,7 +431,7 @@ function RomanticHero({
             />
 
             <span className="text-4xl font-semibold uppercase tracking-[0.45em] text-[#e2bb84] sm:text-2xl">
-              Your Wedding Journey
+              {copy.eyebrow}
             </span>
           </div>
 
@@ -404,6 +459,21 @@ function RomanticHero({
               strokeWidth={0}
               className="relative animate-[heartBeat_2s_ease-in-out_infinite] text-[#d9a363] drop-shadow-[0_0_18px_rgba(224,160,88,0.8)] sm:h-9 sm:w-9 lg:h-18 lg:w-18"
             />
+
+            {/* Small gendered touch — a groom's ring for him, a bride's
+                bloom for her — riding along the heart. */}
+            {copy.touch !== "neutral" && (
+              <div
+                className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full border border-white/25 bg-[#241916] shadow-[0_2px_8px_rgba(0,0,0,0.35)] sm:h-6 sm:w-6 lg:h-8 lg:w-8"
+                style={{ color: copy.accentColor }}
+              >
+                {copy.touch === "groom" ? (
+                  <Gem size={10} className="sm:size-3 lg:size-3.5" />
+                ) : (
+                  <Flower2 size={10} className="sm:size-3 lg:size-3.5" />
+                )}
+              </div>
+            )}
           </div>
 
           <h1 className="animate-[heroNameRight_1s_ease-out] font-serif text-[46px] font-light italic leading-none tracking-[-0.04em] text-white drop-shadow-[0_5px_25px_rgba(0,0,0,0.3)] sm:text-[62px] lg:text-[78px]">
@@ -413,7 +483,7 @@ function RomanticHero({
 
         {/* Romantic tagline */}
         <p className="mt-6 text-[8px] font-medium uppercase tracking-[0.4em] text-white/55 sm:text-lg">
-          Two hearts · One journey · Forever
+          {t("roadmap.hero.tagline")}
         </p>
 
         {/* Small journey indicator */}
@@ -426,7 +496,7 @@ function RomanticHero({
           </span>
 
           <span className="text-[14px] font-medium uppercase tracking-[0.28em] text-white/40">
-            Every step brings you closer
+            {t("roadmap.hero.stepsCloser")}
           </span>
         </div>
 
@@ -459,7 +529,9 @@ function RomanticHero({
               />
 
               <span className="text-[8px] font-semibold uppercase tracking-[0.3em] text-white/65">
-                Until the big day
+                {hasEventDate
+                  ? t("roadmap.hero.countdownUntil")
+                  : t("roadmap.hero.countdownYourBigDay")}
               </span>
 
               <Heart
@@ -469,23 +541,40 @@ function RomanticHero({
               />
             </div>
 
-            {/* Countdown */}
-            <div className="mt-5">
-              <CountdownTimer eventDate={eventDate} />
-            </div>
+            {hasEventDate ? (
+              <>
+                {/* Countdown */}
+                <div className="mt-5">
+                  <CountdownTimer eventDate={eventDate} />
+                </div>
 
-            {/* Event date */}
-            <div className="mt-5 flex items-center justify-center gap-2 rounded-full border border-white/10 bg-white/6 px-4 py-3">
+                {/* Event date */}
+                <div className="mt-5 flex items-center justify-center gap-2 rounded-full border border-white/10 bg-white/6 px-4 py-3">
 
-              <CalendarDays
-                size={13}
-                className="text-[#dfb477]"
-              />
+                  <CalendarDays
+                    size={13}
+                    className="text-[#dfb477]"
+                  />
 
-              <span className="text-[9px] font-medium tracking-wide text-white/80 sm:text-[10px]">
-                {formatDate(eventDate)}
-              </span>
-            </div>
+                  <span className="text-[9px] font-medium tracking-wide text-white/80 sm:text-[10px]">
+                    {formatDate(eventDate)}
+                  </span>
+                </div>
+              </>
+            ) : (
+              /* No date yet — a warm, gender-aware reassurance instead of a
+                 broken 00:00:00:00 countdown. */
+              <div className="mt-5 flex items-start gap-2.5 rounded-2xl border border-white/10 bg-white/6 px-4 py-4">
+                <CalendarDays
+                  size={14}
+                  className="mt-0.5 shrink-0 text-[#dfb477]"
+                />
+
+                <p className="text-left text-[9px] leading-relaxed text-white/75 sm:text-[10px]">
+                  {copy.noDateReassurance}
+                </p>
+              </div>
+            )}
 
             {/* Progress */}
             <div className="mt-5">
@@ -493,7 +582,7 @@ function RomanticHero({
               <div className="mb-2 flex items-center justify-between">
 
                 <span className="text-[7px] font-semibold uppercase tracking-[0.2em] text-white/40">
-                  Our journey
+                  {t("roadmap.hero.progressLabel")}
                 </span>
 
                 <span className="font-serif text-xs text-[#e0b477]">
@@ -524,7 +613,7 @@ function RomanticHero({
               />
 
               <span className="text-[7px] uppercase tracking-[0.25em] text-white/30">
-                Forever starts here
+                {t("roadmap.hero.footerTagline")}
               </span>
 
               <Heart
@@ -775,6 +864,7 @@ function JourneyCard({
   onRequestExternalComplete: (item: any) => void;
   onCompletedWithVendor: (item: any) => void;
 }) {
+  const { t, isArabic } = useLanguage();
   const isCompleted = item.status === RoadmapItemStatus.Completed;
   const isSelected = item.status === RoadmapItemStatus.VendorSelected;
   const hasVendor = Boolean(item.selectedVendorId);
@@ -844,10 +934,10 @@ function JourneyCard({
                   }`}
               >
                 {isCompleted
-                  ? "Completed"
+                  ? t("roadmap.card.status.completed")
                   : isSelected
-                    ? "Vendor Selected"
-                    : `Step ${number}`}
+                    ? t("roadmap.card.status.vendorSelected")
+                    : t("roadmap.card.status.step", { number })}
               </span>
 
               {isCompleted && (
@@ -877,8 +967,7 @@ function JourneyCard({
               </div>
             ) : (
               <p className="mt-2 text-[10px] leading-[1.6] text-[#9a8c82]">
-                Choose a vendor here, or mark this step complete if you
-                booked it outside Wedistry.
+                {t("roadmap.card.noVendorHint")}
               </p>
             )}
           </div>
@@ -890,10 +979,10 @@ function JourneyCard({
             <Tooltip
               title={
                 isCompleted
-                  ? "Reopen category"
+                  ? t("roadmap.card.tooltip.reopen")
                   : hasVendor
-                    ? "Mark as complete"
-                    : "Mark as complete (booked outside Wedistry?)"
+                    ? t("roadmap.card.tooltip.markComplete")
+                    : t("roadmap.card.tooltip.markCompleteExternal")
               }
               arrow
             >
@@ -939,7 +1028,7 @@ function JourneyCard({
             </Tooltip>
 
             {isCompleted && hasVendor && item.id && (
-              <Tooltip title="Write a review" arrow>
+              <Tooltip title={t("roadmap.card.tooltip.writeReview")} arrow>
                 <button
                   type="button"
                   onClick={() => onReview(item)}
@@ -958,13 +1047,15 @@ function JourneyCard({
               )}`}
               className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-[#30251f] px-3 text-[9px] font-semibold tracking-wide text-white transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#46342a] hover:shadow-md sm:px-4"
             >
-              {hasVendor ? "Change" : "Explore"}
+              {hasVendor
+                ? t("roadmap.card.action.change")
+                : t("roadmap.card.action.explore")}
 
-              <ArrowRight size={12} />
+              <ArrowRight size={12} className={isArabic ? "rotate-180" : ""} />
             </Link>
 
             {hasVendor && (
-              <Tooltip title="Remove vendor" arrow>
+              <Tooltip title={t("roadmap.card.tooltip.removeVendor")} arrow>
                 <button
                   type="button"
                   disabled={
@@ -993,6 +1084,7 @@ function JourneyCard({
 ========================================================= */
 
 function ProgressRing({ progress }: { progress: number }) {
+  const { t } = useLanguage();
   const radius = 43;
   const circumference = 2 * Math.PI * radius;
 
@@ -1032,7 +1124,7 @@ function ProgressRing({ progress }: { progress: number }) {
         </span>
 
         <span className="text-[7px] font-semibold uppercase tracking-[0.15em] text-[#a59a92]">
-          Complete
+          {t("roadmap.progressRing.complete")}
         </span>
       </div>
     </div>
@@ -1058,6 +1150,7 @@ function ExternalVendorModal({
   onSkip: () => void;
   onSubmit: (data: { vendorName: string; phone: string; link: string }) => void;
 }) {
+  const { t } = useLanguage();
   const [vendorName, setVendorName] = useState("");
   const [phone, setPhone] = useState("");
   const [link, setLink] = useState("");
@@ -1078,17 +1171,15 @@ function ExternalVendorModal({
             </div>
 
             <h3 className="mt-4 font-serif text-2xl font-light text-white">
-              Booked outside Wedistry?
+              {t("roadmap.externalModal.title")}
             </h3>
 
             <p className="mx-auto mt-2 max-w-sm text-xs leading-relaxed text-white/60">
-              No problem at all — you can still mark{" "}
+              {t("roadmap.externalModal.bodyBefore")}{" "}
               <span className="font-medium text-white/80">
                 {categoryName}
               </span>{" "}
-              as complete. If your experience was good, share a few details
-              about who you worked with and we may reach out to invite them
-              to join Wedistry.
+              {t("roadmap.externalModal.bodyAfter")}
             </p>
           </div>
         </div>
@@ -1096,39 +1187,39 @@ function ExternalVendorModal({
         <div className="space-y-4 p-6 sm:p-7">
           <div>
             <label className="mb-1.5 block text-[9px] font-semibold uppercase tracking-[0.2em] text-[#766b64]">
-              Vendor name or location
+              {t("roadmap.externalModal.fields.vendorName.label")}
             </label>
 
             <input
               value={vendorName}
               onChange={(e) => setVendorName(e.target.value)}
-              placeholder="e.g. Golden Rose Studio, Cairo"
+              placeholder={t("roadmap.externalModal.fields.vendorName.placeholder")}
               className="w-full rounded-xl border border-[#e2d8cf] bg-[#fcfaf8] px-4 py-3 text-sm text-[#30251f] outline-none transition focus:border-[#b17c42] focus:bg-white focus:ring-4 focus:ring-[#b17c42]/10"
             />
           </div>
 
           <div>
             <label className="mb-1.5 block text-[9px] font-semibold uppercase tracking-[0.2em] text-[#766b64]">
-              Phone number (optional)
+              {t("roadmap.externalModal.fields.phone.label")}
             </label>
 
             <input
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              placeholder="+20 1xx xxx xxxx"
+              placeholder={t("roadmap.externalModal.fields.phone.placeholder")}
               className="w-full rounded-xl border border-[#e2d8cf] bg-[#fcfaf8] px-4 py-3 text-sm text-[#30251f] outline-none transition focus:border-[#b17c42] focus:bg-white focus:ring-4 focus:ring-[#b17c42]/10"
             />
           </div>
 
           <div>
             <label className="mb-1.5 block text-[9px] font-semibold uppercase tracking-[0.2em] text-[#766b64]">
-              Website or page link (optional)
+              {t("roadmap.externalModal.fields.link.label")}
             </label>
 
             <input
               value={link}
               onChange={(e) => setLink(e.target.value)}
-              placeholder="https://instagram.com/..."
+              placeholder={t("roadmap.externalModal.fields.link.placeholder")}
               className="w-full rounded-xl border border-[#e2d8cf] bg-[#fcfaf8] px-4 py-3 text-sm text-[#30251f] outline-none transition focus:border-[#b17c42] focus:bg-white focus:ring-4 focus:ring-[#b17c42]/10"
             />
           </div>
@@ -1140,7 +1231,7 @@ function ExternalVendorModal({
               disabled={submitting}
               className="h-11 rounded-xl border border-[#e3d9d1] px-5 text-xs font-semibold text-[#766a62] transition hover:bg-[#f8f4f0] disabled:opacity-60"
             >
-              Skip &amp; Mark Complete
+              {t("roadmap.externalModal.buttons.skip")}
             </button>
 
             <button
@@ -1156,7 +1247,7 @@ function ExternalVendorModal({
               className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#30221d] px-5 text-xs font-semibold text-white transition hover:bg-[#46332a] disabled:opacity-60"
             >
               {submitting && <Loader2 size={14} className="animate-spin" />}
-              Send &amp; Mark Complete
+              {t("roadmap.externalModal.buttons.send")}
             </button>
           </div>
         </div>
@@ -1180,6 +1271,8 @@ function ReviewPromptModal({
   onReviewNow: () => void;
   onLater: () => void;
 }) {
+  const { t } = useLanguage();
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
@@ -1192,12 +1285,11 @@ function ReviewPromptModal({
         </div>
 
         <h3 className="mt-4 font-serif text-2xl font-light text-[#30251f]">
-          {categoryName} completed!
+          {t("roadmap.reviewPrompt.heading", { category: categoryName })}
         </h3>
 
         <p className="mt-2 text-xs leading-relaxed text-[#8b7e76]">
-          Want to share your experience while it&apos;s fresh? You can
-          always do this anytime later from your roadmap.
+          {t("roadmap.reviewPrompt.body")}
         </p>
 
         <div className="mt-6 flex flex-col gap-2">
@@ -1207,7 +1299,7 @@ function ReviewPromptModal({
             className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#30221d] text-xs font-semibold text-white transition hover:bg-[#46332a]"
           >
             <MessageSquarePlus size={14} />
-            Write a Review Now
+            {t("roadmap.reviewPrompt.reviewNow")}
           </button>
 
           <button
@@ -1215,7 +1307,7 @@ function ReviewPromptModal({
             onClick={onLater}
             className="h-11 rounded-xl border border-[#e3d9d1] text-xs font-semibold text-[#766a62] transition hover:bg-[#f8f4f0]"
           >
-            Maybe Later
+            {t("roadmap.reviewPrompt.later")}
           </button>
         </div>
       </div>
@@ -1230,30 +1322,36 @@ function ReviewPromptModal({
 function CreateRoadmapForm({
   onCreate,
   loading,
+  gender,
 }: {
   onCreate: (data: {
     partnerName: string;
     eventDate: string;
   }) => Promise<boolean>;
   loading: boolean;
+  /** Signed-in user's gender ("Male" / "Female"), used to personalize the
+   * copy below — who we ask about, and how we reassure them if a detail
+   * isn't ready yet. */
+  gender?: JourneyGender;
 }) {
+  const { t, isArabic } = useLanguage();
   const [partnerName, setPartnerName] = useState("");
   const [eventDate, setEventDate] = useState("");
   const [formError, setFormError] = useState("");
 
+  const copy = getJourneyCopy(gender, t);
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
-    if (!partnerName.trim() || !eventDate) {
-      setFormError("Please add your partner's name and wedding date.");
-      return;
-    }
-
     setFormError("");
 
+    // Neither field is required to begin the journey — a name or a date
+    // that isn't settled yet shouldn't block someone from starting. We
+    // simply carry forward whatever has been filled in.
     await onCreate({
       partnerName: partnerName.trim(),
-      eventDate: new Date(eventDate).toISOString(),
+      eventDate: eventDate ? new Date(eventDate).toISOString() : "",
     });
   };
 
@@ -1264,21 +1362,34 @@ function CreateRoadmapForm({
           <div className="absolute left-1/2 top-0 h-72 w-72 -translate-x-1/2 rounded-full bg-[#d49b5b]/15 blur-3xl" />
 
           <div className="relative">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-[#dfb67b]/30 bg-[#dfb67b]/10">
+            <div className="relative mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-[#dfb67b]/30 bg-[#dfb67b]/10">
               <Heart size={27} fill="#d9a363" className="text-[#d9a363]" />
+
+              {/* Small gendered touch on the entry screen too. */}
+              {copy.touch !== "neutral" && (
+                <div
+                  className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full border-2 border-[#30221d] bg-[#fbf8f4] shadow-sm"
+                  style={{ color: copy.accentColor }}
+                >
+                  {copy.touch === "groom" ? (
+                    <Gem size={12} />
+                  ) : (
+                    <Flower2 size={12} />
+                  )}
+                </div>
+              )}
             </div>
 
             <p className="mt-7 text-[9px] uppercase tracking-[0.35em] text-[#dcb078]">
-              Your Wedding Journey
+              {copy.eyebrow}
             </p>
 
             <h1 className="mt-3 font-serif text-4xl font-light text-white sm:text-6xl">
-              Let&apos;s start your story.
+              {copy.heading}
             </h1>
 
             <p className="mx-auto mt-4 max-w-lg text-sm leading-relaxed text-white/55">
-              Tell us who you are celebrating with and when your beautiful day
-              will begin.
+              {copy.subheading}
             </p>
           </div>
         </div>
@@ -1286,7 +1397,10 @@ function CreateRoadmapForm({
         <form onSubmit={handleSubmit} className="space-y-6 p-6 sm:p-10">
           <div>
             <label className="mb-2 block text-[9px] font-semibold uppercase tracking-[0.2em] text-[#766b64]">
-              Partner&apos;s Name
+              {copy.partnerLabel}
+              <span className="ml-1 normal-case tracking-normal text-[#b3a89f]">
+                {t("roadmap.create.optional")}
+              </span>
             </label>
 
             <div className="relative">
@@ -1298,7 +1412,7 @@ function CreateRoadmapForm({
               <input
                 value={partnerName}
                 onChange={(e) => setPartnerName(e.target.value)}
-                placeholder="Your partner's name"
+                placeholder={copy.partnerPlaceholder}
                 className="w-full rounded-2xl border border-[#e2d8cf] bg-[#fcfaf8] py-4 pl-11 pr-4 text-sm text-[#30251f] outline-none transition focus:border-[#b17c42] focus:bg-white focus:ring-4 focus:ring-[#b17c42]/10"
               />
             </div>
@@ -1306,7 +1420,10 @@ function CreateRoadmapForm({
 
           <div>
             <label className="mb-2 block text-[9px] font-semibold uppercase tracking-[0.2em] text-[#766b64]">
-              Wedding Date
+              {t("roadmap.create.weddingDateLabel")}
+              <span className="ml-1 normal-case tracking-normal text-[#b3a89f]">
+                {t("roadmap.create.optional")}
+              </span>
             </label>
 
             <div className="relative">
@@ -1322,6 +1439,13 @@ function CreateRoadmapForm({
                 className="w-full rounded-2xl border border-[#e2d8cf] bg-[#fcfaf8] py-4 pl-11 pr-4 text-sm text-[#30251f] outline-none transition focus:border-[#b17c42] focus:bg-white focus:ring-4 focus:ring-[#b17c42]/10"
               />
             </div>
+
+            {!eventDate && (
+              <p className="mt-2.5 flex items-start gap-1.5 text-[11px] leading-relaxed text-[#8b7e76]">
+                <Sparkles size={12} className="mt-0.5 shrink-0 text-[#b17c42]" />
+                {copy.noDateReassurance}
+              </p>
+            )}
           </div>
 
           {formError && (
@@ -1339,13 +1463,13 @@ function CreateRoadmapForm({
             {loading ? (
               <>
                 <Loader2 size={17} className="animate-spin" />
-                Creating your journey...
+                {t("roadmap.create.submit.creating")}
               </>
             ) : (
               <>
                 <Heart size={17} />
-                Begin Our Journey
-                <ArrowRight size={16} />
+                {t("roadmap.create.submit.button")}
+                <ArrowRight size={16} className={isArabic ? "rotate-180" : ""} />
               </>
             )}
           </button>
@@ -1363,6 +1487,7 @@ function RoadmapSummary({
   roadmap,
   onUpdate,
   updating,
+  gender,
 }: {
   roadmap: NonNullable<ReturnType<typeof useRoadmap>["roadmap"]>;
   onUpdate: (data: {
@@ -1370,35 +1495,38 @@ function RoadmapSummary({
     eventDate: string;
   }) => Promise<boolean>;
   updating: boolean;
+  /** Signed-in user's gender ("Male" / "Female"), used to personalize
+   * labels and fallbacks the same way as the rest of the journey. */
+  gender?: JourneyGender;
 }) {
   const { toast } = useToast();
+  const { t } = useLanguage();
+
+  const copy = getJourneyCopy(gender, t);
 
   const [editing, setEditing] = useState(false);
 
   const [partnerName, setPartnerName] = useState(roadmap.partnerName);
 
   const [eventDate, setEventDate] = useState(
-    roadmap.eventDate.slice(0, 10)
+    roadmap.eventDate ? roadmap.eventDate.slice(0, 10) : ""
   );
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
-    if (!partnerName.trim() || !eventDate) {
-      toast("Please complete all plan details.", "error");
-      return;
-    }
-
+    // Same as the initial setup: neither detail is required to save —
+    // couples fill these in whenever they're ready.
     const ok = await onUpdate({
       partnerName: partnerName.trim(),
-      eventDate: new Date(eventDate).toISOString(),
+      eventDate: eventDate ? new Date(eventDate).toISOString() : "",
     });
 
     if (ok) {
       setEditing(false);
-      toast("Wedding details updated.", "success");
+      toast(t("roadmap.summary.toast.updated"), "success");
     } else {
-      toast("We couldn't update your plan.", "error");
+      toast(t("roadmap.summary.toast.updateFailed"), "error");
     }
   };
 
@@ -1416,15 +1544,19 @@ function RoadmapSummary({
 
             <div>
               <p className="text-[8px] font-semibold uppercase tracking-[0.25em] text-[#a9773c]">
-                Wedding Details
+                {t("roadmap.summary.label")}
               </p>
 
               <h3 className="mt-1 font-serif text-xl tracking-[-0.015em] text-[#30251f]">
-                Planning with {roadmap.partnerName}
+                {roadmap.partnerName
+                  ? t("roadmap.summary.planningWith", { name: roadmap.partnerName })
+                  : copy.partnerHeaderFallback}
               </h3>
 
               <p className="mt-1 text-xs text-[#9a8d84]">
-                {formatDate(roadmap.eventDate)}
+                {roadmap.eventDate && formatDate(roadmap.eventDate)
+                  ? formatDate(roadmap.eventDate)
+                  : t("roadmap.summary.dateComingSoon")}
               </p>
             </div>
           </div>
@@ -1435,7 +1567,7 @@ function RoadmapSummary({
             className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-[#e2d8cf] px-4 text-xs font-semibold text-[#685c54] transition hover:border-[#b17c42] hover:text-[#a9773c]"
           >
             <Pencil size={13} />
-            Edit Details
+            {t("roadmap.summary.editButton")}
           </button>
         </div>
       ) : (
@@ -1443,11 +1575,11 @@ function RoadmapSummary({
           <div className="mb-5 flex items-center justify-between">
             <div>
               <p className="text-[8px] font-semibold uppercase tracking-[0.25em] text-[#a9773c]">
-                Edit Your Story
+                {t("roadmap.summary.editEyebrow")}
               </p>
 
               <h3 className="mt-1 font-serif text-xl text-[#30251f]">
-                Wedding Details
+                {t("roadmap.summary.label")}
               </h3>
             </div>
 
@@ -1464,7 +1596,7 @@ function RoadmapSummary({
             <input
               value={partnerName}
               onChange={(e) => setPartnerName(e.target.value)}
-              required
+              placeholder={copy.partnerPlaceholder}
               className="w-full rounded-xl border border-[#e2d9d2] bg-[#fcfaf8] px-4 py-3 text-sm outline-none focus:border-[#a9773c]"
             />
 
@@ -1472,10 +1604,16 @@ function RoadmapSummary({
               type="date"
               value={eventDate}
               onChange={(e) => setEventDate(e.target.value)}
-              required
               className="w-full rounded-xl border border-[#e2d9d2] bg-[#fcfaf8] px-4 py-3 text-sm outline-none focus:border-[#a9773c]"
             />
           </div>
+
+          {!eventDate && (
+            <p className="mt-2.5 flex items-start gap-1.5 text-[11px] leading-relaxed text-[#8b7e76]">
+              <Sparkles size={12} className="mt-0.5 shrink-0 text-[#a9773c]" />
+              {copy.noDateReassurance}
+            </p>
+          )}
 
           <div className="mt-5 flex justify-end gap-2">
             <button
@@ -1483,7 +1621,7 @@ function RoadmapSummary({
               onClick={() => setEditing(false)}
               className="h-10 rounded-xl border border-[#e3d9d1] px-5 text-xs font-semibold text-[#766a62]"
             >
-              Cancel
+              {t("roadmap.summary.cancel")}
             </button>
 
             <button
@@ -1495,7 +1633,9 @@ function RoadmapSummary({
                 <Loader2 size={14} className="animate-spin" />
               )}
 
-              {updating ? "Saving..." : "Save Changes"}
+              {updating
+                ? t("roadmap.summary.saving")
+                : t("roadmap.summary.saveChanges")}
             </button>
           </div>
         </form>
@@ -1521,7 +1661,13 @@ function RoadmapContent() {
     uncomplete,
   } = useRoadmap();
 
+  // Signed-in user's gender (Male/Female) — powers the personalized copy
+  // and small stylistic touches across the roadmap.
+  const { currentUser } = useCurrentUser();
+  const gender = currentUser?.gender as JourneyGender;
+
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   const [reviewItem, setReviewItem] = useState<{
     id: string;
@@ -1551,11 +1697,11 @@ function RoadmapContent() {
           </div>
 
           <p className="mt-5 font-serif text-xl text-[#30251f]">
-            Preparing your journey...
+            {t("roadmap.loading.title")}
           </p>
 
           <p className="mt-1 text-xs text-[#a3978f]">
-            A little magic is loading.
+            {t("roadmap.loading.subtitle")}
           </p>
         </div>
       </div>
@@ -1569,7 +1715,7 @@ function RoadmapContent() {
           <AlertCircle size={28} className="mx-auto text-red-500" />
 
           <h2 className="mt-4 font-serif text-2xl text-[#30251f]">
-            Something went wrong
+            {t("roadmap.errorState.title")}
           </h2>
 
           <p className="mt-2 text-sm text-[#8b7e76]">{error}</p>
@@ -1583,6 +1729,7 @@ function RoadmapContent() {
       <CreateRoadmapForm
         onCreate={create}
         loading={actionLoading === "create"}
+        gender={gender}
       />
     );
   }
@@ -1646,7 +1793,9 @@ function RoadmapContent() {
     const ok = await complete(String(externalCompleteItem.categoryId));
 
     toast(
-      ok ? "Category completed!" : "We couldn't complete this category.",
+      ok
+        ? t("roadmap.toast.categoryCompleted")
+        : t("roadmap.toast.categoryCompleteFailed"),
       ok ? "success" : "error"
     );
 
@@ -1665,10 +1814,11 @@ function RoadmapContent() {
   return (
     <main className="min-h-screen overflow-hidden bg-[#fbf8f4]">
       <RomanticHero
-        partnerName={roadmap.partnerName || "Your Love"}
+        partnerName={roadmap.partnerName}
         eventDate={roadmap.eventDate}
         progress={progress}
         coverImageUrl="https://cdn.prod.website-files.com/6718e262328596ea787524a5/6732673cc4f81ec0ef5c928d_AdobeStock_198831835_optimized_4000.jpeg"
+        gender={gender}
       />
 
       <div className="relative mx-auto px-4 pb-12 sm:px-6 lg:max-w-10/12 lg:px-10">
@@ -1690,16 +1840,15 @@ function RoadmapContent() {
           </div>
 
           <p className="mt-4 text-[9px] font-semibold uppercase tracking-[0.35em] text-[#ad7a40]">
-            Our Roadmap
+            {t("roadmap.main.eyebrow")}
           </p>
 
           <h2 className="mt-2 font-serif text-4xl font-light tracking-[-0.03em] text-[#30251f] sm:text-5xl">
-            One beautiful step at a time
+            {t("roadmap.main.heading")}
           </h2>
 
           <p className="mx-auto mt-3 max-w-xl text-xs leading-relaxed text-[#8d8179]">
-            From the first decision to the final touch, every little detail
-            brings you closer to your day.
+            {t("roadmap.main.subheading")}
           </p>
         </section>
 
@@ -1719,12 +1868,12 @@ function RoadmapContent() {
                 />
 
                 <span className="text-[8px] font-semibold uppercase tracking-[0.3em] text-[#b17c42]">
-                  The Journey
+                  {t("roadmap.main.journeyLabel")}
                 </span>
               </div>
 
               <h2 className="mt-1 font-serif text-3xl font-light tracking-tight text-[#30251f] sm:text-4xl">
-                Your wedding roadmap
+                {t("roadmap.main.journeyHeading")}
               </h2>
             </div>
 
@@ -1739,7 +1888,7 @@ function RoadmapContent() {
                 <span className="text-[#8e827a]">{totalItems}</span>
 
                 <span className="ml-1 text-[8px] uppercase tracking-[0.12em] text-[#a79b93]">
-                  completed
+                  {t("roadmap.main.completedLabel")}
                 </span>
               </div>
 
@@ -1765,22 +1914,22 @@ function RoadmapContent() {
             onComplete={(categoryId) =>
               handleAction(
                 () => complete(String(categoryId)),
-                "Category completed!",
-                "We couldn't complete this category."
+                t("roadmap.toast.categoryCompleted"),
+                t("roadmap.toast.categoryCompleteFailed")
               )
             }
             onUncomplete={(categoryId) =>
               handleAction(
                 () => uncomplete(String(categoryId)),
-                "Category reopened.",
-                "We couldn't reopen this category."
+                t("roadmap.toast.categoryReopened"),
+                t("roadmap.toast.categoryReopenFailed")
               )
             }
             onRemove={(categoryId) =>
               handleAction(
                 () => removeVendor(String(categoryId)),
-                "Vendor removed from your journey.",
-                "We couldn't remove the vendor."
+                t("roadmap.toast.vendorRemoved"),
+                t("roadmap.toast.vendorRemoveFailed")
               )
             }
             onRequestExternalComplete={handleRequestExternalComplete}
@@ -1800,17 +1949,19 @@ function RoadmapContent() {
                   <Sparkles size={13} className="text-[#ad783c]" />
 
                   <span className="text-[8px] font-semibold uppercase tracking-[0.25em] text-[#ad783c]">
-                    Journey Progress
+                    {t("roadmap.progress.label")}
                   </span>
                 </div>
 
                 <h3 className="mt-2 font-serif text-3xl font-light tracking-tight text-[#30251f]">
-                  You&apos;re making it happen.
+                  {t("roadmap.progress.heading")}
                 </h3>
 
                 <p className="mt-2 max-w-lg text-xs leading-relaxed text-[#8b7e76]">
-                  {completedItems} of {totalItems} categories are complete.
-                  Every small decision brings your celebration closer.
+                  {t("roadmap.progress.subheading", {
+                    completed: completedItems,
+                    total: totalItems,
+                  })}
                 </p>
               </div>
 
@@ -1827,9 +1978,15 @@ function RoadmapContent() {
             </div>
 
             <div className="mt-3 flex justify-between text-[9px] text-[#9c9088]">
-              <span>{completedItems} completed</span>
+              <span>
+                {t("roadmap.progress.completedCount", { count: completedItems })}
+              </span>
 
-              <span>{totalItems - completedItems} remaining</span>
+              <span>
+                {t("roadmap.progress.remainingCount", {
+                  count: totalItems - completedItems,
+                })}
+              </span>
             </div>
           </div>
 
@@ -1846,16 +2003,15 @@ function RoadmapContent() {
               </div>
 
               <h3 className="mt-5 font-serif text-2xl font-light tracking-[-0.02em]">
-                Enjoy the journey.
+                {t("roadmap.progress.enjoyHeading")}
               </h3>
 
               <p className="mt-2 text-xs leading-relaxed text-white/50">
-                This is not just a checklist. It&apos;s the beginning of your
-                story together.
+                {t("roadmap.progress.enjoyBody")}
               </p>
 
               <div className="mt-6 flex items-center gap-2 text-[8px] font-semibold uppercase tracking-[0.2em] text-[#d9ac70]">
-                <span>One step closer</span>
+                <span>{t("roadmap.progress.oneStepCloser")}</span>
 
                 <Heart size={11} fill="currentColor" />
               </div>
@@ -1867,6 +2023,7 @@ function RoadmapContent() {
           roadmap={roadmap}
           onUpdate={update}
           updating={actionLoading === "update"}
+          gender={gender}
         />
 
         <div className="mt-5 flex items-start gap-3 rounded-2xl border border-[#e8ded5] bg-[#faf7f3] p-4">
@@ -1876,8 +2033,7 @@ function RoadmapContent() {
           />
 
           <p className="text-[10px] leading-relaxed text-[#847970]">
-            Your roadmap is flexible. You can change a vendor at any time
-            without losing the category or your progress.
+            {t("roadmap.footer.flexibleNote")}
           </p>
         </div>
       </div>
