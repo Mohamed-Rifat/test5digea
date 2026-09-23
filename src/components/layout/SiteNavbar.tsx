@@ -732,7 +732,7 @@ export default function SiteNavbar() {
        the full viewport) */}
       <div
         aria-hidden={!mobileOpen}
-        className={`fixed inset-0 z-50 lg:hidden ${mobileOpen ? "" : "pointer-events-none"}`}
+        className={`fixed inset-0 z-50 overflow-hidden lg:hidden ${mobileOpen ? "" : "pointer-events-none"}`}
       >
         {/* backdrop */}
         <div
