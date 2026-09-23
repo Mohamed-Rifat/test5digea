@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useLanguage } from "@/context/LanguageContext";
+import { LANGUAGE_DATE_LOCALE, type TranslationKey } from "@/locales";
 import { useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import {
@@ -26,7 +27,7 @@ import type { Service } from "@/types/service";
    Helpers
 ========================= */
 
-const formatDate = (date: string) => {
+const formatDate = (date: string, locale = "en-GB") => {
   if (!date) return "-";
 
   const parsedDate = new Date(date);
@@ -35,7 +36,7 @@ const formatDate = (date: string) => {
     return "-";
   }
 
-  return parsedDate.toLocaleDateString("en-GB", {
+  return parsedDate.toLocaleDateString(locale, {
     day: "2-digit",
     month: "short",
     year: "numeric",
@@ -48,8 +49,19 @@ const formatPrice = (price: number) => {
   }).format(price);
 };
 
-const getStatusLabel = (status: string) => {
-  if (!status) return "Unknown";
+const getStatusKey = (status: string): TranslationKey | null => {
+  const n = (status || "").toLowerCase().replace(/[_\-\s]/g, "");
+
+  if (n.includes("pending")) return "admin.services.pending";
+  if (n.includes("reject")) return "admin.services.rejected";
+  if (n.includes("inactive") || n.includes("deactiv")) return "admin.services.inactive";
+  if (n.includes("approved") || n.includes("active")) return "admin.services.approved";
+
+  return null;
+};
+
+const getRawStatusLabel = (status: string) => {
+  if (!status) return "";
 
   return status
     .replace(/([a-z])([A-Z])/g, "$1 $2")
@@ -115,7 +127,13 @@ const getStartingPrice = (service: Service) => {
 ========================= */
 
 export default function AdminServicesPage() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const dateLocale = LANGUAGE_DATE_LOCALE[language];
+  const getStatusLabel = (status: string) => {
+    const key = getStatusKey(status);
+
+    return key ? t(key) : getRawStatusLabel(status) || t("admin.services.unknown");
+  };
   const money = (value: number) => `${formatPrice(value)} ${t("common.currency")}`;
   const {
     services,
@@ -269,7 +287,7 @@ export default function AdminServicesPage() {
     service: Service
   ) => {
     const confirmed = window.confirm(
-      `Are you sure you want to approve "${service.name}"?`
+      t('admin.services.confirmApprove', { name: service.name })
     );
 
     if (!confirmed) return;
@@ -279,12 +297,12 @@ export default function AdminServicesPage() {
     if (success) {
       showMessage(
         "success",
-        "Service approved successfully."
+        t('admin.services.approvedSuccess')
       );
     } else {
       showMessage(
         "error",
-        "Failed to approve service."
+        t('admin.services.approveFailed')
       );
     }
   };
@@ -317,7 +335,7 @@ export default function AdminServicesPage() {
     if (!reason) {
       showMessage(
         "error",
-        "Please enter a rejection reason."
+        t('admin.services.reasonRequired')
       );
       return;
     }
@@ -334,12 +352,12 @@ export default function AdminServicesPage() {
 
       showMessage(
         "success",
-        "Service rejected successfully."
+        t('admin.services.rejectedSuccess')
       );
     } else {
       showMessage(
         "error",
-        "Failed to reject service."
+        t('admin.services.rejectFailed')
       );
     }
   };
@@ -352,7 +370,7 @@ export default function AdminServicesPage() {
     service: Service
   ) => {
     const confirmed = window.confirm(
-      `Activate "${service.name}"?`
+      t('admin.services.confirmActivate', { name: service.name })
     );
 
     if (!confirmed) return;
@@ -362,12 +380,12 @@ export default function AdminServicesPage() {
     if (success) {
       showMessage(
         "success",
-        "Service activated successfully."
+        t('admin.services.activatedSuccess')
       );
     } else {
       showMessage(
         "error",
-        "Failed to activate service."
+        t('admin.services.activateFailed')
       );
     }
   };
@@ -380,7 +398,7 @@ export default function AdminServicesPage() {
     service: Service
   ) => {
     const confirmed = window.confirm(
-      `Deactivate "${service.name}"?`
+      t('admin.services.confirmDeactivate', { name: service.name })
     );
 
     if (!confirmed) return;
@@ -392,12 +410,12 @@ export default function AdminServicesPage() {
     if (success) {
       showMessage(
         "success",
-        "Service deactivated successfully."
+        t('admin.services.deactivatedSuccess')
       );
     } else {
       showMessage(
         "error",
-        "Failed to deactivate service."
+        t('admin.services.deactivateFailed')
       );
     }
   };
@@ -416,7 +434,7 @@ export default function AdminServicesPage() {
           />
 
           <p className="text-sm text-gray-500">
-            Loading services...
+            {t('admin.services.loading')}
           </p>
         </div>
       </div>
@@ -439,7 +457,7 @@ export default function AdminServicesPage() {
 
             <div>
               <h2 className="font-semibold text-red-800">
-                Failed to load services
+                {t('admin.services.loadFailed')}
               </h2>
 
               <p className="mt-1 text-sm text-red-700">
@@ -451,7 +469,7 @@ export default function AdminServicesPage() {
                 onClick={refetch}
                 className="mt-4 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-700"
               >
-                Try Again
+                {t("admin.services.tryAgain")}
               </button>
             </div>
           </div>
@@ -473,22 +491,22 @@ export default function AdminServicesPage() {
               href="/admin"
               className="transition hover:text-gray-900"
             >
-              Dashboard
+              {t('admin.services.breadcrumb')}
             </Link>
 
             <ChevronRight size={15} />
 
             <span className="text-gray-900">
-              Services
+              {t("admin.services.servicePlural")}
             </span>
           </div>
 
           <h1 className="text-2xl font-semibold tracking-tight text-gray-900 md:text-3xl">
-            Services Management
+            {t('admin.services.title')}
           </h1>
 
           <p className="mt-1 text-sm text-gray-500">
-            Review and manage services submitted by vendors.
+            {t('admin.services.subtitle')}
           </p>
         </div>
 
@@ -503,7 +521,7 @@ export default function AdminServicesPage() {
             className={loading ? "animate-spin" : ""}
           />
 
-          Refresh
+          {t('admin.services.refresh')}
         </button>
       </div>
 
@@ -535,22 +553,22 @@ export default function AdminServicesPage() {
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
-          label="Total Services"
+          label={t('admin.services.total')}
           value={stats.total}
         />
 
         <StatCard
-          label="Approved"
+          label={t('admin.services.approved')}
           value={stats.approved}
         />
 
         <StatCard
-          label="Pending"
+          label={t('admin.services.pending')}
           value={stats.pending}
         />
 
         <StatCard
-          label="Rejected"
+          label={t('admin.services.rejected')}
           value={stats.rejected}
         />
       </div>
@@ -575,7 +593,7 @@ export default function AdminServicesPage() {
               onChange={(event) =>
                 setSearch(event.target.value)
               }
-              placeholder="Search by service, vendor, category..."
+              placeholder={t('admin.services.searchPlaceholder')}
               className="h-11 w-full rounded-xl border border-gray-200 bg-gray-50 pl-10 pr-4 text-sm outline-none transition placeholder:text-gray-400 focus:border-[#c59b6d] focus:bg-white focus:ring-2 focus:ring-[#c59b6d]/10"
             />
           </div>
@@ -591,7 +609,7 @@ export default function AdminServicesPage() {
             className="h-11 rounded-xl border border-gray-200 bg-gray-50 px-3 text-sm text-gray-700 outline-none transition focus:border-[#c59b6d] focus:bg-white focus:ring-2 focus:ring-[#c59b6d]/10"
           >
             <option value="">
-              All Categories
+              {t('admin.services.allCategories')}
             </option>
 
             {categories?.map((category) => (
@@ -614,7 +632,7 @@ export default function AdminServicesPage() {
             className="h-11 rounded-xl border border-gray-200 bg-gray-50 px-3 text-sm text-gray-700 outline-none transition focus:border-[#c59b6d] focus:bg-white focus:ring-2 focus:ring-[#c59b6d]/10"
           >
             <option value="">
-              All Statuses
+              {t('admin.services.allStatuses')}
             </option>
 
             {statusOptions.map((status) => (
@@ -653,7 +671,7 @@ export default function AdminServicesPage() {
               }}
               className="text-xs font-medium text-gray-600 transition hover:text-gray-900"
             >
-              Clear filters
+              {t('admin.services.clearFilters')}
             </button>
           </div>
         )}
@@ -670,10 +688,10 @@ export default function AdminServicesPage() {
               <Search size={22} className="text-gray-400" />
             </div>
 
-            <h3 className="font-medium text-gray-900">No services found</h3>
+            <h3 className="font-medium text-gray-900">{t('admin.services.noServices')}</h3>
 
             <p className="mt-1 text-sm text-gray-500">
-              Try changing your search or filters.
+              {t('admin.services.adjustFilters')}
             </p>
           </div>
         ) : (
@@ -754,13 +772,13 @@ export default function AdminServicesPage() {
                     {startingPrice !== null
                       ? `${money(startingPrice)}${
                           service.prices?.length > 1
-                            ? ` · ${service.prices.length} options`
+                            ? ` · ${t('admin.services.priceOptionsCount', { count: service.prices.length })}`
                             : ""
                         }`
-                      : "No price"}
+                      : t('admin.services.noPrice')}
                   </span>
 
-                  <span>{formatDate(service.createdAt)}</span>
+                  <span>{formatDate(service.createdAt, dateLocale)}</span>
                 </div>
 
                 <div className="mt-3 flex items-center gap-2 border-t border-gray-100 pt-3">
@@ -769,7 +787,7 @@ export default function AdminServicesPage() {
                     className="flex h-9 flex-1 items-center justify-center gap-1.5 rounded-lg border border-gray-200 text-xs font-medium text-gray-700 transition hover:bg-gray-50"
                   >
                     <Eye size={14} />
-                    View
+                    {t('admin.services.view')}
                   </Link>
 
                   {canApprove && (
@@ -784,7 +802,7 @@ export default function AdminServicesPage() {
                       ) : (
                         <Check size={14} />
                       )}
-                      Approve
+                      {t('admin.services.approveLabel')}
                     </button>
                   )}
 
@@ -800,7 +818,7 @@ export default function AdminServicesPage() {
                       ) : (
                         <X size={14} />
                       )}
-                      Reject
+                      {t('admin.services.rejectLabel')}
                     </button>
                   )}
 
@@ -816,7 +834,7 @@ export default function AdminServicesPage() {
                       ) : (
                         <Power size={14} />
                       )}
-                      Activate
+                      {t('admin.services.activateLabel')}
                     </button>
                   )}
 
@@ -832,7 +850,7 @@ export default function AdminServicesPage() {
                       ) : (
                         <Power size={14} />
                       )}
-                      Deactivate
+                      {t('admin.services.deactivateLabel')}
                     </button>
                   )}
                 </div>
@@ -852,31 +870,31 @@ export default function AdminServicesPage() {
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50/80">
                 <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
-                  Service
+                  {t('admin.services.service')}
                 </th>
 
                 <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
-                  Vendor
+                  {t('admin.services.vendor')}
                 </th>
 
                 <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
-                  Category
+                  {t('admin.services.category')}
                 </th>
 
                 <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
-                  Price
+                  {t('admin.services.price')}
                 </th>
 
                 <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
-                  Status
+                  {t('admin.services.status')}
                 </th>
 
                 <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
-                  Created
+                  {t("admin.services.created")}
                 </th>
 
                 <th className="px-5 py-4 text-right text-xs font-semibold uppercase tracking-wide text-gray-500">
-                  Actions
+                  {t('admin.services.actions')}
                 </th>
               </tr>
             </thead>
@@ -897,11 +915,11 @@ export default function AdminServicesPage() {
                       </div>
 
                       <h3 className="font-medium text-gray-900">
-                        No services found
+                        {t('admin.services.noServices')}
                       </h3>
 
                       <p className="mt-1 text-sm text-gray-500">
-                        Try changing your search or filters.
+                        {t('admin.services.adjustFilters')}
                       </p>
                     </div>
                   </td>
@@ -1008,7 +1026,7 @@ export default function AdminServicesPage() {
 
                             <p className="mt-0.5 max-w-55 truncate text-xs text-gray-500">
                               {service.description ||
-                                "No description"}
+                                t('admin.services.noDescription')}
                             </p>
                           </div>
                         </div>
@@ -1044,17 +1062,13 @@ export default function AdminServicesPage() {
                             {service.prices
                               ?.length > 1 && (
                               <p className="mt-0.5 text-xs text-gray-500">
-                                {
-                                  service.prices
-                                    .length
-                                }{" "}
-                                price options
+                                {t('admin.services.priceOptionsCount', { count: service.prices.length })}
                               </p>
                             )}
                           </div>
                         ) : (
                           <span className="text-sm text-gray-400">
-                            No price
+                            {t('admin.services.noPrice')}
                           </span>
                         )}
                       </td>
@@ -1078,7 +1092,8 @@ export default function AdminServicesPage() {
                       <td className="px-5 py-4">
                         <span className="text-sm text-gray-600">
                           {formatDate(
-                            service.createdAt
+                            service.createdAt,
+                            dateLocale
                           )}
                         </span>
                       </td>
@@ -1091,7 +1106,7 @@ export default function AdminServicesPage() {
 
                           <Link
                             href={`/admin/services/${service.id}`}
-                            title="View service"
+                            title={t("admin.services.view")}
                             className="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 text-gray-600 transition hover:border-gray-300 hover:bg-gray-50 hover:text-gray-900"
                           >
                             <Eye size={16} />
@@ -1102,7 +1117,7 @@ export default function AdminServicesPage() {
                           {canApprove && (
                             <button
                               type="button"
-                              title="Approve service"
+                              title={t('admin.services.approveAction')}
                               disabled={busy}
                               onClick={() =>
                                 handleApprove(
@@ -1127,7 +1142,7 @@ export default function AdminServicesPage() {
                           {canReject && (
                             <button
                               type="button"
-                              title="Reject service"
+                              title={t('admin.services.rejectAction')}
                               disabled={busy}
                               onClick={() =>
                                 openRejectModal(
@@ -1152,7 +1167,7 @@ export default function AdminServicesPage() {
                           {canActivate && (
                             <button
                               type="button"
-                              title="Activate service"
+                              title={t('admin.services.activateAction')}
                               disabled={busy}
                               onClick={() =>
                                 handleActivate(
@@ -1177,7 +1192,7 @@ export default function AdminServicesPage() {
                           {canDeactivate && (
                             <button
                               type="button"
-                              title="Deactivate service"
+                              title={t('admin.services.deactivateAction')}
                               disabled={busy}
                               onClick={() =>
                                 handleDeactivate(
@@ -1234,11 +1249,11 @@ export default function AdminServicesPage() {
               <div className="flex items-start justify-between border-b border-gray-100 px-6 py-5">
                 <div>
                   <h2 className="text-lg font-semibold text-gray-900">
-                    Reject Service
+                    {t('admin.services.rejectTitle')}
                   </h2>
 
                   <p className="mt-1 text-sm text-gray-500">
-                    Please provide a reason for rejecting this service.
+                    {t('admin.services.reasonRequired')}
                   </p>
                 </div>
 
@@ -1257,7 +1272,7 @@ export default function AdminServicesPage() {
               <div className="space-y-4 px-6 py-5">
                 <div className="rounded-xl bg-gray-50 p-4">
                   <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
-                    Service
+                    {t('admin.services.service')}
                   </p>
 
                   <p className="mt-1 font-medium text-gray-900">
@@ -1274,7 +1289,7 @@ export default function AdminServicesPage() {
                     htmlFor="rejectionReason"
                     className="mb-2 block text-sm font-medium text-gray-700"
                   >
-                    Rejection Reason
+                    {t('admin.services.rejectionReason')}
                   </label>
 
                   <textarea
@@ -1285,7 +1300,7 @@ export default function AdminServicesPage() {
                         event.target.value
                       )
                     }
-                    placeholder="Enter the reason..."
+                    placeholder={t('admin.services.reasonPlaceholder')}
                     rows={5}
                     disabled={Boolean(
                       actionLoading
@@ -1306,7 +1321,7 @@ export default function AdminServicesPage() {
                   )}
                   className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
                 >
-                  Cancel
+                  {t('admin.services.cancel')}
                 </button>
 
                 <button
@@ -1325,13 +1340,13 @@ export default function AdminServicesPage() {
                         className="animate-spin"
                       />
 
-                      Rejecting...
+                      {t('admin.services.rejecting')}
                     </>
                   ) : (
                     <>
                       <X size={16} />
 
-                      Reject Service
+                      {t('admin.services.rejectTitle')}
                     </>
                   )}
                 </button>

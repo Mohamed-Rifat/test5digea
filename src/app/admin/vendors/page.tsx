@@ -1,5 +1,7 @@
 "use client";
 
+import { useLanguage } from "@/context/LanguageContext";
+
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   FormEvent,
@@ -151,6 +153,7 @@ function VendorsSkeleton() {
 // ============================================================
 
 export default function AdminVendorsPage() {
+  const { t } = useLanguage();
   const { vendors, loading, error, refetch } = useAdminVendors();
 
   const router = useRouter();
@@ -273,7 +276,7 @@ export default function AdminVendorsPage() {
       await refetch();
     } catch (error: unknown) {
       setActionError(
-        getApiErrorMessage(error, "Something went wrong. Please try again.")
+        getApiErrorMessage(error, t('admin.vendors.genericError'))
       );
     } finally {
       setActionLoading(null);
@@ -288,7 +291,7 @@ export default function AdminVendorsPage() {
     if (!rejectVendorId) return;
 
     if (!rejectReason.trim()) {
-      setActionError("Please enter a rejection reason.");
+      setActionError(t('admin.vendors.rejectReasonRequired'));
       return;
     }
 
@@ -298,7 +301,7 @@ export default function AdminVendorsPage() {
         rejectVendor(rejectVendorId, {
           reason: rejectReason.trim(),
         }),
-      "Vendor rejected successfully."
+      t('admin.vendors.rejectedSuccess')
     );
 
     setRejectVendorId(null);
@@ -315,7 +318,7 @@ export default function AdminVendorsPage() {
     await runAction(
       deactivateVendorId,
       () => deactivateVendor(deactivateVendorId),
-      "Vendor deactivated successfully."
+      t('admin.vendors.deactivatedSuccess')
     );
 
     setDeactivateVendorId(null);
@@ -339,7 +342,7 @@ export default function AdminVendorsPage() {
       !createForm.fullName.trim() ||
       !createForm.businessName.trim()
     ) {
-      setActionError("Please fill in all fields.");
+      setActionError(t('admin.vendors.fillAll'));
       return;
     }
 
@@ -348,7 +351,7 @@ export default function AdminVendorsPage() {
 
       const vendorId = await createVendor(createForm);
 
-      setSuccess(`Vendor created successfully. ID: ${vendorId}`);
+      setSuccess(t('admin.vendors.createdSuccess', { id: String(vendorId) }));
 
       setCreateForm({
         email: "",
@@ -362,7 +365,7 @@ export default function AdminVendorsPage() {
       await refetch();
     } catch (error: unknown) {
       setActionError(
-        getApiErrorMessage(error, "Failed to create vendor.")
+        getApiErrorMessage(error, t('admin.vendors.createFailed'))
       );
     } finally {
       setCreateLoading(false);
@@ -419,23 +422,22 @@ export default function AdminVendorsPage() {
                 />
 
                 <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#806b5d]">
-                  Vendor Management
+                  {t('admin.vendors.title')}
                 </span>
               </div>
 
               <div className="flex flex-wrap items-end gap-x-4 gap-y-2">
                 <h1 className="text-3xl font-semibold tracking-[-0.04em] text-[#30251f] sm:text-4xl">
-                  Vendors
+                  {t('admin.vendors.vendors')}
                 </h1>
 
                 <span className="mb-1 rounded-full bg-[#f3efec] px-2.5 py-1 text-xs font-semibold text-[#75675e]">
-                  {stats.total} total
+                  {t('admin.vendors.totalCount', { count: stats.total })}
                 </span>
               </div>
 
               <p className="mt-3 max-w-2xl text-sm leading-6 text-[#766b65]">
-                Review applications, monitor vendor performance, and
-                manage account access from one place.
+                {t('admin.vendors.pageDesc')}
               </p>
             </div>
 
@@ -452,7 +454,7 @@ export default function AdminVendorsPage() {
                 <Plus size={16} />
               </span>
 
-              Add Vendor
+              {t('admin.vendors.add')}
             </button>
           </div>
         </section>
@@ -471,7 +473,7 @@ export default function AdminVendorsPage() {
 
                 <div className="min-w-0">
                   <p className="font-semibold">
-                    Something needs your attention
+                    {t('admin.vendors.needAttentionMessage')}
                   </p>
 
                   <p className="mt-0.5 leading-5">
@@ -489,7 +491,7 @@ export default function AdminVendorsPage() {
 
                 <div>
                   <p className="font-semibold">
-                    Action completed
+                    {t('admin.vendors.actionCompleted')}
                   </p>
 
                   <p className="mt-0.5 break-all leading-5">
@@ -507,47 +509,47 @@ export default function AdminVendorsPage() {
 
         <section className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4 xl:grid-cols-5">
           <InsightCard
-            label="Total Vendors"
+            label={t('admin.vendors.total')}
             value={stats.total}
             icon={<Store size={18} />}
             tone="neutral"
             active={statusFilter === "all"}
             onClick={() => setStatusFilter("all")}
-            description="All accounts"
+            description={t("admin.vendors.allAccounts")}
           />
 
           <InsightCard
-            label="Pending Review"
+            label={t('admin.vendors.pending')}
             value={stats.pending}
             icon={<Clock3 size={18} />}
             tone="amber"
             active={statusFilter === "Pending"}
             onClick={() => setStatusFilter("Pending")}
-            description="Need attention"
+            description={t("admin.vendors.needAttention")}
           />
 
           <InsightCard
-            label="Approved"
+            label={t('admin.vendors.statusApproved')}
             value={stats.approved}
             icon={<UserCheck size={18} />}
             tone="emerald"
             active={statusFilter === "Approved"}
             onClick={() => setStatusFilter("Approved")}
-            description="Active vendors"
+            description={t("admin.vendors.active")}
           />
 
           <InsightCard
-            label="Rejected"
+            label={t('admin.vendors.statusRejected')}
             value={stats.rejected}
             icon={<UserX size={18} />}
             tone="red"
             active={statusFilter === "Rejected"}
             onClick={() => setStatusFilter("Rejected")}
-            description="Rejected applications"
+            description={t("admin.vendors.rejected")}
           />
 
           <InsightCard
-            label="Inactive"
+            label={t('admin.vendors.statusInactive')}
             value={stats.inactive}
             icon={<Ban size={18} />}
             tone="gray"
@@ -555,8 +557,8 @@ export default function AdminVendorsPage() {
             onClick={() => setStatusFilter("Inactive")}
             description={
               stats.averageRating > 0
-                ? `${stats.averageRating.toFixed(1)} avg. rating`
-                : "No ratings yet"
+                ? t('admin.vendors.avgRating', { value: stats.averageRating.toFixed(1) })
+                : t('admin.vendors.noRatings')
             }
           />
         </section>
@@ -577,7 +579,7 @@ export default function AdminVendorsPage() {
                 type="text"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search vendors by name, email, location or phone..."
+                placeholder={t('admin.vendors.searchPlaceholder')}
                 className="h-12 w-full rounded-2xl border border-[#e0d8d3] bg-[#fdfcfb] pl-11 pr-11 text-sm text-[#30251f] outline-none transition-all placeholder:text-[#aaa09a] hover:border-[#d4c9c2] focus:border-[#9b7b67] focus:bg-white focus:ring-4 focus:ring-[#9b7b67]/10"
               />
 
@@ -586,7 +588,7 @@ export default function AdminVendorsPage() {
                   type="button"
                   onClick={() => setSearch("")}
                   className="absolute right-3 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-lg text-[#8c817a] transition hover:bg-[#f3efec] hover:text-[#30251f]"
-                  aria-label="Clear search"
+                  aria-label={t("admin.ui.clearSearch")}
                 >
                   <X size={14} />
                 </button>
@@ -602,11 +604,11 @@ export default function AdminVendorsPage() {
                   }
                   className="h-12 w-full appearance-none rounded-2xl border border-[#e0d8d3] bg-[#fdfcfb] px-4 pr-11 text-sm font-medium text-[#4b403a] outline-none transition hover:border-[#d4c9c2] focus:border-[#9b7b67] focus:bg-white focus:ring-4 focus:ring-[#9b7b67]/10"
                 >
-                  <option value="all">All statuses</option>
-                  <option value="Pending">Pending</option>
-                  <option value="Approved">Approved</option>
-                  <option value="Rejected">Rejected</option>
-                  <option value="Inactive">Inactive</option>
+                  <option value="all">{t('admin.vendors.allStatuses')}</option>
+                  <option value="Pending">{t('admin.vendors.statusPending')}</option>
+                  <option value="Approved">{t('admin.vendors.statusApproved')}</option>
+                  <option value="Rejected">{t('admin.vendors.statusRejected')}</option>
+                  <option value="Inactive">{t('admin.vendors.statusInactive')}</option>
                 </select>
 
                 <ChevronDown
@@ -624,7 +626,7 @@ export default function AdminVendorsPage() {
                   }}
                   className="h-12 rounded-2xl border border-[#e0d8d3] bg-white px-4 text-sm font-semibold text-[#675b54] transition hover:border-[#cfc3bb] hover:bg-[#f8f5f3]"
                 >
-                  Clear filters
+                  {t('admin.vendors.clearFilters')}
                 </button>
               )}
             </div>
@@ -638,27 +640,9 @@ export default function AdminVendorsPage() {
         <div className="mb-3 flex flex-wrap items-center justify-between gap-3 px-1">
           <div>
             <p className="text-sm font-medium text-[#766b65]">
-              {filteredVendors.length === vendors.length ? (
-                <>
-                  All{" "}
-                  <span className="font-semibold text-[#30251f]">
-                    {filteredVendors.length}
-                  </span>{" "}
-                  vendors
-                </>
-              ) : (
-                <>
-                  Showing{" "}
-                  <span className="font-semibold text-[#30251f]">
-                    {filteredVendors.length}
-                  </span>{" "}
-                  of{" "}
-                  <span className="font-semibold text-[#30251f]">
-                    {vendors.length}
-                  </span>{" "}
-                  vendors
-                </>
-              )}
+              {filteredVendors.length === vendors.length
+                ? t('admin.vendors.allCount', { count: filteredVendors.length })
+                : t('admin.vendors.showingCount', { shown: filteredVendors.length, total: vendors.length })}
             </p>
           </div>
 
@@ -707,12 +691,12 @@ export default function AdminVendorsPage() {
 
             <div className="hidden overflow-hidden rounded-[26px] border border-[#e9e1dc] bg-white shadow-[0_12px_40px_rgba(48,37,31,0.04)] md:block">
               <div className="grid grid-cols-[minmax(280px,2.2fr)_minmax(160px,1.15fr)_minmax(120px,.85fr)_minmax(100px,.8fr)_minmax(270px,1.7fr)] items-center border-b border-[#eee8e4] bg-[#faf9f8] px-5 py-3.5">
-                <TableHeader>Vendor</TableHeader>
-                <TableHeader>Location</TableHeader>
-                <TableHeader>Status</TableHeader>
-                <TableHeader>Rating</TableHeader>
+                <TableHeader>{t('admin.vendors.vendor')}</TableHeader>
+                <TableHeader>{t('admin.vendors.location')}</TableHeader>
+                <TableHeader>{t('admin.vendors.status')}</TableHeader>
+                <TableHeader>{t('admin.vendors.rating')}</TableHeader>
                 <TableHeader className="text-right">
-                  Actions
+                  {t('admin.vendors.actions')}
                 </TableHeader>
               </div>
 
@@ -734,7 +718,7 @@ export default function AdminVendorsPage() {
                       runAction(
                         vendor.id,
                         () => approveVendor(vendor.id),
-                        "Vendor approved successfully."
+                        t('admin.vendors.approvedSuccess')
                       )
                     }
                     onReject={() => {
@@ -746,7 +730,7 @@ export default function AdminVendorsPage() {
                       runAction(
                         vendor.id,
                         () => activateVendor(vendor.id),
-                        "Vendor activated successfully."
+                        t('admin.vendors.activatedSuccess')
                       )
                     }
                     onDeactivate={() => {
@@ -781,7 +765,7 @@ export default function AdminVendorsPage() {
                       runAction(
                         vendor.id,
                         () => approveVendor(vendor.id),
-                        "Vendor approved successfully."
+                        t('admin.vendors.approvedSuccess')
                       )
                     }
                     onReject={() => {
@@ -793,7 +777,7 @@ export default function AdminVendorsPage() {
                       runAction(
                         vendor.id,
                         () => activateVendor(vendor.id),
-                        "Vendor activated successfully."
+                        t('admin.vendors.activatedSuccess')
                       )
                     }
                     onDeactivate={() => {
@@ -820,7 +804,7 @@ export default function AdminVendorsPage() {
           setSuccess("");
         }}
         className="fixed bottom-6 right-5 z-40 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#30251f] text-white shadow-[0_16px_35px_-10px_rgba(48,37,31,0.65)] transition hover:-translate-y-0.5 hover:bg-[#45362e] active:scale-95 sm:hidden"
-        aria-label="Add Vendor"
+        aria-label={t('admin.vendors.add')}
       >
         <Plus size={22} />
       </button>
@@ -850,16 +834,15 @@ export default function AdminVendorsPage() {
 
                   <div>
                     <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#9b7b67]">
-                      New Account
+                      {t('admin.vendors.newAccount')}
                     </p>
 
                     <h2 className="mt-1 text-xl font-semibold tracking-tight text-[#30251f]">
-                      Add Vendor
+                      {t('admin.vendors.add')}
                     </h2>
 
                     <p className="mt-1 text-sm leading-5 text-[#766b65]">
-                      Create a new vendor account and get
-                      them started.
+                      {t('admin.vendors.createDesc')}
                     </p>
                   </div>
                 </div>
@@ -879,26 +862,26 @@ export default function AdminVendorsPage() {
             >
               <div className="grid gap-4 sm:grid-cols-2">
                 <InputField
-                  label="Full Name"
+                  label={t('admin.vendors.fullName')}
                   name="fullName"
                   value={createForm.fullName}
                   onChange={handleCreateChange}
-                  placeholder="Vendor full name"
+                  placeholder={t('admin.vendors.fullNamePlaceholder')}
                   disabled={createLoading}
                 />
 
                 <InputField
-                  label="Business Name"
+                  label={t('admin.vendors.businessName')}
                   name="businessName"
                   value={createForm.businessName}
                   onChange={handleCreateChange}
-                  placeholder="Business name"
+                  placeholder={t('admin.vendors.businessNamePlaceholder')}
                   disabled={createLoading}
                 />
               </div>
 
               <InputField
-                label="Email Address"
+                label={t('admin.vendors.email')}
                 name="email"
                 type="email"
                 value={createForm.email}
@@ -908,12 +891,12 @@ export default function AdminVendorsPage() {
               />
 
               <InputField
-                label="Temporary Password"
+                label={t('admin.vendors.password')}
                 name="password"
                 type="password"
                 value={createForm.password}
                 onChange={handleCreateChange}
-                placeholder="Enter a temporary password"
+                placeholder={t('admin.vendors.passwordPlaceholder')}
                 disabled={createLoading}
               />
 
@@ -930,7 +913,7 @@ export default function AdminVendorsPage() {
                   }
                   className="h-12 flex-1 rounded-2xl border border-[#ddd4ce] bg-white px-4 text-sm font-semibold text-[#5f544e] transition hover:bg-[#f8f5f3] disabled:opacity-50"
                 >
-                  Cancel
+                  {t('admin.vendors.cancel')}
                 </button>
 
                 <button
@@ -944,12 +927,12 @@ export default function AdminVendorsPage() {
                         size={17}
                         className="animate-spin"
                       />
-                      Creating...
+                      {t('admin.vendors.creating')}
                     </>
                   ) : (
                     <>
                       <Plus size={17} />
-                      Create Vendor
+                      {t('admin.vendors.createTitle')}
                     </>
                   )}
                 </button>
@@ -985,16 +968,15 @@ export default function AdminVendorsPage() {
 
                   <div>
                     <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-red-500">
-                      Review Action
+                      {t('admin.vendors.reviewAction')}
                     </p>
 
                     <h2 className="mt-1 text-xl font-semibold tracking-tight text-[#30251f]">
-                      Reject Vendor
+                      {t('admin.vendors.rejectTitle')}
                     </h2>
 
                     <p className="mt-1 text-sm leading-5 text-[#766b65]">
-                      Explain why this application is being
-                      rejected.
+                      {t('admin.vendors.rejectDesc')}
                     </p>
                   </div>
                 </div>
@@ -1014,7 +996,7 @@ export default function AdminVendorsPage() {
                 htmlFor="rejectReason"
                 className="mb-2 block text-sm font-semibold text-[#30251f]"
               >
-                Rejection reason
+                {t('admin.vendors.rejectionReason')}
               </label>
 
               <textarea
@@ -1023,7 +1005,7 @@ export default function AdminVendorsPage() {
                 onChange={(event) =>
                   setRejectReason(event.target.value)
                 }
-                placeholder="Write a clear reason so the vendor knows what needs to be corrected..."
+                placeholder={t('admin.vendors.rejectionPlaceholder')}
                 rows={5}
                 autoFocus
                 className="w-full resize-none rounded-2xl border border-[#ddd4ce] bg-[#fdfcfb] px-4 py-3.5 text-sm leading-6 text-[#30251f] outline-none transition placeholder:text-[#aaa09a] hover:border-[#cfc3bb] focus:border-[#9b7b67] focus:bg-white focus:ring-4 focus:ring-[#9b7b67]/10"
@@ -1045,7 +1027,7 @@ export default function AdminVendorsPage() {
                   }}
                   className="h-12 flex-1 rounded-2xl border border-[#ddd4ce] px-4 text-sm font-semibold text-[#5f544e] transition hover:bg-[#f8f5f3]"
                 >
-                  Cancel
+                  {t('admin.vendors.cancel')}
                 </button>
 
                 <button
@@ -1060,12 +1042,12 @@ export default function AdminVendorsPage() {
                         size={16}
                         className="animate-spin"
                       />
-                      Rejecting...
+                      {t('admin.vendors.rejecting')}
                     </>
                   ) : (
                     <>
                       <UserX size={16} />
-                      Reject Vendor
+                      {t('admin.vendors.rejectTitle')}
                     </>
                   )}
                 </button>
@@ -1098,17 +1080,15 @@ export default function AdminVendorsPage() {
 
               <div className="mt-5 text-center">
                 <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-red-500">
-                  Account Access
+                  {t('admin.vendors.accountAccess')}
                 </p>
 
                 <h2 className="mt-1 text-xl font-semibold tracking-tight text-[#30251f]">
-                  Deactivate Vendor?
+                  {t('admin.vendors.deactivateConfirm')}
                 </h2>
 
                 <p className="mx-auto mt-3 max-w-sm text-sm leading-6 text-[#766b65]">
-                  This vendor will no longer be able to access
-                  their account until the account is activated
-                  again.
+                  {t('admin.vendors.deactivateDesc')}
                 </p>
               </div>
 
@@ -1126,7 +1106,7 @@ export default function AdminVendorsPage() {
                   }
                   className="h-12 flex-1 rounded-2xl border border-[#ddd4ce] px-4 text-sm font-semibold text-[#5f544e] transition hover:bg-[#f8f5f3]"
                 >
-                  Cancel
+                  {t('admin.vendors.cancel')}
                 </button>
 
                 <button
@@ -1143,12 +1123,12 @@ export default function AdminVendorsPage() {
                         size={16}
                         className="animate-spin"
                       />
-                      Deactivating...
+                      {t('admin.vendors.deactivating')}
                     </>
                   ) : (
                     <>
                       <Ban size={16} />
-                      Deactivate
+                      {t('admin.vendors.deactivate')}
                     </>
                   )}
                 </button>
@@ -1307,6 +1287,8 @@ function VendorTableRow({
   onActivate: () => void;
   onDeactivate: () => void;
 }) {
+  const { t } = useLanguage();
+
   return (
     <div className="group grid min-h-[94px] grid-cols-[minmax(280px,2.2fr)_minmax(160px,1.15fr)_minmax(120px,.85fr)_minmax(100px,.8fr)_minmax(270px,1.7fr)] items-center border-b border-[#eee8e4] px-5 py-3 transition last:border-b-0 hover:bg-[#fdfcfb]">
       {/* Vendor */}
@@ -1317,22 +1299,22 @@ function VendorTableRow({
           <div className="flex min-w-0 items-center gap-2">
             <p className="truncate text-sm font-semibold text-[#30251f]">
               {vendor.businessName ||
-                "Unnamed Vendor"}
+                t('admin.vendors.unnamedVendor')}
             </p>
 
             {vendor.status === "Approved" && (
               <span
-                title="Approved vendor"
+                title={t("admin.vendors.approvedVendor")}
                 className="hidden shrink-0 items-center gap-1 rounded-full bg-emerald-50 px-1.5 py-0.5 text-[9px] font-bold text-emerald-600 lg:inline-flex"
               >
                 <Check size={9} strokeWidth={3} />
-                Verified
+                {t('admin.vendors.verified')}
               </span>
             )}
           </div>
 
           <p className="mt-1 truncate text-xs text-[#8b817b]">
-            {vendor.contactEmail || "No email"}
+            {vendor.contactEmail || t('admin.vendors.noEmail')}
           </p>
         </div>
       </div>
@@ -1344,7 +1326,7 @@ function VendorTableRow({
         </div>
 
         <span className="truncate text-xs font-medium text-[#665b55]">
-          {vendor.location || "Not specified"}
+          {vendor.location || t('admin.vendors.notSpecified')}
         </span>
       </div>
 
@@ -1398,6 +1380,8 @@ function VendorMobileCard({
   onActivate: () => void;
   onDeactivate: () => void;
 }) {
+  const { t } = useLanguage();
+
   return (
     <article className="overflow-hidden rounded-[24px] border border-[#e9e1dc] bg-white shadow-[0_8px_26px_rgba(48,37,31,0.035)]">
       <div className="p-4">
@@ -1409,12 +1393,12 @@ function VendorMobileCard({
               <div className="min-w-0">
                 <h3 className="truncate text-sm font-semibold text-[#30251f]">
                   {vendor.businessName ||
-                    "Unnamed Vendor"}
+                    t('admin.vendors.unnamedVendor')}
                 </h3>
 
                 <p className="mt-1 truncate text-xs text-[#8b817b]">
                   {vendor.contactEmail ||
-                    "No email"}
+                    t('admin.vendors.noEmail')}
                 </p>
               </div>
 
@@ -1426,7 +1410,7 @@ function VendorMobileCard({
         <div className="mt-4 grid grid-cols-2 gap-2.5">
           <div className="rounded-2xl bg-[#faf8f6] p-3">
             <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#a09791]">
-              Rating
+              {t('admin.vendors.rating')}
             </p>
 
             <div className="mt-1.5">
@@ -1439,7 +1423,7 @@ function VendorMobileCard({
 
           <div className="rounded-2xl bg-[#faf8f6] p-3">
             <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#a09791]">
-              Location
+              {t('admin.vendors.location')}
             </p>
 
             <div className="mt-1.5 flex min-w-0 items-center gap-1.5">
@@ -1450,7 +1434,7 @@ function VendorMobileCard({
 
               <span className="truncate text-xs font-medium text-[#665b55]">
                 {vendor.location ||
-                  "Not specified"}
+                  t('admin.vendors.notSpecified')}
               </span>
             </div>
           </div>
@@ -1483,6 +1467,8 @@ function VendorAvatar({
   vendor: Vendor;
   size?: "md" | "lg";
 }) {
+  const { t } = useLanguage();
+
   const sizeClass =
     size === "lg"
       ? "h-14 w-14 rounded-full"
@@ -1496,7 +1482,7 @@ function VendorAvatar({
     return (
       <img
         src={vendor.profileImageUrl}
-        alt={vendor.businessName || "Vendor"}
+        alt={vendor.businessName || t("admin.vendors.vendor")}
         className={`${sizeClass} shrink-0 object-cover ring-1 ring-[#eee8e4]`}
       />
     );
@@ -1592,6 +1578,8 @@ function VendorInlineActions({
   onActivate: () => void;
   onDeactivate: () => void;
 }) {
+  const { t } = useLanguage();
+
   const isPending = vendor.status === "Pending";
   const isApproved = vendor.status === "Approved";
   const isInactive = vendor.status === "Inactive";
@@ -1600,7 +1588,7 @@ function VendorInlineActions({
     <div className="flex flex-wrap items-center justify-end gap-1.5">
       <ActionButton
         icon={<Eye size={14} />}
-        label="View"
+        label={t('admin.vendors.view')}
         onClick={onViewDetails}
         disabled={loading}
         variant="neutral"
@@ -1619,7 +1607,7 @@ function VendorInlineActions({
                 <ShieldCheck size={14} />
               )
             }
-            label="Approve"
+            label={t('admin.vendors.approve')}
             onClick={onApprove}
             disabled={loading}
             variant="approve"
@@ -1627,7 +1615,7 @@ function VendorInlineActions({
 
           <ActionButton
             icon={<UserX size={14} />}
-            label="Reject"
+            label={t('admin.vendors.reject')}
             onClick={onReject}
             disabled={loading}
             variant="reject"
@@ -1647,7 +1635,7 @@ function VendorInlineActions({
               <UserCheck size={14} />
             )
           }
-          label="Activate"
+          label={t('admin.vendors.activate')}
           onClick={onActivate}
           disabled={loading}
           variant="approve"
@@ -1666,7 +1654,7 @@ function VendorInlineActions({
               <Ban size={14} />
             )
           }
-          label="Deactivate"
+          label={t('admin.vendors.deactivate')}
           onClick={onDeactivate}
           disabled={loading}
           variant="danger"
@@ -1737,6 +1725,8 @@ function EmptyVendors({
   onClear: () => void;
   onCreate: () => void;
 }) {
+  const { t } = useLanguage();
+
   return (
     <div className="rounded-[28px] border border-dashed border-[#dcd3cd] bg-white px-6 py-20 text-center shadow-[0_8px_28px_rgba(48,37,31,0.025)]">
       <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-[22px] bg-[#f4efec] text-[#8b7464]">
@@ -1748,21 +1738,15 @@ function EmptyVendors({
       </div>
 
       <p className="mt-5 text-[10px] font-bold uppercase tracking-[0.16em] text-[#9b7b67]">
-        {hasFilters
-          ? "No matching results"
-          : "Vendor Management"}
+        {hasFilters ? t('admin.vendors.noMatching') : t('admin.vendors.title')}
       </p>
 
       <h3 className="mt-2 text-xl font-semibold tracking-tight text-[#30251f]">
-        {hasFilters
-          ? "No vendors found"
-          : "No vendors yet"}
+        {hasFilters ? t('admin.vendors.noVendorsFound') : t('admin.vendors.noVendorsYet')}
       </h3>
 
       <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[#766b65]">
-        {hasFilters
-          ? "Try adjusting your search or status filter to find what you're looking for."
-          : "Create your first vendor account to start managing your marketplace."}
+        {hasFilters ? t('admin.vendors.adjustFilters') : t('admin.vendors.noVendorsDesc')}
       </p>
 
       <div className="mt-6 flex flex-col justify-center gap-2 sm:flex-row">
@@ -1772,7 +1756,7 @@ function EmptyVendors({
             onClick={onClear}
             className="h-11 rounded-xl border border-[#ddd4ce] px-5 text-sm font-semibold text-[#5f544e] transition hover:bg-[#f8f5f3]"
           >
-            Clear Filters
+            {t('admin.vendors.clearFilters')}
           </button>
         )}
 
@@ -1783,7 +1767,7 @@ function EmptyVendors({
             className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#30251f] px-5 text-sm font-semibold text-white transition hover:bg-[#45362e]"
           >
             <Plus size={16} />
-            Add Vendor
+            {t('admin.vendors.add')}
           </button>
         )}
       </div>
@@ -1827,13 +1811,15 @@ function CloseButton({
   onClick: () => void;
   disabled?: boolean;
 }) {
+  const { t } = useLanguage();
+
   return (
     <button
       type="button"
       disabled={disabled}
       onClick={onClick}
       className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-[#766b65] transition hover:bg-[#f3efec] hover:text-[#30251f] disabled:opacity-50"
-      aria-label="Close"
+      aria-label={t("admin.ui.close")}
     >
       <X size={17} />
     </button>
@@ -1895,6 +1881,7 @@ function InlineError({
 }: {
   message: string;
 }) {
+  const { t } = useLanguage();
   return (
     <div className="flex items-start gap-2.5 rounded-2xl border border-red-200 bg-red-50 p-3 text-xs leading-5 text-red-700">
       <AlertCircle

@@ -12,6 +12,9 @@ import { useAuth } from "@/context/AuthContext";
 import { useLanguage } from "@/context/LanguageContext";
 import LanguageSwitcher from "@/components/layout/LanguageSwitcher";
 import SessionCountdownBadge from "@/components/shared/SessionCountdownBadge";
+import VendorOnboarding from "@/components/vendor/onboarding/VendorOnboarding";
+import WelcomeAboard from "@/components/vendor/onboarding/WelcomeAboard";
+import { hasSeenWelcome, markWelcomeSeen } from "@/lib/vendor-onboarding";
 
 const PROFILE_PATH = "/vendor/profile";
 
@@ -35,17 +38,24 @@ function VendorStatusGate({ children }: { children: React.ReactNode }) {
   const { vendor, loading, error } = useVendorContext();
   const { t } = useLanguage();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [welcomeDismissed, setWelcomeDismissed] = useState(false);
 
   const isApproved = vendor?.status === "Approved";
   const onProfilePage = pathname === PROFILE_PATH;
 
+  // Pending / Rejected vendors get the onboarding flow (form -> under review)
+  // instead of the profile page. Only a deactivated account is still sent to
+  // the profile page, where it can update its details as before.
+  const inOnboarding =
+    vendor?.status === "Pending" || vendor?.status === "Rejected";
+
   useEffect(() => {
     if (loading || !vendor) return;
 
-    if (!isApproved && !onProfilePage) {
+    if (!isApproved && !inOnboarding && !onProfilePage) {
       router.replace(PROFILE_PATH);
     }
-  }, [loading, vendor, isApproved, onProfilePage, router]);
+  }, [loading, vendor, isApproved, inOnboarding, onProfilePage, router]);
 
   if (loading) {
     return (
@@ -68,6 +78,11 @@ function VendorStatusGate({ children }: { children: React.ReactNode }) {
     );
   }
 
+  // Waiting for (or asked to change) the details: the onboarding flow.
+  if (inOnboarding) {
+    return <VendorOnboarding vendor={vendor} />;
+  }
+
   if (!isApproved) {
 
     if (!onProfilePage) return null;
@@ -80,6 +95,20 @@ function VendorStatusGate({ children }: { children: React.ReactNode }) {
     );
   }
 
+
+  // Approved for the first time: congratulate them once, then the dashboard.
+  if (!welcomeDismissed && !hasSeenWelcome(vendor.id)) {
+    return (
+      <WelcomeAboard
+        vendor={vendor}
+        onContinue={() => {
+          markWelcomeSeen(vendor.id);
+          setWelcomeDismissed(true);
+          router.replace("/vendor");
+        }}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#faf8f6]">

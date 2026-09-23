@@ -1,5 +1,7 @@
 "use client";
 
+import { useLanguage } from "@/context/LanguageContext";
+
 import { useEffect, useMemo, useState } from "react";
 import {
   Check,
@@ -39,6 +41,7 @@ import {
   toggleReviewDisplay,
 } from "@/features/reviews/api";
 import { formatDate } from "@/lib/format";
+import { LANGUAGE_DATE_LOCALE, type TranslationKey } from "@/locales";
 import type { Review } from "@/types/review";
 
 /* =========================================================
@@ -46,26 +49,30 @@ import type { Review } from "@/types/review";
 ========================================================= */
 
 const VISIBILITY_FILTERS = [
-  { value: "all", label: "All visibility", icon: Filter },
-  { value: "visible", label: "Visible only", icon: Eye },
-  { value: "hidden", label: "Hidden only", icon: EyeOff },
+  { value: "all", labelKey: "admin.reviews.allVisibility", icon: Filter },
+  { value: "visible", labelKey: "admin.reviews.visibleOnly", icon: Eye },
+  { value: "hidden", labelKey: "admin.reviews.hiddenOnly", icon: EyeOff },
 ] as const;
 
 /* =========================================================
    Helpers
 ========================================================= */
 
-function getTimeAgo(date: string): string {
+function getTimeAgo(
+  date: string,
+  t: (key: TranslationKey, params?: Record<string, string | number>) => string,
+  locale: string
+): string {
   const diff = Date.now() - new Date(date).getTime();
   const minutes = Math.floor(diff / 60000);
   const hours = Math.floor(diff / 3600000);
   const days = Math.floor(diff / 86400000);
 
-  if (minutes < 1) return "Just now";
-  if (minutes < 60) return `${minutes}m ago`;
-  if (hours < 24) return `${hours}h ago`;
-  if (days < 7) return `${days}d ago`;
-  return formatDate(date);
+  if (minutes < 1) return t("vendor.reviews.timeAgo.justNow");
+  if (minutes < 60) return t("vendor.reviews.timeAgo.minutes", { count: minutes });
+  if (hours < 24) return t("vendor.reviews.timeAgo.hours", { count: hours });
+  if (days < 7) return t("vendor.reviews.timeAgo.days", { count: days });
+  return formatDate(date, locale);
 }
 
 /* =========================================================
@@ -417,6 +424,7 @@ const PendingReviewCard = ({
   isApproving: boolean;
   isRejecting: boolean;
 }) => {
+  const { t, language } = useLanguage();
   const busy = isApproving || isRejecting;
 
   return (
@@ -441,10 +449,10 @@ const PendingReviewCard = ({
           <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-[#9b8f86]">
             <span className="inline-flex items-center gap-1">
               <User size={11} />
-              {review.userFullName || "Anonymous"}
+              {review.userFullName || t('admin.reviews.anonymous')}
             </span>
             <span className="h-1 w-1 rounded-full bg-[#d5c8be]" />
-            <span>{getTimeAgo(review.createdAt)}</span>
+            <span>{getTimeAgo(review.createdAt, t, LANGUAGE_DATE_LOCALE[language])}</span>
           </div>
         </div>
 
@@ -473,7 +481,7 @@ const PendingReviewCard = ({
           ) : (
             <X size={14} />
           )}
-          Reject
+          {t('admin.reviews.rejectLabel')}
         </button>
 
         <button
@@ -487,7 +495,7 @@ const PendingReviewCard = ({
           ) : (
             <Check size={14} />
           )}
-          Approve
+          {t('admin.reviews.approveLabel')}
         </button>
       </div>
     </div>
@@ -499,6 +507,7 @@ const PendingReviewCard = ({
 ========================================================= */
 
 function PendingReviews() {
+  const { t } = useLanguage();
   const { reviews, loading, error, actionLoading, approve, reject } =
     useAdminReviews();
 
@@ -525,7 +534,7 @@ function PendingReviews() {
       <div className="flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-4">
         <AlertCircle size={18} className="mt-0.5 shrink-0 text-red-600" />
         <div>
-          <p className="text-sm font-semibold text-red-800">Unable to load reviews</p>
+          <p className="text-sm font-semibold text-red-800">{t('admin.reviews.loadFailed')}</p>
           <p className="mt-0.5 text-xs text-red-600">{error}</p>
         </div>
       </div>
@@ -539,10 +548,10 @@ function PendingReviews() {
           <CheckCircle2 size={24} strokeWidth={1.8} />
         </div>
         <h3 className="mt-3 text-sm font-semibold text-[#30251f] sm:mt-4 sm:text-base">
-          All caught up! 🎉
+          {t('admin.reviews.allCaughtUp')}
         </h3>
         <p className="mx-auto mt-1 max-w-md text-xs text-[#756b65] sm:mt-2 sm:text-sm">
-          No pending reviews waiting for moderation.
+          {t('admin.reviews.noPending')}
         </p>
       </div>
     );
@@ -553,12 +562,12 @@ function PendingReviews() {
       <div className="mb-3 flex items-center justify-between">
         <p className="text-xs text-[#9b8f86] sm:text-sm">
           <span className="font-semibold text-[#30251f]">{reviews.length}</span>{" "}
-          {reviews.length === 1 ? "review" : "reviews"} awaiting moderation
+          {reviews.length === 1 ? t('admin.reviews.pendingOne', { count: reviews.length }) : t('admin.reviews.pendingMany', { count: reviews.length })}
         </p>
 
         <Chip
           icon={<Clock3 size={12} />}
-          label="Pending"
+          label={t('admin.reviews.pending')}
           size="small"
           sx={{
             height: 24,
@@ -608,10 +617,10 @@ function PendingReviews() {
                 </div>
                 <div>
                   <h2 className="text-base font-semibold text-[#30251f] sm:text-lg">
-                    Reject Review
+                    {t('admin.reviews.rejectTitle')}
                   </h2>
                   <p className="mt-0.5 text-xs text-[#9b8f86] sm:text-sm">
-                    Provide a reason for rejecting
+                    {t('admin.reviews.reasonRequired')}
                   </p>
                 </div>
               </div>
@@ -638,12 +647,12 @@ function PendingReviews() {
 
               <div>
                 <label className="mb-1.5 block text-xs font-medium text-[#40352f]">
-                  Rejection Reason <span className="text-red-500">*</span>
+                  {t('admin.reviews.rejectionReason')} <span className="text-red-500">*</span>
                 </label>
                 <textarea
                   value={rejectReason}
                   onChange={(e) => setRejectReason(e.target.value)}
-                  placeholder="Explain why..."
+                  placeholder={t('admin.reviews.reasonPlaceholder')}
                   rows={4}
                   className="w-full resize-none rounded-xl border border-[#e3d9d1] bg-[#fcfaf8] px-4 py-3 text-sm text-[#30251f] outline-none transition placeholder:text-[#b6a79d] focus:border-[#a47e43] focus:bg-white focus:ring-2 focus:ring-[#a47e43]/20"
                 />
@@ -656,7 +665,7 @@ function PendingReviews() {
                 onClick={() => setRejectTarget(null)}
                 className="rounded-xl border border-[#e3d9d1] bg-white px-4 py-2.5 text-xs font-medium text-[#514740] transition hover:bg-[#f7f2ef] sm:text-sm"
               >
-                Cancel
+                {t('admin.reviews.cancel')}
               </button>
 
               <button
@@ -668,12 +677,12 @@ function PendingReviews() {
                 {actionLoading ? (
                   <>
                     <Loader2 size={14} className="animate-spin" />
-                    Rejecting...
+                    {t('admin.reviews.rejecting')}
                   </>
                 ) : (
                   <>
                     <X size={14} />
-                    Reject Review
+                    {t('admin.reviews.rejectTitle')}
                   </>
                 )}
               </button>
@@ -690,6 +699,7 @@ function PendingReviews() {
 ========================================================= */
 
 function ApprovedReviewsManager() {
+  const { t, language } = useLanguage();
   const { services } = useAdminServices();
 
   const [allReviews, setAllReviews] = useState<Review[]>([]);
@@ -709,7 +719,7 @@ function ApprovedReviewsManager() {
       const data = await fetchApprovedReviews();
       setAllReviews(data);
     } catch (err) {
-      setError("Failed to load approved reviews.");
+      setError(t('admin.reviews.loadApprovedFailed'));
     } finally {
       setLoading(false);
     }
@@ -862,7 +872,7 @@ function ApprovedReviewsManager() {
           </div>
           <div className="flex-1">
             <h3 className="text-sm font-semibold text-[#30251f] sm:text-base">
-              Manage Approved Reviews
+              {t('admin.reviews.manageApproved')}
             </h3>
             <p className="mt-0.5 text-[11px] text-[#9b8f86] sm:text-xs">
               {allReviews.length} approved reviews across {vendors.length} vendors
@@ -876,7 +886,7 @@ function ApprovedReviewsManager() {
               className="inline-flex items-center gap-1.5 rounded-lg border border-[#e3d9d1] bg-white px-2.5 py-1.5 text-xs font-medium text-[#665950] transition hover:bg-[#faf8f6] disabled:opacity-50"
             >
               <RefreshCw size={12} className={loading ? "animate-spin" : ""} />
-              <span className="hidden sm:inline">Refresh</span>
+              <span className="hidden sm:inline">{t('admin.reviews.refresh')}</span>
             </button>
 
             {hasActiveFilters && (
@@ -885,7 +895,7 @@ function ApprovedReviewsManager() {
                 className="hidden items-center gap-1.5 rounded-lg border border-[#e3d9d1] bg-white px-3 py-1.5 text-xs font-medium text-[#665950] transition hover:bg-[#faf8f6] sm:inline-flex"
               >
                 <X size={12} />
-                Clear All
+                {t('admin.reviews.clearAll')}
               </button>
             )}
           </div>
@@ -897,7 +907,7 @@ function ApprovedReviewsManager() {
           <div>
             <label className="mb-1.5 flex items-center gap-1.5 text-[11px] font-medium text-[#40352f] sm:text-xs">
               <Building2 size={12} className="text-[#a47e43]" />
-              Vendor
+              {t('admin.reviews.vendor')}
             </label>
             <Select
               value={vendorFilter}
@@ -911,7 +921,7 @@ function ApprovedReviewsManager() {
               IconComponent={ChevronDown}
               renderValue={(value) => {
                 if (value === "all") {
-                  return <span className="text-[#9b8f86]">All vendors</span>;
+                  return <span className="text-[#9b8f86]">{t('admin.reviews.allVendors')}</span>;
                 }
                 return <span className="text-[#30251f]">{value}</span>;
               }}
@@ -931,7 +941,7 @@ function ApprovedReviewsManager() {
               <MenuItem value="all">
                 <div className="flex w-full items-center gap-2">
                   <Building2 size={14} className="text-[#a47e43]" />
-                  <span className="flex-1">All vendors</span>
+                  <span className="flex-1">{t('admin.reviews.allVendors')}</span>
                   <span className="text-xs text-[#9b8f86]">({vendors.length})</span>
                 </div>
               </MenuItem>
@@ -950,7 +960,7 @@ function ApprovedReviewsManager() {
           <div>
             <label className="mb-1.5 flex items-center gap-1.5 text-[11px] font-medium text-[#40352f] sm:text-xs">
               <Store size={12} className="text-[#a47e43]" />
-              Service
+              {t('admin.reviews.service')}
             </label>
             <Select
               value={serviceFilter}
@@ -961,7 +971,7 @@ function ApprovedReviewsManager() {
               IconComponent={ChevronDown}
               renderValue={(value) => {
                 if (value === "all") {
-                  return <span className="text-[#9b8f86]">All services</span>;
+                  return <span className="text-[#9b8f86]">{t('admin.reviews.allServices')}</span>;
                 }
                 const service = servicesForVendor.find((s) => s.id === value);
                 return <span className="text-[#30251f]">{service?.name}</span>;
@@ -982,7 +992,7 @@ function ApprovedReviewsManager() {
               <MenuItem value="all">
                 <div className="flex w-full items-center gap-2">
                   <Store size={14} className="text-[#a47e43]" />
-                  <span className="flex-1">All services</span>
+                  <span className="flex-1">{t('admin.reviews.allServices')}</span>
                   <span className="text-xs text-[#9b8f86]">
                     ({servicesForVendor.length})
                   </span>
@@ -1003,7 +1013,7 @@ function ApprovedReviewsManager() {
           <div>
             <label className="mb-1.5 flex items-center gap-1.5 text-[11px] font-medium text-[#40352f] sm:text-xs">
               <Eye size={12} className="text-[#a47e43]" />
-              Visibility
+              {t('admin.reviews.visibility')}
             </label>
             <Select
               value={visibilityFilter}
@@ -1019,7 +1029,7 @@ function ApprovedReviewsManager() {
                 return (
                   <div className="flex items-center gap-2">
                     <Icon size={15} className="text-[#8d796a]" />
-                    <span className="text-[13px]">{current.label}</span>
+                    <span className="text-[13px]">{t(current.labelKey)}</span>
                   </div>
                 );
               }}
@@ -1042,7 +1052,7 @@ function ApprovedReviewsManager() {
                   <MenuItem key={option.value} value={option.value}>
                     <div className="flex items-center gap-2.5">
                       <Icon size={15} className="text-[#806a5c]" />
-                      <span>{option.label}</span>
+                      <span>{t(option.labelKey)}</span>
                     </div>
                   </MenuItem>
                 );
@@ -1055,7 +1065,7 @@ function ApprovedReviewsManager() {
           <TextField
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search by customer name, comment, or service..."
+            placeholder={t('admin.reviews.searchPlaceholder')}
             size="small"
             fullWidth
             slotProps={{
@@ -1100,7 +1110,7 @@ function ApprovedReviewsManager() {
           <div className="flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-4">
             <AlertCircle size={18} className="mt-0.5 shrink-0 text-red-600" />
             <div>
-              <p className="text-sm font-semibold text-red-800">Error</p>
+              <p className="text-sm font-semibold text-red-800">{t('admin.reviews.error')}</p>
               <p className="mt-0.5 text-xs text-red-600">{error}</p>
             </div>
           </div>
@@ -1119,7 +1129,7 @@ function ApprovedReviewsManager() {
               }`}
             >
               <p className="text-[9px] font-medium uppercase tracking-[0.08em] text-[#8d8077] sm:text-[10px]">
-                Total
+                {t('admin.reviews.total')}
               </p>
               <p className="mt-0.5 text-lg font-semibold text-[#30251f] sm:text-xl">
                 {stats.total}
@@ -1135,7 +1145,7 @@ function ApprovedReviewsManager() {
               }`}
             >
               <p className="text-[9px] font-medium uppercase tracking-[0.08em] text-emerald-700 sm:text-[10px]">
-                Visible
+                {t('admin.reviews.visible')}
               </p>
               <p className="mt-0.5 text-lg font-semibold text-emerald-700 sm:text-xl">
                 {stats.visible}
@@ -1151,7 +1161,7 @@ function ApprovedReviewsManager() {
               }`}
             >
               <p className="text-[9px] font-medium uppercase tracking-[0.08em] text-red-700 sm:text-[10px]">
-                Hidden
+                {t('admin.reviews.hidden')}
               </p>
               <p className="mt-0.5 text-lg font-semibold text-red-700 sm:text-xl">
                 {stats.hidden}
@@ -1162,7 +1172,7 @@ function ApprovedReviewsManager() {
           {hasReviewFilters && (
             <div className="mb-3 flex flex-wrap items-center gap-1.5 border-b border-[#f1ece8] pb-3">
               <span className="text-[10px] font-medium text-[#958a83]">
-                Active:
+                {t('admin.reviews.activeFilter')}
               </span>
 
               {visibilityFilter !== "all" && (
@@ -1175,9 +1185,12 @@ function ApprovedReviewsManager() {
                     )
                   }
                   label={
-                    VISIBILITY_FILTERS.find(
-                      (f) => f.value === visibilityFilter
-                    )?.label
+                    (() => {
+                      const filter = VISIBILITY_FILTERS.find(
+                        (f) => f.value === visibilityFilter,
+                      );
+                      return filter ? t(filter.labelKey) : "";
+                    })()
                   }
                   onDelete={() => setVisibilityFilter("all")}
                   size="small"
@@ -1227,7 +1240,7 @@ function ApprovedReviewsManager() {
                 onClick={clearReviewFilters}
                 className="text-[10px] font-medium text-[#8b6d55] hover:text-[#30251f]"
               >
-                Clear
+                {t('admin.reviews.clear')}
               </button>
             </div>
           )}
@@ -1237,15 +1250,15 @@ function ApprovedReviewsManager() {
               <Search className="mx-auto h-6 w-6 text-[#a47e43]" />
               <p className="mt-2 text-xs text-[#756b65] sm:text-sm">
                 {allReviews.length === 0
-                  ? "No approved reviews yet."
-                  : "No reviews match your filters."}
+                  ? t('admin.reviews.noApproved')
+                  : t('admin.reviews.noMatch')}
               </p>
               {hasReviewFilters && (
                 <button
                   onClick={clearReviewFilters}
                   className="mt-2 text-xs font-medium text-[#a47e43] hover:underline"
                 >
-                  Clear filters
+                  {t('admin.reviews.clearFilters')}
                 </button>
               )}
             </div>
@@ -1266,13 +1279,13 @@ function ApprovedReviewsManager() {
                   <div className="flex items-center gap-1">
                     <span className="h-2 w-2 rounded-full bg-emerald-400" />
                     <span className="text-[9px] text-[#9b8f86] sm:text-[10px]">
-                      Visible
+                      {t('admin.reviews.visible')}
                     </span>
                   </div>
                   <div className="flex items-center gap-1">
                     <span className="h-2 w-2 rounded-full bg-red-400" />
                     <span className="text-[9px] text-[#9b8f86] sm:text-[10px]">
-                      Hidden
+                      {t('admin.reviews.hidden')}
                     </span>
                   </div>
                 </div>
@@ -1320,7 +1333,7 @@ function ApprovedReviewsManager() {
 
                           <div className="flex flex-wrap items-center gap-2">
                             <p className="text-sm font-semibold text-[#30251f]">
-                              {review.userFullName || "Anonymous"}
+                              {review.userFullName || t('admin.reviews.anonymous')}
                             </p>
                             <RatingStars rating={review.rating} size={12} />
                             <Chip
@@ -1331,7 +1344,7 @@ function ApprovedReviewsManager() {
                                   <EyeOff size={10} />
                                 )
                               }
-                              label={review.isDisplayed ? "Visible" : "Hidden"}
+                              label={review.isDisplayed ? t("admin.reviews.visible") : t("admin.reviews.hidden")}
                               size="small"
                               sx={{
                                 height: 20,
@@ -1357,15 +1370,15 @@ function ApprovedReviewsManager() {
                           )}
 
                           <p className="mt-1 text-[10px] text-[#9b8f86]">
-                            {getTimeAgo(review.createdAt)}
+                            {getTimeAgo(review.createdAt, t, LANGUAGE_DATE_LOCALE[language])}
                           </p>
                         </div>
 
                         <Tooltip
                           title={
                             review.isDisplayed
-                              ? "Hide from public"
-                              : "Show publicly"
+                              ? t('admin.reviews.hide')
+                              : t('admin.reviews.show')
                           }
                           arrow
                         >
@@ -1406,6 +1419,7 @@ function ApprovedReviewsManager() {
 ========================================================= */
 
 export default function AdminReviewsPage() {
+  const { t } = useLanguage();
   const { reviews: pendingReviews, loading: pendingLoading } = useAdminReviews();
   const { services, loading: servicesLoading } = useAdminServices();
 
@@ -1421,7 +1435,7 @@ export default function AdminReviewsPage() {
       <header>
         <p className="mb-1.5 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#9b8171] sm:mb-2 sm:text-xs">
           <Shield size={11} className="sm:h-3.25 sm:w-3.25" />
-          Admin Dashboard
+          {t('admin.reviews.breadcrumb')}
         </p>
 
         <div className="flex items-center gap-2 sm:gap-3">
@@ -1433,44 +1447,43 @@ export default function AdminReviewsPage() {
             />
           </div>
           <h1 className="text-2xl font-semibold tracking-tight text-[#30251f] sm:text-3xl lg:text-4xl">
-            Reviews Management
+            {t('admin.reviews.title')}
           </h1>
         </div>
 
         <p className="mt-2 max-w-2xl text-xs leading-5 text-[#756b65] sm:mt-3 sm:text-sm sm:leading-6">
-          Moderate pending reviews and manage visibility across all vendors and
-          services.
+          {t('admin.reviews.subtitlePart1')} {t('admin.reviews.subtitlePart2')}
         </p>
       </header>
 
       <section className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-4 lg:gap-4">
         <StatCard
-          title="Pending"
+          title={t('admin.reviews.pending')}
           value={pendingReviews.length}
           icon={Clock3}
-          description="Awaiting moderation"
+          description={t('admin.reviews.awaitingModeration')}
           color="#f59e0b"
           highlight={pendingReviews.length > 0}
         />
         <StatCard
-          title="Total Services"
+          title={t('admin.reviews.totalServices')}
           value={services.length}
           icon={Building2}
-          description="Across platform"
+          description={t('admin.reviews.acrossPlatform')}
           color="#a47e43"
         />
         <StatCard
-          title="Your Role"
-          value="Admin"
+          title={t('admin.reviews.yourRole')}
+          value={t('admin.reviews.admin')}
           icon={Shield}
-          description="Full moderation access"
+          description={t('admin.reviews.fullAccess')}
           color="#8b5cf6"
         />
         <StatCard
-          title="System Status"
-          value="Active"
+          title={t('admin.reviews.systemStatus')}
+          value={t('admin.reviews.active')}
           icon={CheckCircle2}
-          description="All systems running"
+          description={t('admin.reviews.allSystemsRunning')}
           color="#10b981"
         />
       </section>
@@ -1482,10 +1495,10 @@ export default function AdminReviewsPage() {
           </div>
           <div>
             <h2 className="text-sm font-semibold text-[#30251f] sm:text-base">
-              Pending Approval
+              {t('admin.reviews.pendingApproval')}
             </h2>
             <p className="text-[10px] text-[#9b8f86] sm:text-xs">
-              Reviews waiting for your moderation
+              {t('admin.reviews.pendingSubtitle')}
             </p>
           </div>
         </div>
@@ -1500,10 +1513,10 @@ export default function AdminReviewsPage() {
           </div>
           <div>
             <h2 className="text-sm font-semibold text-[#30251f] sm:text-base">
-              Manage Visibility
+              {t('admin.reviews.manageVisibility')}
             </h2>
             <p className="text-[10px] text-[#9b8f86] sm:text-xs">
-              Show or hide approved reviews on public pages
+              {t('admin.reviews.manageApprovedSubtitle')}
             </p>
           </div>
         </div>
@@ -1517,9 +1530,8 @@ export default function AdminReviewsPage() {
           className="mt-0.5 shrink-0 text-[#a47e43] sm:h-4 sm:w-4"
         />
         <span className="leading-5">
-          <span className="font-medium text-[#40352f]">Tip:</span> Filter by
-          vendor first, then by service to see all approved reviews — including
-          hidden ones. Click the eye icon to toggle visibility instantly.
+          <span className="font-medium text-[#40352f]">{t('admin.reviews.tip')}</span>{" "}
+          {t('admin.reviews.tipText')}
         </span>
       </div>
     </div>

@@ -51,6 +51,8 @@ import {
 import type { ModerationQueueItem } from "@/types/moderation";
 import type { Service } from "@/types/service";
 import type { Vendor } from "@/types/vendor";
+import { useLanguage } from "@/context/LanguageContext";
+import { LANGUAGE_DATE_LOCALE, type TranslationKey } from "@/locales";
 
 // Where a recent request should send the admin — the dashboard summary
 // is read-only, so it links out to the page that has the real actions
@@ -73,31 +75,31 @@ function requestHref(item: ModerationQueueItem): string {
 const requestEntityMeta: Record<
   ModerationEntityType,
   {
-    label: string;
+    labelKey: TranslationKey;
     icon: typeof Store;
     className: string;
   }
 > = {
   [ModerationEntityType.Vendor]: {
-    label: "Vendor",
+    labelKey: "admin.moderation.entity.vendor" as const,
     icon: Store,
     className: "bg-[#f0e9e0] text-[#a47e43]",
   },
 
   [ModerationEntityType.Service]: {
-    label: "Service",
+    labelKey: "admin.moderation.entity.service" as const,
     icon: BriefcaseBusiness,
     className: "bg-[#eef2f7] text-[#4d6b8f]",
   },
 
   [ModerationEntityType.Review]: {
-    label: "Review",
+    labelKey: "admin.moderation.entity.review" as const,
     icon: Star,
     className: "bg-[#f7f0e8] text-[#b99a62]",
   },
 
   [ModerationEntityType.ServiceImage]: {
-    label: "Image",
+    labelKey: "admin.moderation.entity.image" as const,
     icon: ImageIcon,
     className: "bg-[#eaf2ee] text-[#4d8f6b]",
   },
@@ -108,10 +110,10 @@ const requestStatusStyles: Record<ModerationStatus, string> = {
   [ModerationStatus.Rejected]: "bg-red-50 text-red-600",
 };
 
-const requestStatusLabels: Record<ModerationStatus, string> = {
-  [ModerationStatus.Pending]: "Pending",
-  [ModerationStatus.Approved]: "Approved",
-  [ModerationStatus.Rejected]: "Rejected",
+const requestStatusLabels: Record<ModerationStatus, TranslationKey> = {
+  [ModerationStatus.Pending]: "admin.moderation.statuses.pending",
+  [ModerationStatus.Approved]: "admin.moderation.statuses.approved",
+  [ModerationStatus.Rejected]: "admin.moderation.statuses.rejected",
 };
 
 /* ========================================================= */
@@ -167,7 +169,7 @@ const formatRating = (value: number) => {
 
 // Builds the last `count` month buckets (oldest -> newest), each keyed by
 // "YYYY-M" so records can be grouped by the month they were created in.
-function getLastMonthBuckets(count: number) {
+function getLastMonthBuckets(count: number, locale = "en-US") {
   const buckets: { key: string; label: string }[] = [];
   const now = new Date();
 
@@ -176,7 +178,7 @@ function getLastMonthBuckets(count: number) {
 
     buckets.push({
       key: `${date.getFullYear()}-${date.getMonth()}`,
-      label: date.toLocaleDateString("en-US", { month: "short" }),
+      label: date.toLocaleDateString(locale, { month: "short" }),
     });
   }
 
@@ -196,9 +198,10 @@ function monthKeyOf(dateString?: string) {
 function buildGrowthSeries(
   vendors: Vendor[],
   services: Service[],
-  months = 6
+  months = 6,
+  locale = "en-US"
 ) {
-  const buckets = getLastMonthBuckets(months);
+  const buckets = getLastMonthBuckets(months, locale);
 
   return buckets.map((bucket) => ({
     month: bucket.label,
@@ -280,6 +283,7 @@ function ChartTooltip({
 /* ========================================================= */
 
 export default function AdminPage() {
+  const { t, language } = useLanguage();
   const {
     categories,
     loading: categoriesLoading,
@@ -385,12 +389,12 @@ export default function AdminPage() {
 
   const vendorStatusChartData = useMemo(
     () => [
-      { name: "Approved", value: vendorStats.approved, color: CHART_COLORS.approved },
-      { name: "Pending", value: vendorStats.pending, color: CHART_COLORS.pending },
-      { name: "Rejected", value: vendorStats.rejected, color: CHART_COLORS.rejected },
-      { name: "Inactive", value: vendorStats.inactive, color: CHART_COLORS.inactive },
+      { name: t('admin.dashboard.approved'), value: vendorStats.approved, color: CHART_COLORS.approved },
+      { name: t('admin.dashboard.pending'), value: vendorStats.pending, color: CHART_COLORS.pending },
+      { name: t('admin.dashboard.rejected'), value: vendorStats.rejected, color: CHART_COLORS.rejected },
+      { name: t('admin.dashboard.inactive'), value: vendorStats.inactive, color: CHART_COLORS.inactive },
     ].filter((item) => item.value > 0),
-    [vendorStats]
+    [vendorStats, t]
   );
 
   /* ========================================================= */
@@ -398,8 +402,8 @@ export default function AdminPage() {
   /* ========================================================= */
 
   const growthData = useMemo(
-    () => buildGrowthSeries(vendors, services, 6),
-    [vendors, services]
+    () => buildGrowthSeries(vendors, services, 6, LANGUAGE_DATE_LOCALE[language]),
+    [vendors, services, language]
   );
 
   const ratingDistribution = useMemo(
@@ -433,7 +437,7 @@ export default function AdminPage() {
     const locationMap = new Map<string, number>();
 
     vendors.forEach((vendor) => {
-      const location = vendor.location?.trim() || "Unknown";
+      const location = vendor.location?.trim() || t('admin.dashboard.unknown');
 
       locationMap.set(location, (locationMap.get(location) || 0) + 1);
     });
@@ -463,72 +467,72 @@ export default function AdminPage() {
 
   const stats = [
     {
-      title: "Total Categories",
+      title: t('admin.dashboard.stats.totalCategories'),
       value: totalCategories,
-      description: "all categories",
+      description: t('admin.dashboard.stats.allCategories'),
       icon: Tags,
       href: "/admin/categories",
     },
     {
-      title: "Total Services",
+      title: t('admin.dashboard.stats.totalServices'),
       value: totalServices,
-      description: "marketplace services",
+      description: t('admin.dashboard.stats.marketplaceServices'),
       icon: BriefcaseBusiness,
       href: "/admin/services",
     },
     {
-      title: "Total Vendors",
+      title: t('admin.dashboard.stats.totalVendors'),
       value: vendorStats.total,
-      description: "registered vendors",
+      description: t('admin.dashboard.stats.registeredVendors'),
       icon: Store,
       href: "/admin/vendors",
     },
     {
-      title: "Approved Vendors",
+      title: t('admin.dashboard.vendorStatus.approved'),
       value: vendorStats.approved,
-      description: "currently approved",
+      description: t('admin.dashboard.currentlyApproved'),
       icon: ShieldCheck,
       href: "/admin/vendors",
     },
     {
-      title: "Pending Vendors",
+      title: t('admin.dashboard.vendorStatus.pending'),
       value: vendorStats.pending,
-      description: "waiting for review",
+      description: t('admin.dashboard.vendorStatus.pendingLegend'),
       icon: Clock3,
       href: "/admin/vendors",
     },
     {
-      title: "Reviews",
+      title: t('admin.dashboard.vendorPerformance.reviews'),
       value: vendorStats.totalReviews,
-      description: "vendor reviews",
+      description: t('admin.dashboard.vendorReviews'),
       icon: MessageSquare,
       href: "/admin/vendors",
     },
     {
-      title: "Average Rating",
+      title: t('admin.dashboard.averageRating'),
       value: formatRating(vendorStats.averageRating),
-      description: "across all vendors",
+      description: t('admin.dashboard.acrossAllVendors'),
       icon: Star,
       href: "/admin/vendors",
     },
     {
-      title: "Inactive Vendors",
+      title: t('admin.dashboard.vendorStatus.inactive'),
       value: vendorStats.inactive,
-      description: "currently inactive",
+      description: t('admin.dashboard.vendorStatus.inactiveLegend'),
       icon: UserX,
       href: "/admin/vendors",
     },
     {
-      title: "Total Users",
+      title: t('admin.dashboard.stats.totalUsers'),
       value: dashboardSummary?.totalUsers ?? 0,
-      description: "registered accounts",
+      description: t('admin.dashboard.stats.registeredAccounts'),
       icon: Users,
       href: undefined,
     },
     {
-      title: "Pending Reviews",
+      title: t('admin.dashboard.pendingReviews'),
       value: dashboardSummary?.pendingReviews ?? 0,
-      description: "awaiting moderation",
+      description: t('admin.dashboard.awaitingModeration'),
       icon: ClipboardList,
       href: "/admin/moderation",
     },
@@ -543,23 +547,22 @@ export default function AdminPage() {
       <div className="mb-7 flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
         <div>
           <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#a18c7d]">
-            Marketplace Overview
+            {t('admin.dashboard.overview')}
           </p>
 
           <h1 className="text-2xl font-semibold tracking-tight text-[#30251f] sm:text-3xl">
-            Dashboard
+            {t('admin.dashboard.title')}
           </h1>
 
           <p className="mt-2 max-w-2xl text-sm leading-6 text-[#8a7d75]">
-            A complete overview of your categories, services, vendors and
-            marketplace activity.
+            {t('admin.dashboard.overviewDesc')}
           </p>
         </div>
 
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 rounded-xl border border-[#e8dfd9] bg-white px-4 py-2.5 text-sm font-medium text-[#665951] shadow-sm">
             <CalendarDays size={16} />
-            <span>September 2026</span>
+            <span>{new Intl.DateTimeFormat(LANGUAGE_DATE_LOCALE[language], { month: 'long', year: 'numeric' }).format(new Date())}</span>
           </div>
         </div>
       </div>
@@ -573,7 +576,7 @@ export default function AdminPage() {
           <p className="text-sm font-medium text-red-700">{error}</p>
 
           <p className="mt-1 text-xs text-red-500">
-            Some dashboard data could not be loaded.
+            {t('admin.dashboard.loadError')}
           </p>
         </div>
       )}
@@ -602,7 +605,7 @@ export default function AdminPage() {
 
                   <div className="flex items-center gap-1 rounded-full bg-[#f8f4f1] px-2.5 py-1 text-[10px] font-semibold text-[#8a786d]">
                     <TrendingUp size={11} />
-                    Live
+                    {t('admin.dashboard.live')}
                   </div>
                 </div>
 
@@ -654,11 +657,11 @@ export default function AdminPage() {
 
             <div>
               <h2 className="text-sm font-semibold text-[#30251f]">
-                Vendor Performance
+                {t('admin.dashboard.vendorPerformance.title')}
               </h2>
 
               <p className="mt-0.5 text-[11px] text-[#9b8e86]">
-                Overview of your marketplace partners
+                {t('admin.dashboard.subtitle')}
               </p>
             </div>
           </div>
@@ -667,7 +670,7 @@ export default function AdminPage() {
             href="/admin/vendors"
             className="flex items-center gap-1.5 self-start rounded-lg border border-[#e9e0da] px-3 py-2 text-xs font-semibold text-[#806d61] transition hover:bg-[#faf7f4] hover:text-[#30251f] sm:self-auto"
           >
-            Manage Vendors
+            {t('admin.dashboard.quickActions.manageVendors')}
             <ArrowUpRight size={14} />
           </Link>
         </div>
@@ -683,11 +686,11 @@ export default function AdminPage() {
             <div className="border-b border-[#f0e9e4] p-5 lg:border-b-0 lg:border-r sm:p-6">
               <div className="mb-4">
                 <p className="text-xs font-semibold text-[#40342d]">
-                  Vendor Status
+                  {t('admin.dashboard.vendorStatus.title')}
                 </p>
 
                 <p className="mt-1 text-[10px] text-[#a39790]">
-                  Current vendor approval distribution
+                  {t('admin.dashboard.vendorStatus.subtitle')}
                 </p>
               </div>
 
@@ -699,7 +702,7 @@ export default function AdminPage() {
                         data={
                           vendorStatusChartData.length > 0
                             ? vendorStatusChartData
-                            : [{ name: "No data", value: 1, color: "#eee8e3" }]
+                            : [{ name: t('admin.dashboard.noData'), value: 1, color: "#eee8e3" }]
                         }
                         dataKey="value"
                         nameKey="name"
@@ -710,7 +713,7 @@ export default function AdminPage() {
                       >
                         {(vendorStatusChartData.length > 0
                           ? vendorStatusChartData
-                          : [{ name: "No data", value: 1, color: "#eee8e3" }]
+                          : [{ name: t('admin.dashboard.noData'), value: 1, color: "#eee8e3" }]
                         ).map((entry) => (
                           <Cell key={entry.name} fill={entry.color} />
                         ))}
@@ -728,35 +731,35 @@ export default function AdminPage() {
                     </span>
 
                     <span className="text-[10px] text-[#9b8e86]">
-                      Total Vendors
+                      {t('admin.dashboard.stats.totalVendors')}
                     </span>
                   </div>
                 </div>
 
                 <div className="space-y-3">
                   <VendorStatusRow
-                    label="Approved"
+                    label={t('admin.dashboard.approved')}
                     value={vendorStats.approved}
                     total={vendorStats.total}
                     color={CHART_COLORS.approved}
                   />
 
                   <VendorStatusRow
-                    label="Pending"
+                    label={t('admin.dashboard.pending')}
                     value={vendorStats.pending}
                     total={vendorStats.total}
                     color={CHART_COLORS.pending}
                   />
 
                   <VendorStatusRow
-                    label="Rejected"
+                    label={t('admin.dashboard.rejected')}
                     value={vendorStats.rejected}
                     total={vendorStats.total}
                     color={CHART_COLORS.rejected}
                   />
 
                   <VendorStatusRow
-                    label="Inactive"
+                    label={t('admin.dashboard.inactive')}
                     value={vendorStats.inactive}
                     total={vendorStats.total}
                     color={CHART_COLORS.inactive}
@@ -772,26 +775,26 @@ export default function AdminPage() {
             <div className="p-5 sm:p-6">
               <div className="mb-5">
                 <p className="text-xs font-semibold text-[#40342d]">
-                  Vendor Insights
+                  {t('admin.dashboard.insights.title')}
                 </p>
 
                 <p className="mt-1 text-[10px] text-[#a39790]">
-                  Key marketplace partner metrics
+                  {t('admin.dashboard.metricsSubtitle')}
                 </p>
               </div>
 
               <div className="space-y-3">
                 <InsightCard
                   icon={Star}
-                  title="Average Rating"
+                  title={t("admin.dashboard.averageRating")}
                   value={formatRating(vendorStats.averageRating)}
                   suffix="/ 5"
-                  description="Across all vendors"
+                  description={t("admin.dashboard.acrossAllVendors")}
                 />
 
                 <InsightCard
                   icon={UserCheck}
-                  title="Approval Rate"
+                  title={t("admin.dashboard.approvalRate")}
                   value={
                     vendorStats.total > 0
                       ? `${Math.round(
@@ -799,21 +802,21 @@ export default function AdminPage() {
                         )}%`
                       : "0%"
                   }
-                  description="Vendors approved"
+                  description={t("admin.dashboard.vendorStatus.approvedLegend")}
                 />
 
                 <InsightCard
                   icon={UserPlus}
-                  title="New This Month"
+                  title={t("admin.dashboard.newThisMonth")}
                   value={formatNumber(vendorStats.newThisMonth)}
-                  description="Vendors joined"
+                  description={t("admin.dashboard.vendorsJoined")}
                 />
 
                 <InsightCard
                   icon={Clock3}
-                  title="Pending Review"
+                  title={t("admin.dashboard.pendingReview")}
                   value={formatNumber(vendorStats.pending)}
-                  description="Needs admin attention"
+                  description={t("admin.dashboard.insights.needsAttention")}
                 />
               </div>
             </div>
@@ -834,11 +837,11 @@ export default function AdminPage() {
 
             <div>
               <h2 className="text-sm font-semibold text-[#30251f]">
-                Marketplace Growth
+                {t('admin.dashboard.growth.title')}
               </h2>
 
               <p className="mt-0.5 text-[11px] text-[#9b8e86]">
-                New vendors and services over the last 6 months
+                {t('admin.dashboard.growth.subtitle')}
               </p>
             </div>
           </div>
@@ -846,12 +849,12 @@ export default function AdminPage() {
           <div className="flex items-center gap-4 text-[10px] font-semibold">
             <span className="flex items-center gap-1.5 text-[#665951]">
               <span className="h-2 w-2 rounded-full bg-[#30251f]" />
-              Vendors
+              {t('admin.dashboard.vendorLocations.vendors')}
             </span>
 
             <span className="flex items-center gap-1.5 text-[#665951]">
               <span className="h-2 w-2 rounded-full bg-[#c9a877]" />
-              Services
+              {t('admin.dashboard.servicesByCategory.services')}
             </span>
           </div>
         </div>
@@ -900,7 +903,7 @@ export default function AdminPage() {
                 <Area
                   type="monotone"
                   dataKey="vendors"
-                  name="New Vendors"
+                  name={t('admin.dashboard.growth.newVendors')}
                   stroke="#30251f"
                   strokeWidth={2}
                   fill="url(#vendorsGradient)"
@@ -909,7 +912,7 @@ export default function AdminPage() {
                 <Area
                   type="monotone"
                   dataKey="services"
-                  name="New Services"
+                  name={t('admin.dashboard.growth.newServices')}
                   stroke="#c9a877"
                   strokeWidth={2}
                   fill="url(#servicesGradient)"
@@ -938,11 +941,11 @@ export default function AdminPage() {
 
               <div>
                 <h2 className="text-sm font-semibold text-[#30251f]">
-                  Services by Category
+                  {t('admin.dashboard.servicesByCategory.title')}
                 </h2>
 
                 <p className="mt-0.5 text-[11px] text-[#9b8e86]">
-                  Category performance
+                  {t('admin.dashboard.servicesByCategory.subtitle')}
                 </p>
               </div>
             </div>
@@ -956,7 +959,7 @@ export default function AdminPage() {
             <div className="h-80 animate-pulse bg-[#fcfaf8] p-6" />
           ) : topCategories.length === 0 ? (
             <div className="p-6">
-              <EmptyState icon={Tags} text="No category data available yet." />
+              <EmptyState icon={Tags} text={t('admin.dashboard.servicesByCategory.empty')} />
             </div>
           ) : (
             <div className="h-80 p-5 sm:p-6">
@@ -993,7 +996,7 @@ export default function AdminPage() {
 
                   <Bar
                     dataKey="serviceCount"
-                    name="Services"
+                    name={t('admin.dashboard.servicesByCategory.services')}
                     fill={CHART_COLORS.dark}
                     radius={[0, 6, 6, 0]}
                     barSize={16}
@@ -1017,11 +1020,11 @@ export default function AdminPage() {
 
               <div>
                 <h2 className="text-sm font-semibold text-[#30251f]">
-                  Top Vendors
+                  {t("admin.dashboard.topVendors")}
                 </h2>
 
                 <p className="mt-0.5 text-[11px] text-[#9b8e86]">
-                  Highest rated partners
+                  {t('admin.dashboard.vendorPerformance.subtitle')}
                 </p>
               </div>
             </div>
@@ -1044,7 +1047,7 @@ export default function AdminPage() {
             </div>
           ) : topVendorsByRating.length === 0 ? (
             <div className="p-6">
-              <EmptyState icon={Star} text="No rated vendors yet." />
+              <EmptyState icon={Star} text={t('admin.dashboard.vendorPerformance.empty')} />
             </div>
           ) : (
             <div className="divide-y divide-[#f5efeb]">
@@ -1064,7 +1067,7 @@ export default function AdminPage() {
               href="/admin/vendors"
               className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#e9e0da] px-4 py-2.5 text-xs font-semibold text-[#806d61] transition hover:bg-[#faf7f4] hover:text-[#30251f]"
             >
-              View All Vendors
+              {t('admin.dashboard.quickActions.viewAllVendors')}
               <ChevronRight size={14} />
             </Link>
           </div>
@@ -1089,11 +1092,11 @@ export default function AdminPage() {
 
               <div>
                 <h2 className="text-sm font-semibold text-[#30251f]">
-                  Rating Distribution
+                  {t('admin.dashboard.ratingDistribution.title')}
                 </h2>
 
                 <p className="mt-0.5 text-[11px] text-[#9b8e86]">
-                  How vendor ratings are spread out
+                  {t('admin.dashboard.ratingDistribution.subtitle')}
                 </p>
               </div>
             </div>
@@ -1130,7 +1133,7 @@ export default function AdminPage() {
 
                   <Bar
                     dataKey="count"
-                    name="Vendors"
+                    name={t('admin.dashboard.vendorLocations.vendors')}
                     fill="#d7a85d"
                     radius={[6, 6, 0, 0]}
                     barSize={28}
@@ -1154,11 +1157,11 @@ export default function AdminPage() {
 
               <div>
                 <h2 className="text-sm font-semibold text-[#30251f]">
-                  Vendor Locations
+                  {t('admin.dashboard.vendorLocations.title')}
                 </h2>
 
                 <p className="mt-0.5 text-[11px] text-[#9b8e86]">
-                  Where your vendors are based
+                  {t('admin.dashboard.vendorLocations.subtitle')}
                 </p>
               </div>
             </div>
@@ -1168,7 +1171,7 @@ export default function AdminPage() {
             <div className="h-64 animate-pulse bg-[#fcfaf8] p-6" />
           ) : locationStats.length === 0 ? (
             <div className="p-6">
-              <EmptyState icon={MapPin} text="No location data available." />
+              <EmptyState icon={MapPin} text={t('admin.dashboard.vendorLocations.empty')} />
             </div>
           ) : (
             <div className="h-64 p-5 sm:p-6">
@@ -1205,7 +1208,7 @@ export default function AdminPage() {
 
                   <Bar
                     dataKey="count"
-                    name="Vendors"
+                    name={t('admin.dashboard.vendorLocations.vendors')}
                     fill="#8c786b"
                     radius={[0, 6, 6, 0]}
                     barSize={16}
@@ -1231,11 +1234,11 @@ export default function AdminPage() {
 
               <div>
                 <h2 className="text-sm font-semibold text-[#30251f]">
-                  Most Reviewed
+                  {t('admin.dashboard.mostReviewed')}
                 </h2>
 
                 <p className="mt-0.5 text-[11px] text-[#9b8e86]">
-                  Vendors with the most customer feedback
+                  {t('admin.dashboard.mostReviewedSubtitle')}
                 </p>
               </div>
             </div>
@@ -1243,7 +1246,7 @@ export default function AdminPage() {
 
           {mostReviewedVendors.length === 0 ? (
             <div className="p-6">
-              <EmptyState icon={MessageSquare} text="No reviews available yet." />
+              <EmptyState icon={MessageSquare} text={t('admin.dashboard.ratingDistribution.empty')} />
             </div>
           ) : (
             <div className="divide-y divide-[#f5efeb]">
@@ -1268,11 +1271,11 @@ export default function AdminPage() {
 
               <div>
                 <h2 className="text-sm font-semibold text-[#30251f]">
-                  Recent Requests
+                  {t('admin.dashboard.insights.recentRequests')}
                 </h2>
 
                 <p className="mt-0.5 text-[11px] text-[#9b8e86]">
-                  Latest vendor, service and review submissions
+                  {t('admin.dashboard.insights.recentSubmissions')}
                 </p>
               </div>
             </div>
@@ -1281,7 +1284,7 @@ export default function AdminPage() {
               href="/admin/moderation"
               className="flex items-center gap-1.5 self-start rounded-lg border border-[#e9e0da] px-3 py-2 text-xs font-semibold text-[#806d61] transition hover:bg-[#faf7f4] hover:text-[#30251f] sm:self-auto"
             >
-              View Queue
+              {t('admin.dashboard.quickActions.viewQueue')}
               <ArrowUpRight size={14} />
             </Link>
           </div>
@@ -1290,14 +1293,14 @@ export default function AdminPage() {
             <div className="p-8">
               <EmptyState
                 icon={ClipboardList}
-                text="Nothing waiting on a decision right now."
+                text={t('admin.dashboard.quickActions.nothingWaiting')}
               />
             </div>
           ) : (
             <div className="divide-y divide-[#f0e9e4]">
               {recentRequests.slice(0, 5).map((item) => {
                 const meta = requestEntityMeta[item.entityType] ?? {
-                  label: "Item",
+                  labelKey: "admin.moderation.entity.item" as const,
                   icon: ClipboardList,
                   className: "bg-[#f0e9e0] text-[#a47e43]",
                 };
@@ -1324,12 +1327,12 @@ export default function AdminPage() {
                           </p>
 
                           <span className="shrink-0 rounded-full bg-[#f4eee9] px-2 py-0.5 text-[9px] font-medium text-[#766d67]">
-                            {meta.label}
+                            {t(meta.labelKey)}
                           </span>
                         </div>
 
                         <p className="mt-0.5 truncate text-[10px] text-[#9b8e86]">
-                          {item.vendorBusinessName} · {formatDate(item.submittedAt)}
+                          {item.vendorBusinessName} · {formatDate(item.submittedAt, LANGUAGE_DATE_LOCALE[language])}
                         </p>
                       </div>
                     </div>
@@ -1340,7 +1343,7 @@ export default function AdminPage() {
                         "bg-[#f4eee9] text-[#766d67]"
                       }`}
                     >
-                      {requestStatusLabels[item.status] ?? "Unknown"}
+                      {requestStatusLabels[item.status] ? t(requestStatusLabels[item.status]) : t('admin.dashboard.unknown')}
                     </span>
                   </Link>
                 );
@@ -1363,11 +1366,11 @@ export default function AdminPage() {
 
             <div>
               <h2 className="text-sm font-semibold text-[#30251f]">
-                Recently Added Vendors
+                {t('admin.dashboard.insights.recentVendors')}
               </h2>
 
               <p className="mt-0.5 text-[11px] text-[#9b8e86]">
-                Latest partners added to the marketplace
+                {t('admin.dashboard.insights.subtitle')}
               </p>
             </div>
           </div>
@@ -1376,14 +1379,14 @@ export default function AdminPage() {
             href="/admin/vendors"
             className="flex items-center gap-1.5 self-start rounded-lg border border-[#e9e0da] px-3 py-2 text-xs font-semibold text-[#806d61] transition hover:bg-[#faf7f4] hover:text-[#30251f] sm:self-auto"
           >
-            Manage Vendors
+            {t('admin.dashboard.quickActions.manageVendors')}
             <ArrowUpRight size={14} />
           </Link>
         </div>
 
         {recentVendors.length === 0 ? (
           <div className="p-8">
-            <EmptyState icon={Users} text="No vendors have been added yet." />
+            <EmptyState icon={Users} text={t('admin.dashboard.noVendorsAdded')} />
           </div>
         ) : (
           <div className="grid gap-3 p-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
@@ -1415,7 +1418,7 @@ export default function AdminPage() {
                 <div className="mt-2 flex items-center gap-1.5 text-[10px] text-[#9b8e86]">
                   <MapPin size={11} />
                   <span className="truncate">
-                    {vendor.location || "Location not provided"}
+                    {vendor.location || t('admin.dashboard.locationNotProvided')}
                   </span>
                 </div>
 
@@ -1427,7 +1430,7 @@ export default function AdminPage() {
                   </div>
 
                   <span className="text-[9px] text-[#b0a39b]">
-                    {formatDate(vendor.createdAt)}
+                    {formatDate(vendor.createdAt, LANGUAGE_DATE_LOCALE[language])}
                   </span>
                 </div>
               </div>
@@ -1442,10 +1445,10 @@ export default function AdminPage() {
 
       <section className="mt-5 rounded-2xl border border-[#ebe3dd] bg-white p-5 shadow-[0_2px_12px_rgba(48,37,31,0.03)] sm:p-6">
         <div className="mb-5">
-          <h2 className="text-sm font-semibold text-[#30251f]">Quick Actions</h2>
+          <h2 className="text-sm font-semibold text-[#30251f]">{t('admin.dashboard.quickActions.title')}</h2>
 
           <p className="mt-1 text-xs text-[#9b8e86]">
-            Frequently used admin shortcuts
+            {t('admin.dashboard.quickActions.subtitle')}
           </p>
         </div>
 
@@ -1453,29 +1456,29 @@ export default function AdminPage() {
           <QuickAction
             href="/admin/vendors"
             icon={Store}
-            title="Manage Vendors"
-            description="Review and manage marketplace vendors"
+            title={t('admin.dashboard.quickActions.manageVendors')}
+            description={t('admin.dashboard.quickActions.manageVendorsDesc')}
           />
 
           <QuickAction
             href="/admin/categories"
             icon={Tags}
-            title="Manage Categories"
-            description="Create, edit and organize categories"
+            title={t('admin.dashboard.quickActions.manageCategories')}
+            description={t('admin.dashboard.quickActions.manageCategoriesDesc')}
           />
 
           <QuickAction
             href="/admin/services"
             icon={BriefcaseBusiness}
-            title="View Services"
-            description="Review marketplace services"
+            title={t('admin.dashboard.quickActions.viewServices')}
+            description={t('admin.dashboard.quickActions.viewServicesDesc')}
           />
 
           <QuickAction
             href="/admin/vendors"
             icon={Clock3}
-            title="Pending Vendors"
-            description={`${vendorStats.pending} vendors waiting for review`}
+            title={t('admin.dashboard.vendorStatus.pending')}
+            description={t('admin.dashboard.pendingVendorsWaiting', { count: vendorStats.pending })}
           />
         </div>
       </section>
@@ -1485,7 +1488,7 @@ export default function AdminPage() {
       {/* ========================================================= */}
 
       <div className="py-7 text-center">
-        <p className="text-[11px] text-[#aa9c93]">5Digea Admin Panel • 2026</p>
+        <p className="text-[11px] text-[#aa9c93]">{t('admin.dashboard.footer')}</p>
       </div>
     </div>
   );
@@ -1506,6 +1509,7 @@ function VendorStatusRow({
   total: number;
   color: string;
 }) {
+  const { t } = useLanguage();
   const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
 
   return (
@@ -1558,6 +1562,7 @@ function InsightCard({
   suffix?: string;
   description: string;
 }) {
+  const { t } = useLanguage();
   return (
     <div className="flex items-center gap-3 rounded-xl bg-[#fcfaf8] p-3.5">
       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#f3ebe5] text-[#806d61]">
@@ -1594,6 +1599,7 @@ function VendorListItem({
   showRating?: boolean;
   showReviews?: boolean;
 }) {
+  const { t } = useLanguage();
   return (
     <div className="flex items-center gap-3 px-5 py-3.5 transition hover:bg-[#fcfaf8] sm:px-6">
       <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-[#f5eee9] text-[9px] font-semibold text-[#806d61]">
@@ -1619,7 +1625,7 @@ function VendorListItem({
 
         <div className="mt-0.5 flex items-center gap-2">
           <span className="truncate text-[9px] text-[#a39790]">
-            {vendor.location || "Location not provided"}
+            {vendor.location || t('admin.dashboard.locationNotProvided')}
           </span>
         </div>
       </div>
@@ -1648,6 +1654,7 @@ function VendorListItem({
 /* ========================================================= */
 
 function StatusBadge({ status }: { status?: string }) {
+  const { t } = useLanguage();
   const normalized = normalizeStatus(status);
 
   let classes = "border-gray-200 bg-gray-50 text-gray-600";
@@ -1664,7 +1671,15 @@ function StatusBadge({ status }: { status?: string }) {
 
   return (
     <span className={`rounded-full border px-2 py-1 text-[8px] font-semibold ${classes}`}>
-      {status || "Unknown"}
+      {normalized.includes("approve")
+        ? t("admin.dashboard.approved")
+        : normalized.includes("pending")
+          ? t("admin.dashboard.pending")
+          : normalized.includes("reject")
+            ? t("admin.dashboard.rejected")
+            : normalized.includes("inactive") || normalized.includes("deactiv")
+              ? t("admin.dashboard.inactive")
+              : status || t("admin.dashboard.unknown")}
     </span>
   );
 }
@@ -1684,6 +1699,7 @@ function QuickAction({
   title: string;
   description: string;
 }) {
+  const { t } = useLanguage();
   return (
     <Link
       href={href}
@@ -1712,6 +1728,7 @@ function QuickAction({
 /* ========================================================= */
 
 function EmptyState({ icon: Icon, text }: { icon: typeof Tags; text: string }) {
+  const { t } = useLanguage();
   return (
     <div className="rounded-xl border border-dashed border-[#e6ddd7] bg-[#fcfaf8] px-4 py-8 text-center">
       <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-lg bg-[#f5eee9] text-[#9b8e86]">
@@ -1727,14 +1744,14 @@ function EmptyState({ icon: Icon, text }: { icon: typeof Tags; text: string }) {
 /* DATE FORMAT */
 /* ========================================================= */
 
-function formatDate(date?: string) {
+function formatDate(date?: string, locale = "en-US") {
   if (!date) return "—";
 
   const parsedDate = new Date(date);
 
   if (Number.isNaN(parsedDate.getTime())) return "—";
 
-  return parsedDate.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  return parsedDate.toLocaleDateString(locale, { month: "short", day: "numeric" });
 }
 
 /* ========================================================= */

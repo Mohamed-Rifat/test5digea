@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useLanguage } from "@/context/LanguageContext";
+import { LANGUAGE_DATE_LOCALE, type TranslationKey } from "@/locales";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
@@ -39,7 +40,7 @@ import type { Service } from "@/types/service";
    Helpers
 ========================= */
 
-const formatDate = (date: string) => {
+const formatDate = (date: string, locale = "en-GB") => {
   if (!date) return "-";
 
   const parsedDate = new Date(date);
@@ -48,14 +49,14 @@ const formatDate = (date: string) => {
     return "-";
   }
 
-  return parsedDate.toLocaleDateString("en-GB", {
+  return parsedDate.toLocaleDateString(locale, {
     day: "2-digit",
     month: "long",
     year: "numeric",
   });
 };
 
-const formatDateTime = (date: string) => {
+const formatDateTime = (date: string, locale = "en-GB") => {
   if (!date) return "-";
 
   const parsedDate = new Date(date);
@@ -64,7 +65,7 @@ const formatDateTime = (date: string) => {
     return "-";
   }
 
-  return parsedDate.toLocaleString("en-GB", {
+  return parsedDate.toLocaleString(locale, {
     day: "2-digit",
     month: "short",
     year: "numeric",
@@ -79,8 +80,19 @@ const formatPrice = (price: number) => {
   }).format(price);
 };
 
-const getStatusLabel = (status: string) => {
-  if (!status) return "Unknown";
+const getStatusKey = (status: string): TranslationKey | null => {
+  const n = (status || "").toLowerCase().replace(/[_\-\s]/g, "");
+
+  if (n.includes("pending")) return "admin.services.pending";
+  if (n.includes("reject")) return "admin.services.rejected";
+  if (n.includes("inactive") || n.includes("deactiv")) return "admin.services.inactive";
+  if (n.includes("approved") || n.includes("active")) return "admin.services.approved";
+
+  return null;
+};
+
+const getRawStatusLabel = (status: string) => {
+  if (!status) return "";
 
   return status
     .replace(/([a-z])([A-Z])/g, "$1 $2")
@@ -140,7 +152,13 @@ const getStatusStyles = (status: string) => {
 ========================= */
 
 export default function AdminServiceDetailsPage() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const dateLocale = LANGUAGE_DATE_LOCALE[language];
+  const getStatusLabel = (status: string) => {
+    const key = getStatusKey(status);
+
+    return key ? t(key) : getRawStatusLabel(status) || t("admin.services.unknown");
+  };
   const money = (value: number) => `${formatPrice(value)} ${t("common.currency")}`;
   const params = useParams();
   const router = useRouter();
@@ -199,7 +217,7 @@ export default function AdminServiceDetailsPage() {
       );
 
       setError(
-        "Failed to load service details."
+        t('admin.serviceDetails.loadFailed')
       );
     } finally {
       setLoading(false);
@@ -257,7 +275,7 @@ export default function AdminServiceDetailsPage() {
     if (!service) return;
 
     const confirmed = window.confirm(
-      `Are you sure you want to approve "${service.name}"?`
+      t('admin.services.confirmApprove', { name: service.name })
     );
 
     if (!confirmed) return;
@@ -271,7 +289,7 @@ export default function AdminServiceDetailsPage() {
 
       showMessage(
         "success",
-        "Service approved successfully."
+        t('admin.services.approvedSuccess')
       );
     } catch (err) {
       console.error(
@@ -281,7 +299,7 @@ export default function AdminServiceDetailsPage() {
 
       showMessage(
         "error",
-        "Failed to approve service."
+        t('admin.services.approveFailed')
       );
     } finally {
       setActionLoading(null);
@@ -317,7 +335,7 @@ export default function AdminServiceDetailsPage() {
     if (!reason) {
       showMessage(
         "error",
-        "Please enter a rejection reason."
+        t('admin.services.reasonRequired')
       );
       return;
     }
@@ -336,7 +354,7 @@ export default function AdminServiceDetailsPage() {
 
       showMessage(
         "success",
-        "Service rejected successfully."
+        t('admin.services.rejectedSuccess')
       );
     } catch (err) {
       console.error(
@@ -346,7 +364,7 @@ export default function AdminServiceDetailsPage() {
 
       showMessage(
         "error",
-        "Failed to reject service."
+        t('admin.services.rejectFailed')
       );
     } finally {
       setActionLoading(null);
@@ -361,7 +379,7 @@ export default function AdminServiceDetailsPage() {
     if (!service) return;
 
     const confirmed = window.confirm(
-      `Activate "${service.name}"?`
+      t('admin.services.confirmActivate', { name: service.name })
     );
 
     if (!confirmed) return;
@@ -375,7 +393,7 @@ export default function AdminServiceDetailsPage() {
 
       showMessage(
         "success",
-        "Service activated successfully."
+        t('admin.services.activatedSuccess')
       );
     } catch (err) {
       console.error(
@@ -385,7 +403,7 @@ export default function AdminServiceDetailsPage() {
 
       showMessage(
         "error",
-        "Failed to activate service."
+        t('admin.services.activateFailed')
       );
     } finally {
       setActionLoading(null);
@@ -400,7 +418,7 @@ export default function AdminServiceDetailsPage() {
     if (!service) return;
 
     const confirmed = window.confirm(
-      `Deactivate "${service.name}"?`
+      t('admin.services.confirmDeactivate', { name: service.name })
     );
 
     if (!confirmed) return;
@@ -414,7 +432,7 @@ export default function AdminServiceDetailsPage() {
 
       showMessage(
         "success",
-        "Service deactivated successfully."
+        t('admin.services.deactivatedSuccess')
       );
     } catch (err) {
       console.error(
@@ -424,7 +442,7 @@ export default function AdminServiceDetailsPage() {
 
       showMessage(
         "error",
-        "Failed to deactivate service."
+        t('admin.services.deactivateFailed')
       );
     } finally {
       setActionLoading(null);
@@ -445,7 +463,7 @@ export default function AdminServiceDetailsPage() {
           />
 
           <p className="text-sm text-gray-500">
-            Loading service details...
+            {t('admin.serviceDetails.loading')}
           </p>
         </div>
       </div>
@@ -466,7 +484,7 @@ export default function AdminServiceDetailsPage() {
           >
             <ArrowLeft size={16} />
 
-            Back to Services
+            {t('admin.serviceDetails.backToServices')}
           </Link>
         </div>
 
@@ -479,12 +497,12 @@ export default function AdminServiceDetailsPage() {
 
             <div>
               <h2 className="font-semibold text-red-800">
-                Unable to load service
+                {t('admin.serviceDetails.loadFailedTitle')}
               </h2>
 
               <p className="mt-1 text-sm text-red-700">
                 {error ||
-                  "The requested service could not be found."}
+                  t('admin.serviceDetails.notFound')}
               </p>
 
               <button
@@ -492,7 +510,7 @@ export default function AdminServiceDetailsPage() {
                 onClick={fetchService}
                 className="mt-4 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-red-700"
               >
-                Try Again
+                {t('admin.serviceDetails.tryAgain')}
               </button>
             </div>
           </div>
@@ -553,7 +571,7 @@ export default function AdminServiceDetailsPage() {
               href="/admin"
               className="transition hover:text-gray-900"
             >
-              Dashboard
+              {t('admin.services.breadcrumb')}
             </Link>
 
             <ChevronRight size={15} />
@@ -562,13 +580,13 @@ export default function AdminServiceDetailsPage() {
               href="/admin/services"
               className="transition hover:text-gray-900"
             >
-              Services
+              {t('admin.services.servicePlural')}
             </Link>
 
             <ChevronRight size={15} />
 
             <span className="text-gray-900">
-              Details
+              {t('admin.serviceDetails.details')}
             </span>
           </div>
 
@@ -578,7 +596,7 @@ export default function AdminServiceDetailsPage() {
           >
             <ArrowLeft size={16} />
 
-            Back to Services
+            {t('admin.serviceDetails.backToServices')}
           </Link>
 
           <div className="flex flex-wrap items-center gap-3">
@@ -598,8 +616,7 @@ export default function AdminServiceDetailsPage() {
           </div>
 
           <p className="mt-2 max-w-3xl text-sm leading-6 text-gray-500">
-            Review the complete service information,
-            pricing, vendor details and moderation status.
+            {t('admin.serviceDetails.subtitle')}
           </p>
         </div>
 
@@ -625,7 +642,7 @@ export default function AdminServiceDetailsPage() {
                 <Check size={17} />
               )}
 
-              Approve
+              {t('admin.services.approveLabel')}
             </button>
           )}
 
@@ -638,7 +655,7 @@ export default function AdminServiceDetailsPage() {
             >
               <X size={17} />
 
-              Reject
+              {t('admin.services.rejectLabel')}
             </button>
           )}
 
@@ -659,7 +676,7 @@ export default function AdminServiceDetailsPage() {
                 <Power size={17} />
               )}
 
-              Activate
+              {t('admin.services.activateLabel')}
             </button>
           )}
 
@@ -680,7 +697,7 @@ export default function AdminServiceDetailsPage() {
                 <Power size={17} />
               )}
 
-              Deactivate
+              {t('admin.services.deactivateLabel')}
             </button>
           )}
         </div>
@@ -729,7 +746,7 @@ export default function AdminServiceDetailsPage() {
                 />
 
                 <h2 className="font-semibold text-gray-900">
-                  Service Overview
+                  {t('admin.serviceDetails.overview')}
                 </h2>
               </div>
             </div>
@@ -737,7 +754,7 @@ export default function AdminServiceDetailsPage() {
             <div className="space-y-5 p-5 md:p-6">
               <div>
                 <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
-                  Service Name
+                  {t('admin.serviceDetails.serviceName')}
                 </p>
 
                 <p className="text-base font-medium text-gray-900">
@@ -747,19 +764,19 @@ export default function AdminServiceDetailsPage() {
 
               <div>
                 <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
-                  Description
+                  {t('admin.serviceDetails.description')}
                 </p>
 
                 <p className="whitespace-pre-line text-sm leading-7 text-gray-600">
                   {service.description ||
-                    "No description provided."}
+                    t('admin.serviceDetails.noDescription')}
                 </p>
               </div>
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <InfoBox
                   icon={Tag}
-                  label="Category"
+                  label={t('admin.services.category')}
                   value={
                     service.categoryName ||
                     "-"
@@ -768,23 +785,19 @@ export default function AdminServiceDetailsPage() {
 
                 <InfoBox
                   icon={CalendarDays}
-                  label="Created"
-                  value={formatDate(
-                    service.createdAt
-                  )}
+                  label={t('admin.services.created')}
+                  value={formatDate(service.createdAt, dateLocale)}
                 />
 
                 <InfoBox
                   icon={Clock3}
-                  label="Last Updated"
-                  value={formatDateTime(
-                    service.updatedAt
-                  )}
+                  label={t('admin.serviceDetails.lastUpdated')}
+                  value={formatDateTime(service.updatedAt, dateLocale)}
                 />
 
                 <InfoBox
                   icon={Package}
-                  label="Price Options"
+                  label={t('admin.serviceDetails.priceOptions')}
                   value={`${totalPriceOptions}`}
                 />
               </div>
@@ -802,7 +815,7 @@ export default function AdminServiceDetailsPage() {
                 />
 
                 <h2 className="font-semibold text-gray-900">
-                  Service Images
+                  {t('admin.serviceDetails.images')}
                 </h2>
 
                 <span className="ml-auto text-xs text-gray-400">
@@ -837,7 +850,7 @@ export default function AdminServiceDetailsPage() {
 
                         <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/50 to-transparent px-3 pb-2 pt-8">
                           <span className="text-xs font-medium text-white">
-                            Image {index + 1}
+                            {t('admin.serviceDetails.imageN', { n: index + 1 })}
                           </span>
                         </div>
                       </button>
@@ -851,7 +864,7 @@ export default function AdminServiceDetailsPage() {
                   />
 
                   <p className="mt-2 text-sm text-gray-500">
-                    No images available
+                    {t('admin.serviceDetails.noImages')}
                   </p>
                 </div>
               )}
@@ -869,7 +882,7 @@ export default function AdminServiceDetailsPage() {
                 />
 
                 <h2 className="font-semibold text-gray-900">
-                  Pricing
+                  {t('admin.serviceDetails.pricing')}
                 </h2>
               </div>
             </div>
@@ -881,11 +894,11 @@ export default function AdminServiceDetailsPage() {
                     <thead>
                       <tr className="border-b border-gray-100 bg-gray-50">
                         <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
-                          Label
+                          {t('admin.serviceDetails.label')}
                         </th>
 
                         <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-500">
-                          Price
+                          {t('admin.services.price')}
                         </th>
                       </tr>
                     </thead>
@@ -899,7 +912,7 @@ export default function AdminServiceDetailsPage() {
                           >
                             <td className="px-4 py-4 text-sm font-medium text-gray-800">
                               {price.label ||
-                                "Standard"}
+                                t('admin.serviceDetails.standard')}
                             </td>
 
                             <td className="px-4 py-4 text-right text-sm font-semibold text-gray-900">
@@ -914,7 +927,7 @@ export default function AdminServiceDetailsPage() {
               ) : (
                 <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-8 text-center">
                   <p className="text-sm text-gray-500">
-                    No pricing information available.
+                    {t('admin.serviceDetails.noPricing')}
                   </p>
                 </div>
               )}
@@ -933,7 +946,7 @@ export default function AdminServiceDetailsPage() {
                   />
 
                   <h2 className="font-semibold text-red-800">
-                    Rejection Reason
+                    {t('admin.services.rejectionReason')}
                   </h2>
                 </div>
               </div>
@@ -963,7 +976,7 @@ export default function AdminServiceDetailsPage() {
                 />
 
                 <h2 className="font-semibold text-gray-900">
-                  Vendor
+                  {t('admin.services.vendor')}
                 </h2>
               </div>
             </div>
@@ -979,18 +992,18 @@ export default function AdminServiceDetailsPage() {
                 <div className="min-w-0">
                   <p className="truncate font-semibold text-gray-900">
                     {service.vendorBusinessName ||
-                      "Unknown Vendor"}
+                      t('admin.serviceDetails.unknownVendor')}
                   </p>
 
                   <p className="mt-0.5 text-xs text-gray-500">
-                    Vendor
+                    {t('admin.services.vendor')}
                   </p>
                 </div>
               </div>
 
               <div className="mt-5 border-t border-gray-100 pt-4">
                 <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
-                  Vendor ID
+                  {t('admin.serviceDetails.vendorId')}
                 </p>
 
                 <p className="mt-1 break-all font-mono text-xs text-gray-600">
@@ -1011,7 +1024,7 @@ export default function AdminServiceDetailsPage() {
                 />
 
                 <h2 className="font-semibold text-gray-900">
-                  Category
+                  {t('admin.services.category')}
                 </h2>
               </div>
             </div>
@@ -1019,7 +1032,7 @@ export default function AdminServiceDetailsPage() {
             <div className="p-5">
               <p className="text-sm font-semibold text-gray-900">
                 {service.categoryName ||
-                  "Uncategorized"}
+                  t('admin.serviceDetails.uncategorized')}
               </p>
 
               <p className="mt-2 break-all font-mono text-xs text-gray-400">
@@ -1033,7 +1046,7 @@ export default function AdminServiceDetailsPage() {
           <section className="rounded-2xl border border-gray-200 bg-white shadow-sm">
             <div className="border-b border-gray-100 px-5 py-4">
               <h2 className="font-semibold text-gray-900">
-                Service Status
+                {t('admin.serviceDetails.serviceStatus')}
               </h2>
             </div>
 
@@ -1045,7 +1058,7 @@ export default function AdminServiceDetailsPage() {
 
                 <div>
                   <p className="text-xs opacity-70">
-                    Current Status
+                    {t('admin.serviceDetails.currentStatus')}
                   </p>
 
                   <p className="mt-0.5 font-semibold">
@@ -1058,25 +1071,21 @@ export default function AdminServiceDetailsPage() {
 
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
-                  Created At
+                  {t('admin.serviceDetails.createdAt')}
                 </p>
 
                 <p className="mt-1 text-sm text-gray-700">
-                  {formatDateTime(
-                    service.createdAt
-                  )}
+                  {formatDateTime(service.createdAt, dateLocale)}
                 </p>
               </div>
 
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
-                  Updated At
+                  {t('admin.serviceDetails.updatedAt')}
                 </p>
 
                 <p className="mt-1 text-sm text-gray-700">
-                  {formatDateTime(
-                    service.updatedAt
-                  )}
+                  {formatDateTime(service.updatedAt, dateLocale)}
                 </p>
               </div>
             </div>
@@ -1087,23 +1096,23 @@ export default function AdminServiceDetailsPage() {
           <section className="rounded-2xl border border-gray-200 bg-white shadow-sm">
             <div className="border-b border-gray-100 px-5 py-4">
               <h2 className="font-semibold text-gray-900">
-                Technical Information
+                {t('admin.serviceDetails.technicalInfo')}
               </h2>
             </div>
 
             <div className="space-y-4 p-5">
               <TechnicalRow
-                label="Service ID"
+                label={t('admin.serviceDetails.serviceId')}
                 value={service.id}
               />
 
               <TechnicalRow
-                label="Vendor ID"
+                label={t('admin.serviceDetails.vendorId')}
                 value={service.vendorId}
               />
 
               <TechnicalRow
-                label="Category ID"
+                label={t('admin.serviceDetails.categoryId')}
                 value={service.categoryId}
               />
             </div>
@@ -1123,11 +1132,11 @@ export default function AdminServiceDetailsPage() {
             <div className="flex items-start justify-between border-b border-gray-100 px-6 py-5">
               <div>
                 <h2 className="text-lg font-semibold text-gray-900">
-                  Reject Service
+                  {t('admin.services.rejectTitle')}
                 </h2>
 
                 <p className="mt-1 text-sm text-gray-500">
-                  Provide a clear reason for the rejection.
+                  {t('admin.serviceDetails.rejectSubtitle')}
                 </p>
               </div>
 
@@ -1148,7 +1157,7 @@ export default function AdminServiceDetailsPage() {
             <div className="space-y-4 px-6 py-5">
               <div className="rounded-xl bg-gray-50 p-4">
                 <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
-                  Service
+                  {t('admin.services.service')}
                 </p>
 
                 <p className="mt-1 font-medium text-gray-900">
@@ -1165,7 +1174,7 @@ export default function AdminServiceDetailsPage() {
                   htmlFor="rejectionReason"
                   className="mb-2 block text-sm font-medium text-gray-700"
                 >
-                  Rejection Reason
+                  {t('admin.services.rejectionReason')}
                 </label>
 
                 <textarea
@@ -1180,7 +1189,7 @@ export default function AdminServiceDetailsPage() {
                   disabled={
                     actionLoading === "reject"
                   }
-                  placeholder="Explain why this service is being rejected..."
+                  placeholder={t('admin.serviceDetails.rejectPlaceholder')}
                   className="w-full resize-none rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-[#c59b6d] focus:bg-white focus:ring-2 focus:ring-[#c59b6d]/10 disabled:cursor-not-allowed disabled:opacity-60"
                 />
               </div>
@@ -1197,7 +1206,7 @@ export default function AdminServiceDetailsPage() {
                 }
                 className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
               >
-                Cancel
+                {t('admin.services.cancel')}
               </button>
 
               <button
@@ -1216,13 +1225,13 @@ export default function AdminServiceDetailsPage() {
                       className="animate-spin"
                     />
 
-                    Rejecting...
+                    {t('admin.services.rejecting')}
                   </>
                 ) : (
                   <>
                     <X size={16} />
 
-                    Reject Service
+                    {t('admin.services.rejectTitle')}
                   </>
                 )}
               </button>

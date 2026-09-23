@@ -597,3 +597,235 @@ button {
     animation: none;
   }
 }
+
+/* =========================================================================
+   Vendor onboarding (form -> "under review" -> welcome aboard)
+   ========================================================================= */
+
+/* Staggered entrance. Set the delay inline: style={{ "--onb-delay": "120ms" }} */
+@keyframes onb-rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.onb-rise {
+  opacity: 0;
+  animation: onb-rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: var(--onb-delay, 0ms);
+}
+
+/* Soft expanding ring behind the "under review" icon */
+@keyframes onb-ring {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.55;
+  }
+  100% {
+    transform: scale(1.75);
+    opacity: 0;
+  }
+}
+
+.onb-ring {
+  animation: onb-ring 2.8s ease-out infinite;
+  animation-delay: var(--onb-delay, 0ms);
+}
+
+/* Gentle float for decorative hearts / rings */
+@keyframes onb-float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-14px) rotate(6deg);
+  }
+}
+
+.onb-float {
+  animation: onb-float 7s ease-in-out infinite;
+  animation-delay: var(--onb-delay, 0ms);
+}
+
+/* Hourglass that flips every few seconds */
+@keyframes onb-flip {
+  0%,
+  45% {
+    transform: rotate(0deg);
+  }
+  60%,
+  100% {
+    transform: rotate(180deg);
+  }
+}
+
+.onb-flip {
+  animation: onb-flip 3.6s ease-in-out infinite;
+}
+
+/* Light sweeping across the active step / progress bar */
+@keyframes onb-sweep {
+  0% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(320%);
+  }
+}
+
+.onb-sweep {
+  animation: onb-sweep 2.2s ease-in-out infinite;
+}
+
+/* Pulsing dot on the active timeline step */
+@keyframes onb-dot {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(185, 154, 98, 0.55);
+  }
+  50% {
+    box-shadow: 0 0 0 9px rgba(185, 154, 98, 0);
+  }
+}
+
+.onb-dot {
+  animation: onb-dot 1.8s ease-out infinite;
+}
+
+/* Timeline connector that "fills in" */
+@keyframes onb-fill {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+.onb-fill {
+  transform-origin: top;
+  animation: onb-fill 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: var(--onb-delay, 0ms);
+}
+
+/* Refresh button icon */
+@keyframes onb-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.onb-spin {
+  animation: onb-spin 0.9s linear infinite;
+}
+
+/* Welcome screen: pop-in badge, drawn check mark, confetti */
+@keyframes onb-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.12);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.onb-pop {
+  opacity: 0;
+  animation: onb-pop 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  animation-delay: var(--onb-delay, 0ms);
+}
+
+@keyframes onb-draw {
+  from {
+    stroke-dashoffset: 30;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.onb-draw {
+  stroke-dasharray: 30;
+  stroke-dashoffset: 30;
+  animation: onb-draw 0.7s ease-out forwards;
+  animation-delay: var(--onb-delay, 0ms);
+}
+
+@keyframes onb-confetti {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, -12vh, 0) rotate(0deg);
+  }
+  8% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(var(--dx, 0px), 112vh, 0) rotate(var(--rot, 540deg));
+  }
+}
+
+.onb-confetti {
+  position: absolute;
+  top: 0;
+  opacity: 0;
+  /* two showers, then it settles (`both` keeps it hidden until its delay) */
+  animation: onb-confetti var(--dur, 6s) linear 2 both;
+  animation-delay: var(--onb-delay, 0ms);
+}
+
+/* Shimmering gold text for the congratulations headline */
+@keyframes onb-shine {
+  to {
+    background-position: 200% center;
+  }
+}
+
+.onb-shine {
+  background: linear-gradient(90deg, #30251f 0%, #a47e43 25%, #d9bd85 50%, #a47e43 75%, #30251f 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: onb-shine 4s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .onb-rise,
+  .onb-pop {
+    opacity: 1;
+    animation: none;
+  }
+
+  .onb-draw {
+    stroke-dashoffset: 0;
+    animation: none;
+  }
+
+  .onb-ring,
+  .onb-float,
+  .onb-flip,
+  .onb-sweep,
+  .onb-dot,
+  .onb-spin,
+  .onb-confetti,
+  .onb-shine {
+    animation: none;
+  }
+
+  .onb-confetti {
+    display: none;
+  }
+}

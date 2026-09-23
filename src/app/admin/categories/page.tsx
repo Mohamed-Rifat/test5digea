@@ -1,5 +1,7 @@
 "use client";
 
+import { useLanguage } from "@/context/LanguageContext";
+
 import { FormEvent, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import {
@@ -36,6 +38,7 @@ type ModalType = "create" | "edit" | "delete" | null;
 type StatusFilter = "all" | "active" | "inactive";
 
 export default function AdminCategoriesPage() {
+  const { t } = useLanguage();
     const {
         categories,
         loading,
@@ -194,7 +197,7 @@ export default function AdminCategoriesPage() {
             !description.trim() ||
             !iconUrl.trim()
         ) {
-            setActionError("Please fill in all required fields.");
+            setActionError(t('admin.categories.fillRequired'));
             return;
         }
 
@@ -217,7 +220,7 @@ export default function AdminCategoriesPage() {
             setIconUrl("");
 
             setSuccessMessage(
-                "Category created successfully."
+                t('admin.categories.createdSuccess')
             );
         } catch (error) {
             console.error(
@@ -226,7 +229,7 @@ export default function AdminCategoriesPage() {
             );
 
             setActionError(
-                "Failed to create category. Please try again."
+                t('admin.categories.createFailedRetry')
             );
         } finally {
             setActionLoading(false);
@@ -263,7 +266,7 @@ export default function AdminCategoriesPage() {
             !editDescription.trim() ||
             !editIconUrl.trim()
         ) {
-            setActionError("Please fill in all required fields.");
+            setActionError(t('admin.categories.fillRequired'));
             return;
         }
 
@@ -284,7 +287,7 @@ export default function AdminCategoriesPage() {
             setSelectedCategory(null);
 
             setSuccessMessage(
-                "Category updated successfully."
+                t('admin.categories.updated')
             );
         } catch (error) {
             console.error(
@@ -293,7 +296,7 @@ export default function AdminCategoriesPage() {
             );
 
             setActionError(
-                "Failed to update category. Please try again."
+                t('admin.categories.updateFailedRetry')
             );
         } finally {
             setActionLoading(false);
@@ -321,8 +324,8 @@ export default function AdminCategoriesPage() {
 
             setSuccessMessage(
                 category.isActive
-                    ? `"${category.name}" has been disabled.`
-                    : `"${category.name}" has been activated.`
+                    ? t('admin.categories.disabledMsg', { name: category.name })
+                    : t('admin.categories.activatedMsg', { name: category.name })
             );
         } catch (error) {
             console.error(
@@ -331,7 +334,7 @@ export default function AdminCategoriesPage() {
             );
 
             setActionError(
-                "Failed to update category status."
+                t('admin.categories.statusFailed')
             );
         } finally {
             setToggleLoadingId(null);
@@ -367,7 +370,7 @@ export default function AdminCategoriesPage() {
             setSelectedCategory(null);
 
             setSuccessMessage(
-                `"${deletedName}" was deleted successfully.`
+                t('admin.categories.deletedMsg', { name: deletedName })
             );
         } catch (error) {
             console.error(
@@ -376,7 +379,7 @@ export default function AdminCategoriesPage() {
             );
 
             setActionError(
-                "Failed to delete category. Please try again."
+                t('admin.categories.deleteFailedRetry')
             );
         } finally {
             setActionLoading(false);
@@ -389,10 +392,10 @@ export default function AdminCategoriesPage() {
 
     const statusLabel =
         statusFilter === "all"
-            ? "All Status"
+            ? t('admin.categories.allStatus')
             : statusFilter === "active"
-                ? "Active"
-                : "Inactive";
+                ? t('admin.categories.active')
+                : t('admin.categories.inactive');
 
     return (
         <div className="mx-auto">
@@ -416,7 +419,7 @@ export default function AdminCategoriesPage() {
                         type="button"
                         onClick={() => setSuccessMessage(null)}
                         className="shrink-0 rounded-lg p-1 text-[#819187] transition hover:bg-[#e8f1ea]"
-                        aria-label="Dismiss success message"
+                        aria-label={t('admin.categories.dismiss')}
                     >
                         <X size={15} />
                     </button>
@@ -435,22 +438,21 @@ export default function AdminCategoriesPage() {
                         <div className="mb-2.5 flex items-center gap-2 text-[11px] font-medium text-[#9b8e86]">
                             <Tags size={13} />
 
-                            <span>Management</span>
+                            <span>{t('admin.categories.breadcrumb')}</span>
 
                             <span>/</span>
 
                             <span className="text-[#6f6057]">
-                                Categories
+                                {t('admin.categories.title')}
                             </span>
                         </div>
 
                         <h1 className="text-2xl font-semibold tracking-tight text-[#30251f] sm:text-3xl">
-                            Categories
+                            {t('admin.categories.title')}
                         </h1>
 
                         <p className="mt-1.5 max-w-2xl text-sm leading-5 text-[#8b7e76]">
-                            Manage the categories that organize
-                            services across the 5Digea marketplace.
+                            {t('admin.categories.pageDesc')}
                         </p>
                     </div>
 
@@ -468,7 +470,7 @@ export default function AdminCategoriesPage() {
                                 }
                             />
 
-                            Refresh
+                            {t('admin.categories.refresh')}
                         </button>
 
                         <button
@@ -479,7 +481,7 @@ export default function AdminCategoriesPage() {
                         >
                             <Plus size={16} />
 
-                            Add Category
+                            {t('admin.categories.add')}
                         </button>
                     </div>
                 </div>
@@ -497,11 +499,11 @@ export default function AdminCategoriesPage() {
 
                     <div>
                         <p className="text-xs font-semibold text-[#725a35]">
-                            Services could not be loaded
+                            {t('admin.categories.servicesLoadError')}
                         </p>
 
                         <p className="mt-0.5 text-[11px] text-[#9a8567]">
-                            Service counts may not be accurate.
+                            {t('admin.categories.serviceCountsWarning')}
                         </p>
                     </div>
                 </div>
@@ -536,24 +538,24 @@ export default function AdminCategoriesPage() {
             ) : !error ? (
                 <div className="mb-5 grid grid-cols-3 gap-2.5 sm:gap-4">
                     <StatCard
-                        label="Total"
+                        label={t('admin.categories.total')}
                         value={totalCategories}
                         icon={<Tags size={17} />}
-                        description="All categories"
+                        description={t('admin.categories.all')}
                     />
 
                     <StatCard
-                        label="Active"
+                        label={t('admin.categories.active')}
                         value={activeCategories}
                         icon={<Check size={17} />}
-                        description="Visible"
+                        description={t('admin.categories.visible')}
                     />
 
                     <StatCard
-                        label="Inactive"
+                        label={t('admin.categories.inactive')}
                         value={inactiveCategories}
                         icon={<Archive size={17} />}
-                        description="Disabled"
+                        description={t('admin.categories.disabled')}
                     />
                 </div>
             ) : null}
@@ -581,7 +583,7 @@ export default function AdminCategoriesPage() {
                                 onChange={(event) =>
                                     setSearch(event.target.value)
                                 }
-                                placeholder="Search categories..."
+                                placeholder={t('admin.categories.searchPlaceholder')}
                                 className="h-10 w-full rounded-lg border border-[#eee6e1] bg-[#fcfaf8] pl-10 pr-9 text-xs text-[#30251f] outline-none transition placeholder:text-[#afa39b] focus:border-[#cdbeb3] focus:bg-white"
                             />
 
@@ -590,7 +592,7 @@ export default function AdminCategoriesPage() {
                                     type="button"
                                     onClick={() => setSearch("")}
                                     className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-md p-1 text-[#a99b92] transition hover:bg-[#f3ece7] hover:text-[#5f5048]"
-                                    aria-label="Clear search"
+                                    aria-label={t("admin.ui.clearSearch")}
                                 >
                                     <X size={14} />
                                 </button>
@@ -625,15 +627,15 @@ export default function AdminCategoriesPage() {
                                     {[
                                         {
                                             value: "all",
-                                            label: "All Status",
+                                            label: t('admin.categories.allStatus'),
                                         },
                                         {
                                             value: "active",
-                                            label: "Active",
+                                            label: t('admin.categories.active'),
                                         },
                                         {
                                             value: "inactive",
-                                            label: "Inactive",
+                                            label: t('admin.categories.inactive'),
                                         },
                                     ].map((option) => (
                                         <button
@@ -697,7 +699,7 @@ export default function AdminCategoriesPage() {
                     </div>
 
                     <h2 className="mt-5 text-lg font-semibold text-[#30251f]">
-                        Something went wrong
+                        {t('admin.categories.errorTitle')}
                     </h2>
 
                     <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[#8f8179]">
@@ -711,7 +713,7 @@ export default function AdminCategoriesPage() {
                     >
                         <RefreshCw size={15} />
 
-                        Try Again
+                        {t('admin.categories.tryAgain')}
                     </button>
                 </div>
             )}
@@ -729,13 +731,11 @@ export default function AdminCategoriesPage() {
                         </div>
 
                         <h2 className="mt-5 text-lg font-semibold text-[#30251f]">
-                            No categories yet
+                            {t('admin.categories.emptyTitle')}
                         </h2>
 
                         <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[#93857c]">
-                            Create your first category to start
-                            organizing services on the 5Digea
-                            marketplace.
+                            {t('admin.categories.emptyDesc')}
                         </p>
 
                         <button
@@ -745,7 +745,7 @@ export default function AdminCategoriesPage() {
                         >
                             <Plus size={16} />
 
-                            Add Category
+                            {t('admin.categories.add')}
                         </button>
                     </div>
                 )}
@@ -764,12 +764,11 @@ export default function AdminCategoriesPage() {
                         </div>
 
                         <h2 className="mt-5 text-lg font-semibold text-[#30251f]">
-                            No matching categories
+                            {t('admin.categories.noMatch')}
                         </h2>
 
                         <p className="mt-2 text-sm text-[#93857c]">
-                            Try a different search term or status
-                            filter.
+                            {t('admin.categories.noMatchDesc')}
                         </p>
 
                         <button
@@ -780,7 +779,7 @@ export default function AdminCategoriesPage() {
                             }}
                             className="mt-5 rounded-xl border border-[#e7ded8] px-4 py-2.5 text-sm font-medium text-[#665951] transition hover:bg-[#faf7f4]"
                         >
-                            Clear filters
+                            {t('admin.categories.clearFilters')}
                         </button>
                     </div>
                 )}
@@ -842,8 +841,8 @@ export default function AdminCategoriesPage() {
                                                 />
 
                                                 {category.isActive
-                                                    ? "Active"
-                                                    : "Inactive"}
+                                                    ? t('admin.categories.active')
+                                                    : t('admin.categories.inactive')}
                                             </span>
                                         </div>
 
@@ -863,7 +862,7 @@ export default function AdminCategoriesPage() {
                                                     actionLoading || isToggling
                                                 }
                                                 className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-[#756960] shadow-sm transition hover:bg-[#30251f] hover:text-white disabled:opacity-50"
-                                                aria-label={`Actions for ${category.name}`}
+                                                aria-label={t('admin.categories.actionsFor', { name: category.name })}
                                             >
                                                 <MoreVertical size={15} />
                                             </button>
@@ -879,7 +878,7 @@ export default function AdminCategoriesPage() {
                                                     >
                                                         <Edit3 size={14} />
 
-                                                        Edit category
+                                                        {t('admin.categories.edit')}
                                                     </button>
 
                                                     <div className="my-1 border-t border-[#f0e9e4]" />
@@ -893,7 +892,7 @@ export default function AdminCategoriesPage() {
                                                     >
                                                         <Trash2 size={14} />
 
-                                                        Delete category
+                                                        {t('admin.categories.deleteAction')}
                                                     </button>
                                                 </div>
                                             )}
@@ -910,7 +909,7 @@ export default function AdminCategoriesPage() {
 
                                             <p className="mt-1.5 line-clamp-2 text-[11px] leading-4.5 text-[#91847c]">
                                                 {category.description ||
-                                                    "No description available."}
+                                                    t('admin.categories.noDescription')}
                                             </p>
                                         </div>
 
@@ -924,7 +923,7 @@ export default function AdminCategoriesPage() {
 
                                                 <div>
                                                     <p className="text-[9px] font-semibold uppercase tracking-widest text-[#a2948b]">
-                                                        Services
+                                                        {t('admin.categories.services')}
                                                     </p>
 
                                                     <p className="mt-0.5 text-xs font-semibold text-[#4c3e36]">
@@ -947,16 +946,16 @@ export default function AdminCategoriesPage() {
                                                 }
                                                 className="group/toggle inline-flex items-center gap-2 disabled:cursor-not-allowed disabled:opacity-60"
                                                 aria-label={`${category.isActive
-                                                        ? "Disable"
-                                                        : "Activate"
+                                                        ? t('admin.categories.disable')
+                                                        : t('admin.categories.activate')
                                                     } ${category.name}`}
                                             >
                                                 <span className="text-[9px] font-semibold text-[#8c7d74]">
                                                     {isToggling
-                                                        ? "Updating..."
+                                                        ? t('admin.categories.updating')
                                                         : category.isActive
-                                                            ? "Active"
-                                                            : "Inactive"}
+                                                            ? t('admin.categories.active')
+                                                            : t('admin.categories.inactive')}
                                                 </span>
 
                                                 <span
@@ -987,7 +986,7 @@ export default function AdminCategoriesPage() {
                                         <div className="mt-3 flex items-center justify-between border-t border-[#f1ebe7] pt-3">
                                             <div>
                                                 <p className="text-[9px] text-[#a39790]">
-                                                    Created
+                                                    {t('admin.categories.created')}
                                                 </p>
 
                                                 <p className="mt-0.5 text-[10px] font-medium text-[#6e6058]">
@@ -1009,7 +1008,7 @@ export default function AdminCategoriesPage() {
                                             >
                                                 <Edit3 size={12} />
 
-                                                Edit
+                                                {t('admin.categories.edit')}
                                             </button>
                                         </div>
                                     </div>
@@ -1029,13 +1028,13 @@ export default function AdminCategoriesPage() {
                         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-[#eee7e2] bg-white px-6 py-5">
                             <div>
                                 <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#a18d7f]">
-                                    Category Management
+                                    {t('admin.categories.management')}
                                 </p>
 
                                 <h2 className="mt-1 text-xl font-semibold text-[#30251f]">
                                     {modal === "create"
-                                        ? "Create Category"
-                                        : "Edit Category"}
+                                        ? t('admin.categories.createTitle')
+                                        : t('admin.categories.editTitle')}
                                 </h2>
                             </div>
 
@@ -1062,7 +1061,7 @@ export default function AdminCategoriesPage() {
                                     htmlFor="category-name"
                                     className="mb-2 block text-xs font-semibold text-[#55483f]"
                                 >
-                                    Category Name
+                                    {t('admin.categories.name')}
                                 </label>
 
                                 <input
@@ -1080,7 +1079,7 @@ export default function AdminCategoriesPage() {
                                                 event.target.value
                                             )
                                     }
-                                    placeholder="e.g. Photography"
+                                    placeholder={t('admin.categories.namePlaceholder')}
                                     required
                                     disabled={actionLoading}
                                     className="h-12 w-full rounded-xl border border-[#e7ded8] bg-[#fcfaf8] px-4 text-sm text-[#30251f] outline-none transition placeholder:text-[#afa19a] focus:border-[#bba99d] focus:bg-white focus:ring-4 focus:ring-[#f3ece7]"
@@ -1092,7 +1091,7 @@ export default function AdminCategoriesPage() {
                                     htmlFor="category-description"
                                     className="mb-2 block text-xs font-semibold text-[#55483f]"
                                 >
-                                    Description
+                                    {t('admin.categories.description')}
                                 </label>
 
                                 <textarea
@@ -1111,7 +1110,7 @@ export default function AdminCategoriesPage() {
                                                 event.target.value
                                             )
                                     }
-                                    placeholder="Describe what this category represents..."
+                                    placeholder={t('admin.categories.descriptionPlaceholder')}
                                     rows={4}
                                     required
                                     disabled={actionLoading}
@@ -1124,7 +1123,7 @@ export default function AdminCategoriesPage() {
                                     htmlFor="category-icon-url"
                                     className="mb-2 block text-xs font-semibold text-[#55483f]"
                                 >
-                                    Icon URL
+                                    {t('admin.categories.iconUrl')}
                                 </label>
 
                                 <input
@@ -1142,7 +1141,7 @@ export default function AdminCategoriesPage() {
                                                 event.target.value
                                             )
                                     }
-                                    placeholder="https://example.com/icon.png"
+                                    placeholder={t('admin.categories.iconPlaceholder')}
                                     required
                                     disabled={actionLoading}
                                     className="h-12 w-full rounded-xl border border-[#e7ded8] bg-[#fcfaf8] px-4 text-sm text-[#30251f] outline-none transition placeholder:text-[#afa19a] focus:border-[#bba99d] focus:bg-white focus:ring-4 focus:ring-[#f3ece7]"
@@ -1159,14 +1158,14 @@ export default function AdminCategoriesPage() {
                                                             ? iconUrl
                                                             : editIconUrl
                                                     }
-                                                    alt="Category icon preview"
+                                                    alt={t('admin.categories.iconPreviewAlt')}
                                                     className="h-9 w-9 object-contain"
                                                 />
                                             </div>
 
                                             <div>
                                                 <p className="text-xs font-semibold text-[#55483f]">
-                                                    Icon preview
+                                                    {t('admin.categories.iconPreview')}
                                                 </p>
 
                                                 <p className="mt-0.5 max-w-87.5 truncate text-[10px] text-[#9d9087]">
@@ -1194,7 +1193,7 @@ export default function AdminCategoriesPage() {
                                     disabled={actionLoading}
                                     className="rounded-xl border border-[#e5dcd6] px-5 py-2.5 text-sm font-medium text-[#665951] transition hover:bg-[#faf7f4] disabled:opacity-50"
                                 >
-                                    Cancel
+                                    {t('admin.categories.cancel')}
                                 </button>
 
                                 <button
@@ -1211,11 +1210,11 @@ export default function AdminCategoriesPage() {
 
                                     {modal === "create"
                                         ? actionLoading
-                                            ? "Creating..."
-                                            : "Create Category"
+                                            ? t('admin.categories.creating')
+                                            : t('admin.categories.createTitle')
                                         : actionLoading
-                                            ? "Saving..."
-                                            : "Save Changes"}
+                                            ? t('admin.categories.saving')
+                                            : t('admin.categories.save')}
                                 </button>
                             </div>
                         </form>
@@ -1235,15 +1234,15 @@ export default function AdminCategoriesPage() {
                         </div>
 
                         <h2 className="mt-5 text-xl font-semibold text-[#30251f]">
-                            Delete Category?
+                            {t('admin.categories.deleteConfirmTitle')}
                         </h2>
 
                         <p className="mt-2 text-sm leading-6 text-[#8f8179]">
-                            You&apos;re about to permanently delete{" "}
+                            {t("admin.categories.deleteWarning")}{" "}
                             <strong className="font-semibold text-[#50423a]">
                                 {selectedCategory.name}
                             </strong>
-                            . This action cannot be undone.
+                            {t("admin.categories.deleteWarningSuffix")}
                         </p>
 
                         {actionError && (
@@ -1261,7 +1260,7 @@ export default function AdminCategoriesPage() {
                                 disabled={actionLoading}
                                 className="rounded-xl border border-[#e5dcd6] px-5 py-2.5 text-sm font-medium text-[#665951] transition hover:bg-[#faf7f4] disabled:opacity-50"
                             >
-                                Cancel
+                                {t('admin.categories.cancel')}
                             </button>
 
                             <button
@@ -1278,8 +1277,8 @@ export default function AdminCategoriesPage() {
                                 )}
 
                                 {actionLoading
-                                    ? "Deleting..."
-                                    : "Delete Category"}
+                                    ? t('admin.categories.deleting')
+                                    : t('admin.categories.delete')}
                             </button>
                         </div>
                     </div>
@@ -1304,6 +1303,8 @@ function StatCard({
     icon: React.ReactNode;
     description: string;
 }) {
+    const { t } = useLanguage();
+
     return (
         <div className="group rounded-xl border border-[#ebe3dd] bg-white px-3 py-3 shadow-[0_2px_10px_rgba(48,37,31,0.03)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_7px_20px_rgba(48,37,31,0.06)] sm:p-4">
             <div className="flex items-center justify-between gap-2">
@@ -1312,7 +1313,7 @@ function StatCard({
                 </div>
 
                 <span className="hidden text-[9px] font-medium uppercase tracking-widest text-[#b0a29a] sm:block">
-                    Overview
+                    {t("admin.categories.overview")}
                 </span>
             </div>
 

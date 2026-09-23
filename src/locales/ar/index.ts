@@ -17,6 +17,7 @@ import profile from "./profile";
 import support from "./support";
 import notFound from "./notFound";
 import becomeVendor from "./becomeVendor";
+import vendorOnboarding from "./vendorOnboarding";
 
 const ar = {
   common,
@@ -38,6 +39,7 @@ const ar = {
   support,
   notFound,
   becomeVendor,
+  vendorOnboarding,
 };
 
 export default ar;
