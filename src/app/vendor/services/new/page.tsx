@@ -11,21 +11,13 @@ import {
   Plus,
   Save,
   Trash2,
-  Sparkles,
-  BriefcaseBusiness,
-  CheckCircle2,
-  XCircle,
   HelpCircle,
 } from "lucide-react";
 
 import {
   Tooltip,
-  Badge,
-  CircularProgress,
-  Button,
   TextField,
   InputAdornment,
-  IconButton,
 } from "@mui/material";
 
 import Select from "@/components/shared/Select";
@@ -35,6 +27,13 @@ import { useVendor } from "@/features/vendors/hooks/useVendor";
 import { useLanguage } from "@/context/LanguageContext";
 import TextWithSlot from "@/components/shared/TextWithSlot";
 import type { CreateServicePriceRequest } from "@/types/service";
+
+type PriceFormRow = {
+  label: string;
+  price: number | "";
+};
+
+const MAX_IMAGES = 5;
 
 export default function NewVendorServicePage() {
   const router = useRouter();
@@ -53,7 +52,8 @@ export default function NewVendorServicePage() {
     const assignedNames = new Set(vendor.categories);
 
     return categories.filter(
-      (category) => category.isActive && assignedNames.has(category.name)
+      (category) =>
+        category.isActive && assignedNames.has(category.name)
     );
   }, [categories, vendor]);
 
@@ -66,22 +66,30 @@ export default function NewVendorServicePage() {
     [availableCategories]
   );
 
-  const categoriesLoadingCombined = categoriesLoading || vendorLoading;
+  const categoriesLoadingCombined =
+    categoriesLoading || vendorLoading;
+
   const hasNoAssignedCategories =
-    !categoriesLoadingCombined && availableCategories.length === 0;
+    !categoriesLoadingCombined &&
+    availableCategories.length === 0;
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [categoryId, setCategoryId] = useState("");
-  const [prices, setPrices] = useState<CreateServicePriceRequest[]>([
-    { label: "", price: 0 },
+
+  // Form state allows an empty price while the vendor is typing.
+  // The value is converted to a number only before sending to the API.
+  const [prices, setPrices] = useState<PriceFormRow[]>([
+    { label: "", price: "" },
   ]);
+
   const [images, setImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [formError, setFormError] = useState("");
-  // Covers the whole create + upload-images sequence. `actionLoading` alone
-  // goes back to null between the two steps, which re-enabled the button and
-  // allowed a double click to create the service twice.
+
+  // Covers the whole create + upload-images sequence.
+  // Prevents double-clicking the submit button from creating
+  // the service more than once.
   const [submitting, setSubmitting] = useState(false);
 
   const isSubmitting = submitting;
@@ -89,99 +97,188 @@ export default function NewVendorServicePage() {
   const handleImagesSelected = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
       const files = Array.from(event.target.files ?? []);
+
       if (files.length === 0) return;
 
-      setImages((prev) => [...prev, ...files]);
-      setImagePreviews((prev) => [
-        ...prev,
-        ...files.map((file) => URL.createObjectURL(file)),
-      ]);
+      setImages((prevImages) => {
+        const remainingSlots =
+          MAX_IMAGES - prevImages.length;
 
-      // allow re-selecting the same file again later
+        if (remainingSlots <= 0) {
+          return prevImages;
+        }
+
+        const filesToAdd = files.slice(
+          0,
+          remainingSlots
+        );
+
+        setImagePreviews((prevPreviews) => [
+          ...prevPreviews,
+          ...filesToAdd.map((file) =>
+            URL.createObjectURL(file)
+          ),
+        ]);
+
+        return [...prevImages, ...filesToAdd];
+      });
+
+      // Allow re-selecting the same file again later.
       event.target.value = "";
     },
     []
   );
 
   const removeImage = useCallback((index: number) => {
-    setImages((prev) => prev.filter((_, i) => i !== index));
+    setImages((prev) =>
+      prev.filter((_, i) => i !== index)
+    );
+
     setImagePreviews((prev) => {
-      if (prev[index]) URL.revokeObjectURL(prev[index]);
+      if (prev[index]) {
+        URL.revokeObjectURL(prev[index]);
+      }
+
       return prev.filter((_, i) => i !== index);
     });
   }, []);
 
   const addPriceRow = useCallback(() => {
-    setPrices((prev) => [...prev, { label: "", price: 0 }]);
+    setPrices((prev) => [
+      ...prev,
+      {
+        label: "",
+        price: "",
+      },
+    ]);
   }, []);
 
   const removePriceRow = useCallback((index: number) => {
-    setPrices((prev) => prev.filter((_, i) => i !== index));
-  }, []);
-
-  const updatePriceRow = useCallback((
-    index: number,
-    field: "label" | "price",
-    value: string
-  ) => {
     setPrices((prev) =>
-      prev.map((row, i) =>
-        i === index
-          ? {
-              ...row,
-              [field]: field === "price" ? Number(value) || 0 : value,
-            }
-          : row
-      )
+      prev.filter((_, i) => i !== index)
     );
   }, []);
 
-  const handleSubmit = useCallback(async (event: FormEvent) => {
-    event.preventDefault();
-    if (submitting) return;
-    setFormError("");
+  const updatePriceRow = useCallback(
+    (
+      index: number,
+      field: "label" | "price",
+      value: string
+    ) => {
+      setPrices((prev) =>
+        prev.map((row, i) =>
+          i === index
+            ? {
+                ...row,
+                [field]:
+                  field === "price"
+                    ? value === ""
+                      ? ""
+                      : Number(value)
+                    : value,
+              }
+            : row
+        )
+      );
+    },
+    []
+  );
 
-    if (!name.trim() || !description.trim() || !categoryId) {
-      setFormError(t("vendor.services.form.errors.fillNew"));
-      return;
-    }
+  const handleSubmit = useCallback(
+    async (event: FormEvent) => {
+      event.preventDefault();
 
-    const validPrices = prices.filter(
-      (price) => price.label.trim() !== "" && price.price >= 0
-    );
+      if (submitting) return;
 
-    if (validPrices.length === 0) {
-      setFormError(t("vendor.services.form.errors.atLeastOnePrice"));
-      return;
-    }
+      setFormError("");
 
-    setSubmitting(true);
-
-    try {
-      const id = await create({
-        categoryId,
-        name: name.trim(),
-        description: description.trim(),
-        prices: validPrices,
-      });
-
-      if (id) {
-        if (images.length > 0) {
-          const uploaded = await uploadImages(id, images);
-          if (!uploaded) {
-            // Service was created, but images failed — let the vendor add
-            // them from the edit page instead of losing the service.
-            router.push(`/vendor/services/${id}`);
-            return;
-          }
-        }
-
-        router.push("/vendor/services");
+      if (
+        !name.trim() ||
+        !description.trim() ||
+        !categoryId
+      ) {
+        setFormError(
+          t("vendor.services.form.errors.fillNew")
+        );
+        return;
       }
-    } finally {
-      setSubmitting(false);
-    }
-  }, [name, description, categoryId, prices, images, create, uploadImages, router, t, submitting]);
+
+      // Extra protection against submitting more than 5 images.
+      if (images.length > MAX_IMAGES) {
+        setFormError(
+          "You can upload a maximum of 5 images."
+        );
+        return;
+      }
+
+      // Convert the form values into the API request type.
+      // Empty price inputs are ignored.
+      const validPrices: CreateServicePriceRequest[] =
+        prices
+          .filter(
+            (price) =>
+              price.label.trim() !== "" &&
+              price.price !== "" &&
+              price.price >= 0
+          )
+          .map((price) => ({
+            label: price.label.trim(),
+            price: price.price as number,
+          }));
+
+      if (validPrices.length === 0) {
+        setFormError(
+          t(
+            "vendor.services.form.errors.atLeastOnePrice"
+          )
+        );
+        return;
+      }
+
+      setSubmitting(true);
+
+      try {
+        const id = await create({
+          categoryId,
+          name: name.trim(),
+          description: description.trim(),
+          prices: validPrices,
+        });
+
+        if (id) {
+          if (images.length > 0) {
+            const uploaded = await uploadImages(
+              id,
+              images
+            );
+
+            if (!uploaded) {
+              // Service was created, but images failed.
+              // Let the vendor add them from the edit page.
+              router.push(`/vendor/services/${id}`);
+              return;
+            }
+          }
+
+          router.push("/vendor/services");
+        }
+      } finally {
+        setSubmitting(false);
+      }
+    },
+    [
+      name,
+      description,
+      categoryId,
+      prices,
+      images,
+      create,
+      uploadImages,
+      router,
+      t,
+      submitting,
+    ]
+  );
 
   const handleCancel = useCallback(() => {
     router.push("/vendor/services");
@@ -189,7 +286,7 @@ export default function NewVendorServicePage() {
 
   return (
     <main className="min-h-screen bg-[#faf8f6]">
-      <div className="mx-auto lg:max-w-full px-3 py-4 sm:px-4 sm:py-6 lg:px-6 lg:py-8 xl:px-8 xl:py-10">
+      <div className="mx-auto px-3 py-4 sm:px-4 sm:py-6 lg:max-w-full lg:px-6 lg:py-8 xl:px-8 xl:py-10">
         {/* =================================================
             Header
         ================================================= */}
@@ -199,7 +296,7 @@ export default function NewVendorServicePage() {
             href="/vendor/services"
             className="mb-3 inline-flex items-center gap-1.5 text-xs font-medium text-[#756b65] transition hover:text-[#30251f] sm:mb-4 sm:gap-2 sm:text-sm"
           >
-            <ArrowLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4 rtl:rotate-180" />
+            <ArrowLeft className="h-3.5 w-3.5 rtl:rotate-180 sm:h-4 sm:w-4" />
             {t("vendor.services.add.back")}
           </Link>
 
@@ -231,7 +328,10 @@ export default function NewVendorServicePage() {
           {(formError || actionError) && (
             <div className="mb-6 flex items-start gap-3 rounded-2xl border border-red-100 bg-red-50 p-3 text-xs text-red-700 sm:mb-8 sm:p-4 sm:text-sm">
               <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 sm:h-5 sm:w-5" />
-              <span className="leading-5 sm:leading-6">{formError || actionError}</span>
+
+              <span className="leading-5 sm:leading-6">
+                {formError || actionError}
+              </span>
             </div>
           )}
 
@@ -241,13 +341,19 @@ export default function NewVendorServicePage() {
 
           <div className="mb-5 sm:mb-6">
             <label className="mb-1.5 block text-xs font-medium text-[#40352f] sm:mb-2 sm:text-sm">
-              {t("vendor.services.form.name")} <span className="text-red-500">*</span>
+              {t("vendor.services.form.name")}{" "}
+              <span className="text-red-500">*</span>
             </label>
+
             <TextField
               type="text"
               value={name}
-              onChange={(event) => setName(event.target.value)}
-              placeholder={t("vendor.services.form.namePlaceholder")}
+              onChange={(event) =>
+                setName(event.target.value)
+              }
+              placeholder={t(
+                "vendor.services.form.namePlaceholder"
+              )}
               fullWidth
               size="small"
               sx={{
@@ -255,12 +361,20 @@ export default function NewVendorServicePage() {
                   borderRadius: "12px",
                   backgroundColor: "#fcfaf8",
                   fontSize: "13px",
-                  "& fieldset": { borderColor: "#e3d9d1" },
-                  "&:hover fieldset": { borderColor: "#d5c8be" },
-                  "&.Mui-focused fieldset": { borderColor: "#a47e43", borderWidth: "1px" },
+                  "& fieldset": {
+                    borderColor: "#e3d9d1",
+                  },
+                  "&:hover fieldset": {
+                    borderColor: "#d5c8be",
+                  },
+                  "&.Mui-focused fieldset": {
+                    borderColor: "#a47e43",
+                    borderWidth: "1px",
+                  },
                 },
               }}
             />
+
             <p className="mt-1 text-[10px] text-[#9b8f86] sm:text-xs">
               {t("vendor.services.form.nameHint")}
             </p>
@@ -272,13 +386,19 @@ export default function NewVendorServicePage() {
 
           <div className="mb-5 sm:mb-6">
             <label className="mb-1.5 block text-xs font-medium text-[#40352f] sm:mb-2 sm:text-sm">
-              {t("vendor.services.form.category")} <span className="text-red-500">*</span>
+              {t("vendor.services.form.category")}{" "}
+              <span className="text-red-500">*</span>
             </label>
 
             {categoriesLoadingCombined ? (
               <div className="flex items-center gap-3 rounded-xl border border-[#e3d9d1] bg-[#fcfaf8] px-4 py-3">
                 <Loader2 className="h-4 w-4 animate-spin text-[#a47e43]" />
-                <span className="text-sm text-[#9b8f86]">{t("vendor.services.form.loadingCategories")}</span>
+
+                <span className="text-sm text-[#9b8f86]">
+                  {t(
+                    "vendor.services.form.loadingCategories"
+                  )}
+                </span>
               </div>
             ) : (
               <Select
@@ -286,21 +406,33 @@ export default function NewVendorServicePage() {
                 onChange={setCategoryId}
                 options={categoryOptions}
                 loading={categoriesLoadingCombined}
-                placeholder={t("vendor.services.form.selectCategory")}
-                emptyMessage={t("vendor.services.form.noCategoriesEmpty")}
+                placeholder={t(
+                  "vendor.services.form.selectCategory"
+                )}
+                emptyMessage={t(
+                  "vendor.services.form.noCategoriesEmpty"
+                )}
               />
             )}
 
             {hasNoAssignedCategories ? (
               <div className="mt-2 flex items-start gap-2 rounded-xl bg-amber-50 p-2.5 text-xs text-amber-700 sm:p-3">
                 <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+
                 <span className="leading-5">
                   <TextWithSlot
-                    text={t("vendor.services.form.noAssigned")}
+                    text={t(
+                      "vendor.services.form.noAssigned"
+                    )}
                     token="{link}"
                     slot={
-                      <Link href="/vendor/support" className="font-semibold underline hover:no-underline">
-                        {t("vendor.services.form.contactSupportLink")}
+                      <Link
+                        href="/vendor/support"
+                        className="font-semibold underline hover:no-underline"
+                      >
+                        {t(
+                          "vendor.services.form.contactSupportLink"
+                        )}
                       </Link>
                     }
                   />
@@ -308,7 +440,9 @@ export default function NewVendorServicePage() {
               </div>
             ) : (
               <p className="mt-1 text-[10px] text-[#9b8f86] sm:text-xs">
-                {t("vendor.services.form.categoryHint")}
+                {t(
+                  "vendor.services.form.categoryHint"
+                )}
               </p>
             )}
           </div>
@@ -319,28 +453,46 @@ export default function NewVendorServicePage() {
 
           <div className="mb-5 sm:mb-6">
             <label className="mb-1.5 block text-xs font-medium text-[#40352f] sm:mb-2 sm:text-sm">
-              {t("vendor.services.form.description")} <span className="text-red-500">*</span>
+              {t(
+                "vendor.services.form.description"
+              )}{" "}
+              <span className="text-red-500">*</span>
             </label>
+
             <TextField
               value={description}
-              onChange={(event) => setDescription(event.target.value)}
+              onChange={(event) =>
+                setDescription(event.target.value)
+              }
               multiline
               rows={5}
-              placeholder={t("vendor.services.form.descriptionPlaceholder")}
+              placeholder={t(
+                "vendor.services.form.descriptionPlaceholder"
+              )}
               fullWidth
               sx={{
                 "& .MuiOutlinedInput-root": {
                   borderRadius: "12px",
                   backgroundColor: "#fcfaf8",
                   fontSize: "13px",
-                  "& fieldset": { borderColor: "#e3d9d1" },
-                  "&:hover fieldset": { borderColor: "#d5c8be" },
-                  "&.Mui-focused fieldset": { borderColor: "#a47e43", borderWidth: "1px" },
+                  "& fieldset": {
+                    borderColor: "#e3d9d1",
+                  },
+                  "&:hover fieldset": {
+                    borderColor: "#d5c8be",
+                  },
+                  "&.Mui-focused fieldset": {
+                    borderColor: "#a47e43",
+                    borderWidth: "1px",
+                  },
                 },
               }}
             />
+
             <p className="mt-1 text-[10px] text-[#9b8f86] sm:text-xs">
-              {t("vendor.services.form.descriptionHint")}
+              {t(
+                "vendor.services.form.descriptionHint"
+              )}
             </p>
           </div>
 
@@ -351,14 +503,17 @@ export default function NewVendorServicePage() {
           <div className="mb-5 sm:mb-6">
             <div className="mb-1.5 flex items-center justify-between sm:mb-2">
               <label className="text-xs font-medium text-[#40352f] sm:text-sm">
-                {t("vendor.services.form.pricing")} <span className="text-red-500">*</span>
+                {t("vendor.services.form.pricing")}{" "}
+                <span className="text-red-500">*</span>
               </label>
+
               <button
                 type="button"
                 onClick={addPriceRow}
                 className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-[#604b3e] transition hover:bg-[#f5eee9] hover:text-[#30251f] sm:gap-1.5 sm:px-2.5 sm:py-1.5 sm:text-sm"
               >
                 <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+
                 {t("vendor.services.form.addPrice")}
               </button>
             </div>
@@ -374,9 +529,15 @@ export default function NewVendorServicePage() {
                       type="text"
                       value={price.label}
                       onChange={(event) =>
-                        updatePriceRow(index, "label", event.target.value)
+                        updatePriceRow(
+                          index,
+                          "label",
+                          event.target.value
+                        )
                       }
-                      placeholder={t("vendor.services.form.labelPlaceholder")}
+                      placeholder={t(
+                        "vendor.services.form.labelPlaceholder"
+                      )}
                       size="small"
                       fullWidth
                       sx={{
@@ -384,9 +545,16 @@ export default function NewVendorServicePage() {
                           borderRadius: "10px",
                           backgroundColor: "white",
                           fontSize: "12px",
-                          "& fieldset": { borderColor: "#e3d9d1" },
-                          "&:hover fieldset": { borderColor: "#d5c8be" },
-                          "&.Mui-focused fieldset": { borderColor: "#a47e43", borderWidth: "1px" },
+                          "& fieldset": {
+                            borderColor: "#e3d9d1",
+                          },
+                          "&:hover fieldset": {
+                            borderColor: "#d5c8be",
+                          },
+                          "&.Mui-focused fieldset": {
+                            borderColor: "#a47e43",
+                            borderWidth: "1px",
+                          },
                         },
                       }}
                     />
@@ -398,16 +566,24 @@ export default function NewVendorServicePage() {
                         type="number"
                         value={price.price}
                         onChange={(event) =>
-                          updatePriceRow(index, "price", event.target.value)
+                          updatePriceRow(
+                            index,
+                            "price",
+                            event.target.value
+                          )
                         }
-                        placeholder={t("vendor.services.form.pricePlaceholder")}
+                        placeholder={t(
+                          "vendor.services.form.pricePlaceholder"
+                        )}
                         size="small"
                         fullWidth
                         slotProps={{
                           input: {
                             startAdornment: (
                               <InputAdornment position="start">
-                                <span className="text-[#9b8f86]">{t("common.currency")}</span>
+                                <span className="text-[#9b8f86]">
+                                  {t("common.currency")}
+                                </span>
                               </InputAdornment>
                             ),
                             inputProps: {
@@ -421,20 +597,34 @@ export default function NewVendorServicePage() {
                             borderRadius: "10px",
                             backgroundColor: "white",
                             fontSize: "12px",
-                            "& fieldset": { borderColor: "#e3d9d1" },
-                            "&:hover fieldset": { borderColor: "#d5c8be" },
-                            "&.Mui-focused fieldset": { borderColor: "#a47e43", borderWidth: "1px" },
+                            "& fieldset": {
+                              borderColor: "#e3d9d1",
+                            },
+                            "&:hover fieldset": {
+                              borderColor: "#d5c8be",
+                            },
+                            "&.Mui-focused fieldset": {
+                              borderColor: "#a47e43",
+                              borderWidth: "1px",
+                            },
                           },
                         }}
                       />
                     </div>
 
                     {prices.length > 1 && (
-                      <Tooltip title={t("vendor.services.form.removePrice")} arrow>
+                      <Tooltip
+                        title={t(
+                          "vendor.services.form.removePrice"
+                        )}
+                        arrow
+                      >
                         <button
                           type="button"
-                          onClick={() => removePriceRow(index)}
-                          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#e3d9d1] text-[#9a5555] transition hover:bg-red-50 hover:border-red-200 sm:h-11 sm:w-11"
+                          onClick={() =>
+                            removePriceRow(index)
+                          }
+                          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#e3d9d1] text-[#9a5555] transition hover:border-red-200 hover:bg-red-50 sm:h-11 sm:w-11"
                         >
                           <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                         </button>
@@ -446,7 +636,9 @@ export default function NewVendorServicePage() {
             </div>
 
             <p className="mt-1.5 text-[10px] text-[#9b8f86] sm:mt-2 sm:text-xs">
-              {t("vendor.services.form.pricesHint")}
+              {t(
+                "vendor.services.form.pricesHint"
+              )}
             </p>
           </div>
 
@@ -455,9 +647,15 @@ export default function NewVendorServicePage() {
           ================================================= */}
 
           <div className="mb-5 sm:mb-6">
-            <label className="mb-1.5 block text-xs font-medium text-[#40352f] sm:mb-2 sm:text-sm">
-              {t("vendor.services.form.images")}
-            </label>
+            <div className="mb-1.5 flex items-center justify-between sm:mb-2">
+              <label className="text-xs font-medium text-[#40352f] sm:text-sm">
+                {t("vendor.services.form.images")}
+              </label>
+
+              <span className="text-[10px] font-medium text-[#9b8f86] sm:text-xs">
+                {images.length}/{MAX_IMAGES}
+              </span>
+            </div>
 
             <div className="flex flex-wrap gap-2.5 sm:gap-3">
               {imagePreviews.map((src, index) => (
@@ -468,34 +666,50 @@ export default function NewVendorServicePage() {
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={src}
-                    alt={t("vendor.services.form.selectedImageAlt", { number: index + 1 })}
+                    alt={t(
+                      "vendor.services.form.selectedImageAlt",
+                      {
+                        number: index + 1,
+                      }
+                    )}
                     className="h-full w-full object-cover"
                   />
+
                   <button
                     type="button"
                     onClick={() => removeImage(index)}
-                    className="absolute end-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition group-hover:opacity-100"
+                    className="absolute inset-e-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition group-hover:opacity-100"
                   >
                     <Trash2 className="h-3 w-3" />
                   </button>
                 </div>
               ))}
 
-              <label className="flex h-20 w-20 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-[#d5c8be] bg-[#fcfaf8] text-[#9b8f86] transition hover:border-[#a47e43] hover:text-[#a47e43] sm:h-24 sm:w-24">
-                <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
-                <span className="text-[10px]">{t("vendor.services.form.addPhoto")}</span>
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={handleImagesSelected}
-                  className="hidden"
-                />
-              </label>
+              {images.length < MAX_IMAGES && (
+                <label className="flex h-20 w-20 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-[#d5c8be] bg-[#fcfaf8] text-[#9b8f86] transition hover:border-[#a47e43] hover:text-[#a47e43] sm:h-24 sm:w-24">
+                  <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
+
+                  <span className="text-[10px]">
+                    {t("vendor.services.form.addPhoto")}
+                  </span>
+
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleImagesSelected}
+                    className="hidden"
+                  />
+                </label>
+              )}
             </div>
 
             <p className="mt-1.5 text-[10px] text-[#9b8f86] sm:mt-2 sm:text-xs">
               {t("vendor.services.form.imagesHint")}
+              {" "}
+              <span className="font-medium text-[#756b65]">
+                ({images.length}/{MAX_IMAGES})
+              </span>
             </p>
           </div>
 
@@ -506,18 +720,26 @@ export default function NewVendorServicePage() {
           <div className="flex flex-col gap-2 border-t border-[#eee7e2] pt-4 sm:flex-row sm:items-center sm:gap-3 sm:pt-6">
             <button
               type="submit"
-              disabled={isSubmitting || hasNoAssignedCategories}
+              disabled={
+                isSubmitting || hasNoAssignedCategories
+              }
               className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-[#30251f] px-4 text-xs font-medium text-white transition hover:bg-[#463831] disabled:opacity-60 sm:h-11 sm:px-6 sm:text-sm"
             >
               {isSubmitting ? (
                 <>
                   <Loader2 className="h-3.5 w-3.5 animate-spin sm:h-4 sm:w-4" />
-                  {t("vendor.services.form.submitting")}
+
+                  {t(
+                    "vendor.services.form.submitting"
+                  )}
                 </>
               ) : (
                 <>
                   <Save className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                  {t("vendor.services.form.submitForReview")}
+
+                  {t(
+                    "vendor.services.form.submitForReview"
+                  )}
                 </>
               )}
             </button>
@@ -533,7 +755,10 @@ export default function NewVendorServicePage() {
             {/* Status indicator */}
             <div className="mt-2 flex items-center gap-2 text-[10px] text-[#9b8f86] sm:ms-auto sm:mt-0 sm:text-xs">
               <span className="inline-flex h-1.5 w-1.5 rounded-full bg-amber-400" />
-              <span>{t("vendor.services.form.draft")}</span>
+
+              <span>
+                {t("vendor.services.form.draft")}
+              </span>
             </div>
           </div>
 
@@ -543,11 +768,25 @@ export default function NewVendorServicePage() {
 
           <div className="mt-4 flex items-start gap-2 rounded-xl bg-[#fbf6f1] p-3 text-[10px] text-[#6f625a] sm:mt-6 sm:p-3.5 sm:text-xs">
             <HelpCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#a47e43] sm:h-4 sm:w-4" />
+
             <span className="leading-5">
-              <span className="font-medium text-[#40352f]">{t("vendor.services.form.needHelp")}</span>{" "}
-              {t("vendor.services.form.needHelpText")}
-              <Link href="/vendor/support" className="ms-1 font-medium text-[#a47e43] hover:underline">
-                {t("vendor.services.form.contactSupport")}
+              <span className="font-medium text-[#40352f]">
+                {t(
+                  "vendor.services.form.needHelp"
+                )}
+              </span>{" "}
+
+              {t(
+                "vendor.services.form.needHelpText"
+              )}
+
+              <Link
+                href="/vendor/support"
+                className="ms-1 font-medium text-[#a47e43] hover:underline"
+              >
+                {t(
+                  "vendor.services.form.contactSupport"
+                )}
               </Link>
             </span>
           </div>
