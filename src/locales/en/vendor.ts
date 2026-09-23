@@ -19,6 +19,9 @@ const vendor: Translation["vendor"] = {
     reviews: "Reviews",
     security: "Security",
     userMode: "User Mode",
+    userModeTooltip:
+      "User Mode will open after all vendors have completed adding their services, and no later than October 10, 2026.",
+    comingSoon: "Coming Soon",
     subscriptions: "Subscriptions",
     helpCenter: "Help Center",
     settings: "Settings",

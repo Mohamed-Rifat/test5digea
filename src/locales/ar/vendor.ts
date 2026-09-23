@@ -17,6 +17,9 @@ const vendor = {
     reviews: "التقييمات",
     security: "الأمان",
     userMode: "وضع المستخدم",
+    userModeTooltip:
+      "سيتم فتح وضع المستخدمين بعد الانتهاء من إضافة الخدمات من جميع مزودي الخدمة، وبحد أقصى 10 أكتوبر 2026.",
+    comingSoon: "قريبًا",
     subscriptions: "الاشتراكات",
     helpCenter: "مركز المساعدة",
     settings: "الإعدادات",
