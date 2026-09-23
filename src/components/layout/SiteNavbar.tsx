@@ -881,8 +881,6 @@ export default function SiteNavbar() {
 
           {/* footer */}
           <div className="border-t border-[#eee7e1] bg-[#fafafa] p-4">
-            <LanguageSwitcher variant="segmented" className="mb-3" />
-
             {!isAuthenticated ? (
               <div className="flex gap-2">
                 <Link
