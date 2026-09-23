@@ -193,9 +193,9 @@ export default function SiteNavbar() {
             height={36}
             className="rounded-full"
           />
-          <span className="font-serif text-lg font-medium text-[#30251f]">
-            5Digea
-          </span>
+        <span className="hidden lg:inline font-serif text-lg font-medium text-[#30251f]">
+              5Digea
+         </span>
         </Link>
 
         {/* DESKTOP NAV */}
