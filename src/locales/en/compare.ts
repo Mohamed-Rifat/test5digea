@@ -10,10 +10,15 @@ const compare: Translation["compare"] = {
   backToMarketplace: "Back to marketplace",
   sameCategoryNotice: "All selected services belong to the same category.",
   comparison: "Comparison",
+  swipeHint: "Swipe to see the rest of your options side by side",
   viewDetails: "View details →",
   removeItem: "Remove {title} from comparison",
+  showOnlyDifferences: "Show only differences",
+  item: "Item",
+  tip: "Prices and details may change — contact the provider to confirm.",
   rows: {
     vendor: "Vendor",
+    images: "Service photos",
     category: "Category",
     description: "Description",
     rating: "Rating",
@@ -24,6 +29,7 @@ const compare: Translation["compare"] = {
   gallery: "Gallery",
   contactVendor: "Contact vendor",
   noImages: "No images",
+  viewImage: "View {title} photos",
   errors: {
     selectTwo: "Select at least two items to compare.",
     maxItems: "You can compare up to {max} items at once.",

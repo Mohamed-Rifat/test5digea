@@ -168,6 +168,15 @@ function ServicesPageContent() {
     setSearchTerm(searchInput.trim());
   };
 
+  // Clearing the compare tray should also let go of the category the page
+  // locked onto automatically while comparing — otherwise the list stays
+  // filtered with no obvious reason once there's nothing left to compare.
+  const handleClearCompare = () => {
+    clearAll();
+    setPage(1);
+    setCategoryId("");
+  };
+
   const clearAllFilters = () => {
     setPage(1);
     setCategoryId("");
@@ -181,6 +190,36 @@ function ServicesPageContent() {
   const activeFiltersCount =
     [categoryId, minPrice, maxPrice, searchTerm].filter(Boolean).length +
     (sortBy !== 0 ? 1 : 0);
+
+  // Once the user starts a comparison from the "all categories" view, keep
+  // pushing manual filtering back on them serves no purpose: only services
+  // from the same category can ever be compared together, so lock the list
+  // to that category automatically the moment the first item is selected —
+  // and let go of that lock again the moment nothing is left to compare
+  // (whether that's from "Clear all" or from un-selecting the last item),
+  // as long as the person hasn't since changed the filter themselves.
+  const compareLockedCategoryRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (selected.length > 0) {
+      const compareCategoryId = selected[0].categoryId || null;
+      if (compareCategoryId && categoryId !== compareCategoryId) {
+        setCategoryId(compareCategoryId);
+        setPage(1);
+      }
+      compareLockedCategoryRef.current = compareCategoryId;
+      return;
+    }
+
+    if (
+      compareLockedCategoryRef.current &&
+      categoryId === compareLockedCategoryRef.current
+    ) {
+      setCategoryId("");
+      setPage(1);
+    }
+    compareLockedCategoryRef.current = null;
+  }, [selected, categoryId]);
 
   const items = result?.items ?? [];
   const totalPages = result?.totalPages ?? 1;
@@ -310,6 +349,7 @@ function ServicesPageContent() {
                         onClick={() => {
                           setPage(1);
                           setCategoryId("");
+                          setFiltersOpen(false);
                         }}
                         className={`group flex items-center justify-between rounded-xl border px-3.5 py-2.5 text-start text-xs font-medium transition ${
                           !categoryId
@@ -330,6 +370,7 @@ function ServicesPageContent() {
                             onClick={() => {
                               setPage(1);
                               setCategoryId(c.id);
+                              setFiltersOpen(false);
                             }}
                             className={`group flex items-center justify-between rounded-xl border px-3.5 py-2.5 text-start text-xs font-medium transition ${
                               active
@@ -454,50 +495,11 @@ function ServicesPageContent() {
       </section>
 
       {/* Results */}
-      <section className="mx-auto lg:max-w-10/12 px-4 py-12 sm:px-6 lg:px-8">
-        {/* Compare bar */}
-        {selected.length > 0 && (
-          <div className="sticky bottom-3 z-20 mb-6 flex flex-col gap-3 rounded-2xl bg-[#30251f] px-4 py-3 text-white shadow-[0_16px_40px_rgba(48,37,31,0.22)] sm:flex-row sm:items-center sm:justify-between sm:px-5">
-            <span className="text-sm">
-              {selected.length > 1
-                ? t("services.list.selectedMany", {
-                    count: selected.length,
-                    category: selected[0].categoryName,
-                  })
-                : t("services.list.selectedOne", {
-                    count: selected.length,
-                    category: selected[0].categoryName,
-                  })}
-            </span>
-
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={clearAll}
-                className="rounded-lg px-3 py-2 text-xs font-semibold text-white/80 hover:text-white"
-              >
-                {t("compare.clearAll")}
-              </button>
-
-              <Link
-                href={
-                  selected.length >= 2
-                    ? `/compare?type=service&ids=${selected.map((s) => s.id).join(",")}&categoryId=${selected[0].categoryId}`
-                    : "#"
-                }
-                aria-disabled={selected.length < 2}
-                className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-semibold ${
-                  selected.length >= 2
-                    ? "bg-white text-[#30251f]"
-                    : "pointer-events-none bg-white/30 text-white/60"
-                }`}
-              >
-                <GitCompare size={15} />
-                {t("services.list.compareButton", { count: selected.length })}
-              </Link>
-            </div>
-          </div>
-        )}
+      <section
+        className={`mx-auto lg:max-w-10/12 px-4 py-12 sm:px-6 lg:px-8 ${
+          selected.length > 0 ? "pb-32 sm:pb-28" : ""
+        }`}
+      >
 
         {/* Loading skeleton: a full page of cards, so the layout doesn't jump */}
         {loading && (
@@ -609,6 +611,57 @@ function ServicesPageContent() {
           </div>
         )}
       </section>
+
+      {/* Compare tray: pinned to the bottom of the viewport at all times, so
+          it never scrolls away — the person doesn't have to hunt for it or
+          scroll back up to reach "compare" after picking items. */}
+      {selected.length > 0 && (
+        <div
+          className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-[#30251f] px-4 pt-3 text-white shadow-[0_-12px_30px_rgba(48,37,31,0.25)] sm:px-6"
+          style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom, 0px))" }}
+        >
+          <div className="mx-auto flex max-w-3xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <span className="text-sm">
+              {selected.length > 1
+                ? t("services.list.selectedMany", {
+                    count: selected.length,
+                    category: selected[0].categoryName,
+                  })
+                : t("services.list.selectedOne", {
+                    count: selected.length,
+                    category: selected[0].categoryName,
+                  })}
+            </span>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleClearCompare}
+                className="rounded-lg px-3 py-2 text-xs font-semibold text-white/80 hover:text-white"
+              >
+                {t("compare.clearAll")}
+              </button>
+
+              <Link
+                href={
+                  selected.length >= 2
+                    ? `/compare?type=service&ids=${selected.map((s) => s.id).join(",")}&categoryId=${selected[0].categoryId}`
+                    : "#"
+                }
+                aria-disabled={selected.length < 2}
+                className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-semibold ${
+                  selected.length >= 2
+                    ? "bg-white text-[#30251f]"
+                    : "pointer-events-none bg-white/30 text-white/60"
+                }`}
+              >
+                <GitCompare size={15} />
+                {t("services.list.compareButton", { count: selected.length })}
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

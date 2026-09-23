@@ -825,7 +825,7 @@ export default function AdminServiceDetailsPage() {
                         key={image.id}
                         type="button"
                         onClick={() => setLightboxIndex(index)}
-                        className="group relative aspect-[4/3] overflow-hidden rounded-xl bg-gray-100 text-left"
+                        className="group relative aspect-4/3 overflow-hidden rounded-xl bg-gray-100 text-left"
                       >
                         <img
                           src={image.url}
@@ -835,7 +835,7 @@ export default function AdminServiceDetailsPage() {
                           className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
                         />
 
-                        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/50 to-transparent px-3 pb-2 pt-8">
+                        <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/50 to-transparent px-3 pb-2 pt-8">
                           <span className="text-xs font-medium text-white">
                             Image {index + 1}
                           </span>
@@ -844,7 +844,7 @@ export default function AdminServiceDetailsPage() {
                     ))}
                 </div>
               ) : (
-                <div className="flex min-h-[180px] flex-col items-center justify-center rounded-xl border border-dashed border-gray-200 bg-gray-50">
+                <div className="flex min-h-45 flex-col items-center justify-center rounded-xl border border-dashed border-gray-200 bg-gray-50">
                   <ImageIcon
                     size={28}
                     className="text-gray-300"

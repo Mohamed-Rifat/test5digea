@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -34,6 +34,10 @@ export default function ImageLightbox({
   const isRtl = dir === "rtl";
   const [index, setIndex] = useState(initialIndex);
   const [mounted, setMounted] = useState(false);
+  // Touch-swipe state for mobile: only the horizontal delta at the moment
+  // of release decides whether it was a swipe (vs. a scroll or a tap).
+  const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
 
   useEffect(() => setMounted(true), []);
 
@@ -71,6 +75,29 @@ export default function ImageLightbox({
   const goPrev = () => setIndex((prev) => (prev - 1 + images.length) % images.length);
   const goNext = () => setIndex((prev) => (prev + 1) % images.length);
 
+  const handleTouchStart = (event: React.TouchEvent) => {
+    touchStartX.current = event.touches[0].clientX;
+    touchStartY.current = event.touches[0].clientY;
+  };
+
+  const handleTouchEnd = (event: React.TouchEvent) => {
+    if (touchStartX.current === null || touchStartY.current === null) return;
+    const deltaX = event.changedTouches[0].clientX - touchStartX.current;
+    const deltaY = event.changedTouches[0].clientY - touchStartY.current;
+    touchStartX.current = null;
+    touchStartY.current = null;
+
+    // Require a clearly horizontal, deliberate drag so a vertical scroll or
+    // a plain tap never gets mistaken for a swipe.
+    if (Math.abs(deltaX) < 45 || Math.abs(deltaX) < Math.abs(deltaY)) return;
+
+    // A left swipe advances to the next photo in LTR (mirrors typical photo
+    // viewers); in RTL the whole gesture flips, same as the arrow keys above.
+    const swipedForward = isRtl ? deltaX > 0 : deltaX < 0;
+    if (swipedForward) goNext();
+    else goPrev();
+  };
+
   return createPortal(
     <div
       className="fixed inset-0 z-100 flex flex-col bg-black/95 backdrop-blur-sm animate-in fade-in duration-150"
@@ -104,7 +131,11 @@ export default function ImageLightbox({
       </div>
 
       {/* Main image */}
-      <div className="relative flex flex-1 items-center justify-center px-4 pb-4 sm:px-16">
+      <div
+        className="relative flex flex-1 items-center justify-center px-4 pb-4 sm:px-16"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
         {images.length > 1 && (
           <button
             type="button"

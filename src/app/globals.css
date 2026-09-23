@@ -90,6 +90,33 @@ button {
   transform: rotate(0deg) scale(1.015);
 }
 
+/* Premium dropdown/menu entrance: a soft lift with a touch of overshoot,
+   used across the navbar's Categories mega-menu, search suggestions,
+   account menus and mobile accordions. */
+@keyframes menu-pop {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.96);
+  }
+  60% {
+    opacity: 1;
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-menu-pop {
+  animation: menu-pop 0.32s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-menu-pop {
+    animation-duration: 0.01ms;
+  }
+}
+
 @media (max-width: 640px) {
   input, select, textarea {
     font-size: 16px;
@@ -226,6 +253,23 @@ button {
         }
       
 /* Responsive marketplace polish */
+
+/* Comparison table column sizing: below `lg` the items scroll and snap one
+   (almost) at a time — like flipping through cards that stay lined up with
+   their labels; at `lg` and up everything fits and just sits side by side,
+   no scrolling needed. */
+:root {
+  --compare-label-w: 104px;
+  --compare-item-w: min(80vw, 300px);
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --compare-label-w: 150px;
+    --compare-item-w: minmax(180px, 1fr);
+  }
+}
+
 .compare-scroll {
   scrollbar-width: thin;
   scrollbar-color: #d8cfc7 transparent;

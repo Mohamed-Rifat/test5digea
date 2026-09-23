@@ -55,6 +55,18 @@ const searchTargets: {
   { labelKey: "navbar.services", href: "/services", icon: BriefcaseBusiness },
 ];
 
+// Shared classes for the underline-on-hover nav link treatment, so the
+// primary and secondary links (and the Categories trigger) stay identical.
+const navLinkClass = (active: boolean) =>
+  `group relative px-3 py-2 text-[12.5px] font-semibold uppercase tracking-[0.14em] transition-colors duration-200 ${
+    active ? "text-[#30251f]" : "text-[#71655d] hover:text-[#30251f]"
+  }`;
+
+const navUnderlineClass = (active: boolean) =>
+  `pointer-events-none absolute inset-x-3 -bottom-px h-px origin-center rounded-full bg-gradient-to-r from-[#a47e43] via-[#d3b483] to-[#a47e43] transition-transform duration-300 ease-out ${
+    active ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"
+  }`;
+
 export default function SiteNavbar() {
   const router = useRouter();
   const pathname = usePathname();
@@ -72,6 +84,14 @@ export default function SiteNavbar() {
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [mobileAccountOpen, setMobileAccountOpen] = useState(false);
 
+  // Premium chrome behaviour: the bar compacts and gains a soft shadow once
+  // the page scrolls, and tucks itself away on the way down so it never
+  // competes with the page — it reappears the moment the person scrolls
+  // back up, the way most flagship product sites behave.
+  const [scrolled, setScrolled] = useState(false);
+  const [hideOnScroll, setHideOnScroll] = useState(false);
+  const lastScrollY = useRef(0);
+
   const categoriesRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
   const mobileSearchInputRef = useRef<HTMLInputElement>(null);
@@ -82,6 +102,35 @@ export default function SiteNavbar() {
 
   const activeCategories = categories.filter((c) => c.isActive);
   const canJoinAsVendor = !isAuthenticated || isUser;
+
+  // Any open overlay pauses the auto-hide behaviour, so the bar never slides
+  // away while someone is mid-interaction with it.
+  const anyOverlayOpen =
+    mobileOpen ||
+    mobileSearchOpen ||
+    mobileAccountOpen ||
+    categoriesOpen ||
+    menuOpen ||
+    showSearchTargets;
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const y = window.scrollY;
+      setScrolled(y > 10);
+
+      if (y < 96) {
+        setHideOnScroll(false);
+      } else if (y > lastScrollY.current + 6) {
+        setHideOnScroll(true);
+      } else if (y < lastScrollY.current - 6) {
+        setHideOnScroll(false);
+      }
+      lastScrollY.current = y;
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   // Close the desktop categories dropdown on outside click.
   useEffect(() => {
@@ -183,36 +232,49 @@ export default function SiteNavbar() {
 
   return (
     <>
-    <header className="sticky top-0 z-40 border-b border-[#eee7e1] bg-[#f8f5ef]/95 backdrop-blur-md">
-      <div className="mx-auto flex h-18 lg:max-w-10/12 items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-        <Link href="/" className="flex shrink-0 items-center gap-2">
-          <Image
-            src="/Logo.png"
-            alt="5digea"
-            width={36}
-            height={36}
-            className="rounded-full"
-          />
-        <span className="hidden lg:inline font-serif text-lg font-medium text-[#30251f]">
+    <header
+      className={`sticky top-0 z-40 border-b transition-all duration-300 ease-out ${
+        scrolled
+          ? "border-[#eee2d6] bg-[#faf8f6]/92 shadow-[0_18px_40px_-24px_rgba(48,37,31,0.35)] backdrop-blur-xl"
+          : "border-transparent bg-[#f8f5ef]/85 backdrop-blur-md"
+      } ${hideOnScroll && !anyOverlayOpen ? "-translate-y-full" : "translate-y-0"}`}
+    >
+      <div
+        className={`mx-auto flex lg:max-w-10/12 items-center justify-between gap-4 px-4 transition-[height] duration-300 ease-out sm:px-6 lg:px-8 ${
+          scrolled ? "h-15.5" : "h-18"
+        }`}
+      >
+        <Link href="/" className="group flex shrink-0 items-center gap-2.5">
+          <span className="relative flex shrink-0 items-center justify-center rounded-full ring-1 ring-[#e7d9c2] transition-transform duration-300 group-hover:scale-105">
+            <Image
+              src="/Logo.png"
+              alt="5digea"
+              width={36}
+              height={36}
+              className={`rounded-full transition-all duration-300 ${scrolled ? "h-8 w-8" : "h-9 w-9"}`}
+            />
+          </span>
+          <span className="hidden flex-col leading-none lg:flex">
+            <span className="font-serif text-lg font-medium tracking-tight text-[#30251f]">
               5Digea
-         </span>
+            </span>
+            <span className="mt-0.5 text-[9px] font-semibold uppercase tracking-[0.32em] text-[#a47e43]">
+              Wedding Marketplace
+            </span>
+          </span>
         </Link>
 
         {/* DESKTOP NAV */}
-        <nav className="hidden items-center gap-1 lg:flex">
-          {primaryLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={`rounded-full px-4 py-2 text-sm font-medium transition ${
-                isActive(link.href)
-                  ? "bg-[#30251f] text-white"
-                  : "text-[#5f544d] hover:bg-[#f0e9e0] hover:text-[#30251f]"
-              }`}
-            >
-              {t(link.labelKey)}
-            </Link>
-          ))}
+        <nav className="hidden items-center gap-0.5 lg:flex">
+          {primaryLinks.map((link) => {
+            const active = isActive(link.href);
+            return (
+              <Link key={link.href} href={link.href} className={navLinkClass(active)}>
+                {t(link.labelKey)}
+                <span className={navUnderlineClass(active)} />
+              </Link>
+            );
+          })}
 
           {/* CATEGORIES (mega-menu) — browse by category, separate from
               the standalone "Services" link above. */}
@@ -220,24 +282,26 @@ export default function SiteNavbar() {
             <button
               type="button"
               onClick={() => setCategoriesOpen((v) => !v)}
-              className={`flex items-center gap-1 rounded-full px-4 py-2 text-sm font-medium transition ${
-                categoriesOpen
-                  ? "bg-[#f0e9e0] text-[#30251f]"
-                  : "text-[#5f544d] hover:bg-[#f0e9e0] hover:text-[#30251f]"
-              }`}
+              className={`${navLinkClass(categoriesOpen)} flex items-center gap-1`}
             >
               {t("navbar.categories")}
               <ChevronDown
-                size={16}
-                className={`transition-transform ${categoriesOpen ? "rotate-180" : ""}`}
+                size={14}
+                className={`transition-transform duration-300 ${
+                  categoriesOpen ? "rotate-180 text-[#a47e43]" : ""
+                }`}
               />
+              <span className={navUnderlineClass(categoriesOpen)} />
             </button>
 
             {categoriesOpen && (
-              <div className="absolute left-1/2 top-full z-30 mt-3 w-[min(90vw,720px)] -translate-x-1/2 rounded-2xl border border-[#eee7e1] bg-white p-4 shadow-[0_18px_40px_rgba(48,37,31,0.14)]">
-                <p className="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-[#a47e43]">
-                  {t("navbar.browseByCategory")}
-                </p>
+              <div className="animate-menu-pop absolute start-1/2 top-full z-30 mt-4 w-[min(90vw,720px)] origin-top -translate-x-1/2 rtl:translate-x-1/2 overflow-hidden rounded-[1.75rem] border border-[#eee2d6] bg-white/98 p-5 shadow-[0_32px_70px_-20px_rgba(48,37,31,0.3)] backdrop-blur-xl">
+                <div className="mb-3 flex items-center gap-2 px-1">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-[#a47e43]">
+                    {t("navbar.browseByCategory")}
+                  </p>
+                  <span className="h-px flex-1 bg-gradient-to-r from-[#e7d5b8] to-transparent rtl:bg-gradient-to-l" />
+                </div>
                 {activeCategories.length === 0 ? (
                   <p className="px-1 py-2 text-sm text-[#766d67]">
                     {t("navbar.noCategories")}
@@ -249,50 +313,49 @@ export default function SiteNavbar() {
                         key={category.id}
                         type="button"
                         onClick={() => goToCategory(category.id)}
-                        className="rounded-xl px-3 py-2 text-start text-sm text-[#5f544d] transition hover:bg-[#faf7f4] hover:text-[#30251f]"
+                        className="rounded-2xl px-3.5 py-2.5 text-start text-sm text-[#5f544d] transition-all duration-200 hover:bg-[#faf3ea] hover:text-[#30251f] hover:shadow-[inset_0_0_0_1px_#eadfce]"
                       >
                         {category.name}
                       </button>
                     ))}
                   </div>
                 )}
-                <div className="mt-2 border-t border-[#f0e9e0] pt-2">
+                <div className="mt-3 border-t border-[#f1ece2] pt-3">
                   <Link
                     href="/vendors"
                     onClick={() => setCategoriesOpen(false)}
-                    className="flex items-center gap-1 px-1 py-1 text-sm font-medium text-[#a47e43] hover:text-[#8a6836]"
+                    className="group inline-flex items-center gap-1 px-1 py-1 text-sm font-semibold text-[#a47e43] transition-colors hover:text-[#8a6836]"
                   >
                     {t("navbar.viewAllVendors")}
-                    <ChevronRight size={14} className="rtl:rotate-180" />
+                    <ChevronRight
+                      size={14}
+                      className="transition-transform duration-200 rtl:rotate-180 group-hover:translate-x-1 rtl:group-hover:-translate-x-1"
+                    />
                   </Link>
                 </div>
               </div>
             )}
           </div>
 
-          {secondaryLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={`rounded-full px-4 py-2 text-sm font-medium transition ${
-                isActive(link.href)
-                  ? "bg-[#30251f] text-white"
-                  : "text-[#5f544d] hover:bg-[#f0e9e0] hover:text-[#30251f]"
-              }`}
-            >
-              {t(link.labelKey)}
-            </Link>
-          ))}
+          {secondaryLinks.map((link) => {
+            const active = isActive(link.href);
+            return (
+              <Link key={link.href} href={link.href} className={navLinkClass(active)}>
+                {t(link.labelKey)}
+                <span className={navUnderlineClass(active)} />
+              </Link>
+            );
+          })}
         </nav>
 
-        <div className="hidden items-center gap-2 lg:flex">
+        <div className="hidden items-center gap-2.5 lg:flex">
           {/* SEARCH — pick Vendors or Services, same pattern as the admin
               dashboard's quick search. */}
           <div className="relative" ref={searchRef}>
             <form onSubmit={handleSearchSubmit} className="relative">
               <Search
                 size={16}
-                className="pointer-events-none absolute inset-s-3 top-1/2 -translate-y-1/2 text-[#a89c92]"
+                className="pointer-events-none absolute inset-s-3 top-1/2 -translate-y-1/2 text-[#a89c92] transition-colors duration-200 peer-focus:text-[#a47e43]"
               />
               <input
                 value={search}
@@ -303,12 +366,12 @@ export default function SiteNavbar() {
                 onFocus={() => setShowSearchTargets(true)}
                 type="text"
                 placeholder={t("navbar.searchPlaceholder")}
-                className="w-40 rounded-full border border-[#e4dbd0] bg-white py-2 ps-9 pe-3 text-sm text-[#30251f] outline-none transition focus:w-64 focus:border-[#b99a62]"
+                className="peer w-40 rounded-full border border-[#e4dbd0] bg-white/70 py-2 ps-9 pe-3 text-sm text-[#30251f] outline-none transition-all duration-300 focus:w-64 focus:border-[#b99a62] focus:bg-white focus:shadow-[0_10px_24px_-14px_rgba(164,126,67,0.5)]"
               />
             </form>
 
             {showSearchTargets && (
-              <div className="absolute inset-e-0 top-full z-30 mt-2 w-64 overflow-hidden rounded-xl border border-[#eee7e1] bg-white p-1.5 shadow-[0_18px_40px_rgba(48,37,31,0.14)]">
+              <div className="animate-menu-pop absolute inset-e-0 top-full z-30 mt-2.5 w-64 origin-top-right rtl:origin-top-left overflow-hidden rounded-2xl border border-[#eee2d6] bg-white/98 p-1.5 shadow-[0_24px_50px_-16px_rgba(48,37,31,0.3)] backdrop-blur-xl">
                 {searchTargets.map((target) => {
                   const Icon = target.icon;
                   return (
@@ -316,7 +379,7 @@ export default function SiteNavbar() {
                       key={target.href}
                       type="button"
                       onClick={() => goToSearch(target.href)}
-                      className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-start text-sm text-[#5f544d] transition hover:bg-[#faf7f4] hover:text-[#30251f]"
+                      className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-start text-sm text-[#5f544d] transition-colors duration-150 hover:bg-[#faf3ea] hover:text-[#30251f]"
                     >
                       <Icon size={15} className="text-[#a47e43]" />
                       {search.trim() ? (
@@ -340,8 +403,10 @@ export default function SiteNavbar() {
               <Link
                 href="/favorites"
                 aria-label={t("navbar.favorites")}
-                className={`flex h-10 w-10 items-center justify-center rounded-full border border-[#e4dbd0] text-[#5f544d] transition hover:border-[#b99a62] hover:text-[#a47e43] ${
-                  isActive("/favorites") ? "border-[#b99a62] text-[#a47e43]" : ""
+                className={`flex h-10 w-10 items-center justify-center rounded-full border transition-all duration-200 ${
+                  isActive("/favorites")
+                    ? "border-[#b99a62] bg-[#faf3ea] text-[#a47e43]"
+                    : "border-[#e4dbd0] text-[#5f544d] hover:border-[#b99a62] hover:text-[#a47e43]"
                 }`}
               >
                 <Heart size={18} />
@@ -350,8 +415,10 @@ export default function SiteNavbar() {
               <Link
                 href="/roadmap"
                 aria-label={t("navbar.weddingRoadmap")}
-                className={`flex h-10 w-10 items-center justify-center rounded-full border border-[#e4dbd0] text-[#5f544d] transition hover:border-[#b99a62] hover:text-[#a47e43] ${
-                  isActive("/roadmap") ? "border-[#b99a62] text-[#a47e43]" : ""
+                className={`flex h-10 w-10 items-center justify-center rounded-full border transition-all duration-200 ${
+                  isActive("/roadmap")
+                    ? "border-[#b99a62] bg-[#faf3ea] text-[#a47e43]"
+                    : "border-[#e4dbd0] text-[#5f544d] hover:border-[#b99a62] hover:text-[#a47e43]"
                 }`}
               >
                 <Map size={18} />
@@ -364,48 +431,59 @@ export default function SiteNavbar() {
           <LanguageSwitcher />
 
           {!isAuthenticated ? (
-            <div className="flex items-center gap-2 ps-2">
+            <div className="flex items-center gap-1.5 ps-2">
               <Link
                 href="/login"
-                className="rounded-full px-4 py-2 text-sm font-medium text-[#5f544d] transition hover:text-[#30251f]"
+                className="rounded-full px-4 py-2 text-[12.5px] font-semibold uppercase tracking-[0.08em] text-[#5f544d] transition-colors duration-200 hover:text-[#30251f]"
               >
                 {t("navbar.login")}
               </Link>
 
               <Link
                 href="/register"
-                className="rounded-full border border-[#c6a66f] bg-[#30251f] px-5 py-2.5 text-sm font-medium text-white transition hover:bg-[#42332a]"
+                className="group relative overflow-hidden rounded-full border border-[#c6a66f] bg-[#30251f] px-5 py-2.5 text-[12.5px] font-semibold uppercase tracking-[0.08em] text-white transition-all duration-300 hover:border-[#dcb97c] hover:shadow-[0_14px_30px_-10px_rgba(164,126,67,0.55)]"
               >
-                {t("navbar.signUp")}
+                <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full" />
+                <span className="relative">{t("navbar.signUp")}</span>
               </Link>
 
-          {canJoinAsVendor && (
-            <Link
-              href="/become-a-vendor"
-              className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition ${
-                isActive("/become-a-vendor")
-                  ? "bg-[#30251f] text-white"
-                  : "text-[#a47e43] hover:bg-[#f0e9e0] hover:text-[#8a6836]"
-              }`}
-            >
-              <Handshake size={15} />
-              {t("navbar.joinUs")}
-            </Link>
-          )}
+              {canJoinAsVendor && (
+                <Link
+                  href="/become-a-vendor"
+                  className={`group flex items-center gap-1.5 rounded-full px-3.5 py-2 text-[12.5px] font-semibold uppercase tracking-[0.08em] transition-colors duration-200 ${
+                    isActive("/become-a-vendor")
+                      ? "bg-[#faf3ea] text-[#8a6836]"
+                      : "text-[#a47e43] hover:bg-[#faf3ea] hover:text-[#8a6836]"
+                  }`}
+                >
+                  <Handshake size={14} className="transition-transform duration-200 group-hover:-rotate-6" />
+                  {t("navbar.joinUs")}
+                </Link>
+              )}
             </div>
           ) : (
             <div className="relative ps-2">
               <button
                 type="button"
                 onClick={() => setMenuOpen((v) => !v)}
-                className="flex items-center gap-2 rounded-full border border-[#e4dbd0] py-1.5 ps-1.5 pe-3 text-sm font-medium text-[#30251f] transition hover:border-[#b99a62]"
+                className={`flex items-center gap-2.5 rounded-full border py-1.5 ps-1.5 pe-3.5 text-sm font-medium transition-all duration-200 ${
+                  menuOpen
+                    ? "border-[#c6a66f] bg-[#faf3ea] text-[#30251f] shadow-[0_10px_24px_-14px_rgba(164,126,67,0.5)]"
+                    : "border-[#e4dbd0] text-[#30251f] hover:border-[#c6a66f] hover:bg-[#faf7f4]"
+                }`}
               >
-                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#f0e9e0] text-[#a47e43]">
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#f2e2c6] to-[#d9b988] text-[#5c431f] shadow-inner">
                   <UserIcon size={16} />
                 </span>
                 <span className="max-w-27.5 truncate">
                   {user?.fullName || t("navbar.account")}
                 </span>
+                <ChevronDown
+                  size={13}
+                  className={`text-[#a89c92] transition-transform duration-300 ${
+                    menuOpen ? "rotate-180 text-[#a47e43]" : ""
+                  }`}
+                />
               </button>
 
               {menuOpen && (
@@ -414,54 +492,63 @@ export default function SiteNavbar() {
                     className="fixed inset-0 z-10"
                     onClick={() => setMenuOpen(false)}
                   />
-                  <div className="absolute inset-e-0 z-20 mt-2 w-52 overflow-hidden rounded-2xl border border-[#eee7e1] bg-white py-2 shadow-[0_18px_40px_rgba(48,37,31,0.14)]">
-                    {(isAdmin || isVendor) && (
-                      <Link
-                        href={getHomePath(role)}
-                        onClick={() => setMenuOpen(false)}
-                        className="flex items-center gap-2 px-4 py-2.5 text-sm text-[#5f544d] hover:bg-[#faf7f4] hover:text-[#30251f]"
-                      >
-                        <LayoutDashboard size={16} />
-                        {isAdmin ? t("navbar.adminDashboard") : t("navbar.vendorDashboard")}
-                      </Link>
-                    )}
+                  <div className="animate-menu-pop absolute inset-e-0 z-20 mt-2.5 w-56 origin-top-right rtl:origin-top-left overflow-hidden rounded-2xl border border-[#eee2d6] bg-white/98 shadow-[0_28px_60px_-18px_rgba(48,37,31,0.3)] backdrop-blur-xl">
+                    <div className="border-b border-[#f1ece2] px-4 pb-3 pt-3.5">
+                      <p className="truncate text-sm font-semibold text-[#30251f]">
+                        {user?.fullName || t("navbar.account")}
+                      </p>
+                      <p className="text-xs text-[#9b8f86]">{t("navbar.signedIn")}</p>
+                    </div>
 
-                    {isUser && (
-                      <>
+                    <div className="py-1.5">
+                      {(isAdmin || isVendor) && (
                         <Link
-                          href="/profile"
+                          href={getHomePath(role)}
                           onClick={() => setMenuOpen(false)}
-                          className="flex items-center gap-2 px-4 py-2.5 text-sm text-[#5f544d] hover:bg-[#faf7f4] hover:text-[#30251f]"
+                          className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-[#5f544d] transition-colors duration-150 hover:bg-[#faf3ea] hover:text-[#30251f]"
                         >
-                          <User size={16} />
-                          {t("navbar.myProfile")}
+                          <LayoutDashboard size={16} className="text-[#a47e43]" />
+                          {isAdmin ? t("navbar.adminDashboard") : t("navbar.vendorDashboard")}
                         </Link>
-                        <Link
-                          href="/favorites"
-                          onClick={() => setMenuOpen(false)}
-                          className="flex items-center gap-2 px-4 py-2.5 text-sm text-[#5f544d] hover:bg-[#faf7f4] hover:text-[#30251f]"
-                        >
-                          <Heart size={16} />
-                          {t("navbar.favorites")}
-                        </Link>
-                        <Link
-                          href="/roadmap"
-                          onClick={() => setMenuOpen(false)}
-                          className="flex items-center gap-2 px-4 py-2.5 text-sm text-[#5f544d] hover:bg-[#faf7f4] hover:text-[#30251f]"
-                        >
-                          <Map size={16} />
-                          {t("navbar.weddingRoadmap")}
-                        </Link>
-                        <Link
-                          href="/change-password"
-                          onClick={() => setMenuOpen(false)}
-                          className="flex items-center gap-2 px-4 py-2.5 text-sm text-[#5f544d] hover:bg-[#faf7f4] hover:text-[#30251f]"
-                        >
-                          <KeyRound size={16} />
-                          {t("navbar.security")}
-                        </Link>
-                      </>
-                    )}
+                      )}
+
+                      {isUser && (
+                        <>
+                          <Link
+                            href="/profile"
+                            onClick={() => setMenuOpen(false)}
+                            className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-[#5f544d] transition-colors duration-150 hover:bg-[#faf3ea] hover:text-[#30251f]"
+                          >
+                            <User size={16} className="text-[#a47e43]" />
+                            {t("navbar.myProfile")}
+                          </Link>
+                          <Link
+                            href="/favorites"
+                            onClick={() => setMenuOpen(false)}
+                            className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-[#5f544d] transition-colors duration-150 hover:bg-[#faf3ea] hover:text-[#30251f]"
+                          >
+                            <Heart size={16} className="text-[#a47e43]" />
+                            {t("navbar.favorites")}
+                          </Link>
+                          <Link
+                            href="/roadmap"
+                            onClick={() => setMenuOpen(false)}
+                            className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-[#5f544d] transition-colors duration-150 hover:bg-[#faf3ea] hover:text-[#30251f]"
+                          >
+                            <Map size={16} className="text-[#a47e43]" />
+                            {t("navbar.weddingRoadmap")}
+                          </Link>
+                          <Link
+                            href="/change-password"
+                            onClick={() => setMenuOpen(false)}
+                            className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-[#5f544d] transition-colors duration-150 hover:bg-[#faf3ea] hover:text-[#30251f]"
+                          >
+                            <KeyRound size={16} className="text-[#a47e43]" />
+                            {t("navbar.security")}
+                          </Link>
+                        </>
+                      )}
+                    </div>
 
                     <button
                       type="button"
@@ -469,7 +556,7 @@ export default function SiteNavbar() {
                         setMenuOpen(false);
                         logout();
                       }}
-                      className="flex w-full items-center gap-2 border-t border-[#f0e9e0] px-4 py-2.5 text-start text-sm text-[#b3453a] hover:bg-[#faf7f4]"
+                      className="flex w-full items-center gap-2.5 border-t border-[#f1ece2] px-4 py-2.5 text-start text-sm text-[#b3453a] transition-colors duration-150 hover:bg-[#fbf0ee]"
                     >
                       <LogOut size={16} />
                       {t("navbar.logout")}
@@ -493,13 +580,19 @@ export default function SiteNavbar() {
             }}
             aria-label={t("common.search")}
             aria-expanded={mobileSearchOpen}
-            className={`flex h-9 w-9 items-center justify-center rounded-xl border border-[#e4dbd0] transition ${
+            className={`flex h-9 w-9 items-center justify-center rounded-2xl border transition-all duration-200 ${
               mobileSearchOpen
-                ? "bg-[#f0e9e0] text-[#30251f]"
-                : "text-[#5f544d] hover:border-[#b99a62]"
+                ? "border-[#c6a66f] bg-[#faf3ea] text-[#30251f]"
+                : "border-[#e4dbd0] text-[#5f544d] hover:border-[#b99a62]"
             }`}
           >
-            {mobileSearchOpen ? <X size={18} /> : <Search size={18} />}
+            <span
+              className={`inline-flex transition-transform duration-300 ${
+                mobileSearchOpen ? "rotate-90" : "rotate-0"
+              }`}
+            >
+              {mobileSearchOpen ? <X size={18} /> : <Search size={18} />}
+            </span>
           </button>
 
           {isAuthenticated && isUser && (
@@ -507,8 +600,10 @@ export default function SiteNavbar() {
               <Link
                 href="/favorites"
                 aria-label={t("navbar.favorites")}
-                className={`flex h-9 w-9 items-center justify-center rounded-xl border border-[#e4dbd0] text-[#5f544d] transition hover:border-[#b99a62] hover:text-[#a47e43] ${
-                  isActive("/favorites") ? "border-[#b99a62] text-[#a47e43]" : ""
+                className={`flex h-9 w-9 items-center justify-center rounded-2xl border transition-all duration-200 ${
+                  isActive("/favorites")
+                    ? "border-[#c6a66f] bg-[#faf3ea] text-[#a47e43]"
+                    : "border-[#e4dbd0] text-[#5f544d] hover:border-[#b99a62] hover:text-[#a47e43]"
                 }`}
               >
                 <Heart size={17} />
@@ -526,39 +621,39 @@ export default function SiteNavbar() {
                   }}
                   aria-label={t("navbar.accountMenu")}
                   aria-expanded={mobileAccountOpen}
-                  className={`flex h-9 w-9 items-center justify-center rounded-xl border border-[#e4dbd0] transition ${
+                  className={`flex h-9 w-9 items-center justify-center rounded-2xl border transition-all duration-200 ${
                     mobileAccountOpen
-                      ? "bg-[#f0e9e0] text-[#30251f]"
-                      : "text-[#5f544d] hover:border-[#b99a62]"
+                      ? "border-[#c6a66f] bg-[#faf3ea] text-[#30251f]"
+                      : "border-[#e4dbd0] text-[#5f544d] hover:border-[#b99a62]"
                   }`}
                 >
                   <UserIcon size={17} />
                 </button>
 
                 {mobileAccountOpen && (
-                  <div className="absolute inset-e-0 z-30 mt-2 w-52 overflow-hidden rounded-2xl border border-[#eee7e1] bg-white py-2 shadow-[0_18px_40px_rgba(48,37,31,0.14)]">
+                  <div className="animate-menu-pop absolute inset-e-0 z-30 mt-2.5 w-52 origin-top-right rtl:origin-top-left overflow-hidden rounded-2xl border border-[#eee2d6] bg-white/98 py-2 shadow-[0_24px_50px_-16px_rgba(48,37,31,0.3)] backdrop-blur-xl">
                     <Link
                       href="/roadmap"
                       onClick={() => setMobileAccountOpen(false)}
-                      className="flex items-center gap-2 px-4 py-2.5 text-sm text-[#5f544d] hover:bg-[#faf7f4] hover:text-[#30251f]"
+                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-[#5f544d] transition-colors duration-150 hover:bg-[#faf3ea] hover:text-[#30251f]"
                     >
-                      <Map size={16} />
+                      <Map size={16} className="text-[#a47e43]" />
                       {t("navbar.weddingRoadmap")}
                     </Link>
                     <Link
                       href="/profile"
                       onClick={() => setMobileAccountOpen(false)}
-                      className="flex items-center gap-2 px-4 py-2.5 text-sm text-[#5f544d] hover:bg-[#faf7f4] hover:text-[#30251f]"
+                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-[#5f544d] transition-colors duration-150 hover:bg-[#faf3ea] hover:text-[#30251f]"
                     >
-                      <User size={16} />
+                      <User size={16} className="text-[#a47e43]" />
                       {t("navbar.myProfile")}
                     </Link>
                     <Link
                       href="/change-password"
                       onClick={() => setMobileAccountOpen(false)}
-                      className="flex items-center gap-2 px-4 py-2.5 text-sm text-[#5f544d] hover:bg-[#faf7f4] hover:text-[#30251f]"
+                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-[#5f544d] transition-colors duration-150 hover:bg-[#faf3ea] hover:text-[#30251f]"
                     >
-                      <KeyRound size={16} />
+                      <KeyRound size={16} className="text-[#a47e43]" />
                       {t("navbar.security")}
                     </Link>
                   </div>
@@ -578,7 +673,7 @@ export default function SiteNavbar() {
             type="button"
             aria-label={t("navbar.openMenu")}
             onClick={openMobileDrawer}
-            className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#e4dbd0] text-[#30251f]"
+            className="flex h-9 w-9 items-center justify-center rounded-2xl border border-[#e4dbd0] text-[#30251f] transition-all duration-200 hover:border-[#c6a66f]"
           >
             <Menu size={18} />
           </button>
@@ -587,7 +682,7 @@ export default function SiteNavbar() {
 
       {/* MOBILE SEARCH PANEL */}
       {mobileSearchOpen && (
-        <div className="absolute inset-x-0 top-full z-30 border-b border-[#eee7e1] bg-white p-3 shadow-lg lg:hidden">
+        <div className="animate-menu-pop absolute inset-x-0 top-full z-30 origin-top border-b border-[#eee2d6] bg-white/98 p-3 shadow-[0_24px_50px_-16px_rgba(48,37,31,0.3)] backdrop-blur-xl lg:hidden">
           <form onSubmit={handleSearchSubmit} className="relative">
             <Search
               size={16}
@@ -599,7 +694,7 @@ export default function SiteNavbar() {
               onChange={(e) => setSearch(e.target.value)}
               type="text"
               placeholder={t("navbar.searchPlaceholderMobile")}
-              className="h-11 w-full rounded-full border border-[#e4dbd0] bg-[#faf7f4] ps-10 pe-4 text-sm text-[#30251f] outline-none transition focus:border-[#b99a62] focus:bg-white"
+              className="h-11 w-full rounded-full border border-[#e4dbd0] bg-[#faf7f4] ps-10 pe-4 text-sm text-[#30251f] outline-none transition-all duration-200 focus:border-[#b99a62] focus:bg-white"
             />
           </form>
 
@@ -611,7 +706,7 @@ export default function SiteNavbar() {
                   key={target.href}
                   type="button"
                   onClick={() => goToSearch(target.href)}
-                  className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-start text-sm text-[#5f544d] transition hover:bg-[#faf7f4] hover:text-[#30251f]"
+                  className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-start text-sm text-[#5f544d] transition-colors duration-150 hover:bg-[#faf3ea] hover:text-[#30251f]"
                 >
                   <Icon size={15} className="text-[#a47e43]" />
                   {search.trim() ? (
@@ -642,14 +737,14 @@ export default function SiteNavbar() {
         {/* backdrop */}
         <div
           onClick={closeMobile}
-          className={`absolute inset-0 bg-black/40 transition-opacity duration-300 ${
+          className={`absolute inset-0 bg-[#20180f]/50 backdrop-blur-[2px] transition-opacity duration-300 ${
             mobileOpen ? "opacity-100" : "opacity-0"
           }`}
         />
 
         {/* panel */}
         <div
-          className={`absolute inset-e-0 top-0 flex h-full w-[85%] max-w-sm flex-col bg-[#f8f5ef] shadow-2xl transition-transform duration-300 ease-out ${
+          className={`absolute inset-e-0 top-0 flex h-full w-[85%] max-w-sm flex-col bg-[#f8f5ef] shadow-[0_0_60px_rgba(48,37,31,0.35)] transition-transform duration-300 ease-out ${
             mobileOpen ? "translate-x-0" : "translate-x-full rtl:-translate-x-full"
           }`}
         >
@@ -675,7 +770,7 @@ export default function SiteNavbar() {
               type="button"
               aria-label={t("navbar.closeMenu")}
               onClick={closeMobile}
-              className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#e4dbd0] text-[#30251f]"
+              className="flex h-9 w-9 items-center justify-center rounded-2xl border border-[#e4dbd0] text-[#30251f] transition-transform duration-200 hover:rotate-90 hover:border-[#c6a66f]"
             >
               <X size={18} />
             </button>
@@ -689,7 +784,7 @@ export default function SiteNavbar() {
                   key={link.href}
                   href={link.href}
                   onClick={closeMobile}
-                  className={`rounded-xl px-4 py-2.5 text-sm font-medium ${
+                  className={`rounded-xl px-4 py-2.5 text-sm font-medium transition-colors duration-150 ${
                     isActive(link.href)
                       ? "bg-[#30251f] text-white"
                       : "text-[#5f544d] hover:bg-[#f0e9e0]"
@@ -703,7 +798,7 @@ export default function SiteNavbar() {
               <button
                 type="button"
                 onClick={() => setMobileCategoriesOpen((v) => !v)}
-                className={`flex items-center justify-between rounded-xl px-4 py-2.5 text-sm font-semibold ${
+                className={`flex items-center justify-between rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors duration-150 ${
                   mobileCategoriesOpen ? "bg-[#f0e9e0] text-[#a47e43]" : "text-[#a47e43]"
                 }`}
               >
@@ -713,12 +808,12 @@ export default function SiteNavbar() {
                 </span>
                 <ChevronDown
                   size={16}
-                  className={`transition-transform ${mobileCategoriesOpen ? "rotate-180" : ""}`}
+                  className={`transition-transform duration-300 ${mobileCategoriesOpen ? "rotate-180" : ""}`}
                 />
               </button>
 
               {mobileCategoriesOpen && (
-                <div className="ms-2 flex flex-col gap-0.5 border-s border-[#eee7e1] ps-3">
+                <div className="animate-menu-pop ms-2 flex origin-top flex-col gap-0.5 border-s border-[#eee7e1] ps-3">
                   {activeCategories.length === 0 ? (
                     <p className="px-3 py-2 text-sm text-[#766d67]">
                       {t("navbar.noCategories")}
@@ -729,7 +824,7 @@ export default function SiteNavbar() {
                         key={category.id}
                         type="button"
                         onClick={() => goToCategory(category.id)}
-                        className="rounded-lg px-3 py-2 text-start text-sm text-[#5f544d] hover:bg-[#f0e9e0] hover:text-[#30251f]"
+                        className="rounded-lg px-3 py-2 text-start text-sm text-[#5f544d] transition-colors duration-150 hover:bg-[#f0e9e0] hover:text-[#30251f]"
                       >
                         {category.name}
                       </button>
@@ -743,7 +838,7 @@ export default function SiteNavbar() {
                   key={link.href}
                   href={link.href}
                   onClick={closeMobile}
-                  className={`rounded-xl px-4 py-2.5 text-sm font-medium ${
+                  className={`rounded-xl px-4 py-2.5 text-sm font-medium transition-colors duration-150 ${
                     isActive(link.href)
                       ? "bg-[#30251f] text-white"
                       : "text-[#5f544d] hover:bg-[#f0e9e0]"
@@ -757,7 +852,7 @@ export default function SiteNavbar() {
                 <Link
                   href="/become-a-vendor"
                   onClick={closeMobile}
-                  className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium ${
+                  className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors duration-150 ${
                     isActive("/become-a-vendor")
                       ? "bg-[#30251f] text-white"
                       : "text-[#a47e43] hover:bg-[#f0e9e0]"
@@ -774,7 +869,7 @@ export default function SiteNavbar() {
                   <Link
                     href={getHomePath(role)}
                     onClick={closeMobile}
-                    className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium text-[#5f544d] hover:bg-[#f0e9e0]"
+                    className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium text-[#5f544d] transition-colors duration-150 hover:bg-[#f0e9e0]"
                   >
                     <LayoutDashboard size={16} />
                     {isAdmin ? t("navbar.adminDashboard") : t("navbar.vendorDashboard")}
@@ -793,14 +888,14 @@ export default function SiteNavbar() {
                 <Link
                   href="/login"
                   onClick={closeMobile}
-                  className="flex-1 rounded-full border border-[#e4dbd0] px-4 py-2.5 text-center text-sm font-medium text-[#30251f]"
+                  className="flex-1 rounded-full border border-[#e4dbd0] px-4 py-2.5 text-center text-sm font-medium text-[#30251f] transition-colors duration-150 hover:border-[#c6a66f]"
                 >
                   {t("navbar.login")}
                 </Link>
                 <Link
                   href="/register"
                   onClick={closeMobile}
-                  className="flex-1 rounded-full bg-[#30251f] px-4 py-2.5 text-center text-sm font-medium text-white"
+                  className="flex-1 rounded-full border border-[#c6a66f] bg-[#30251f] px-4 py-2.5 text-center text-sm font-medium text-white transition-colors duration-150 hover:bg-[#42332a]"
                 >
                   {t("navbar.signUp")}
                 </Link>
@@ -820,7 +915,7 @@ export default function SiteNavbar() {
                     closeMobile();
                     logout();
                   }}
-                  className="flex shrink-0 items-center gap-1.5 rounded-full bg-[#f6dedb] px-3 py-2 text-sm font-medium text-[#b3453a] hover:bg-[#f0d0cc]"
+                  className="flex shrink-0 items-center gap-1.5 rounded-full bg-[#f6dedb] px-3 py-2 text-sm font-medium text-[#b3453a] transition-colors duration-150 hover:bg-[#f0d0cc]"
                 >
                   <LogOut size={14} />
                   {t("navbar.logout")}

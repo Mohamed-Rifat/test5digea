@@ -8,10 +8,15 @@ const compare = {
   backToMarketplace: "الرجوع للتصفح",
   sameCategoryNotice: "كل الخدمات المختارة من نفس التصنيف.",
   comparison: "المقارنة",
+  swipeHint: "اسحب يمين وشمال علشان تشوف باقي الاختيارات جنب بعض",
   viewDetails: "عرض التفاصيل ←",
   removeItem: "شيل {title} من المقارنة",
+  showOnlyDifferences: "اظهار الفروق بس",
+  item: "عنصر",
+  tip: "الأسعار والتفاصيل ممكن تتغير — تواصل مع مقدم الخدمة للتأكيد.",
   rows: {
     vendor: "مقدم الخدمة",
+    images: "صور الخدمة",
     category: "التصنيف",
     description: "الوصف",
     rating: "التقييم",
@@ -22,6 +27,7 @@ const compare = {
   gallery: "المعرض",
   contactVendor: "تواصل مع مقدم الخدمة",
   noImages: "مفيش صور",
+  viewImage: "شوف صور {title}",
   errors: {
     selectTwo: "اختار عنصرين على الأقل للمقارنة.",
     maxItems: "تقدر تقارن لحد {max} عناصر مرة واحدة.",
