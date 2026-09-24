@@ -1,7 +1,8 @@
 "use client";
 
-import { use, useCallback, useEffect, useMemo, useState } from "react";
+import { use, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   AlertCircle,
   ArrowLeft,
@@ -132,6 +133,14 @@ export default function AdminVendorDetailsPage({
   const { t, language } = useLanguage();
   const dateLocale = LANGUAGE_DATE_LOCALE[language];
 
+  // Deep link from the admin messages inbox: /admin/vendors/{id}?highlightCategory={categoryId}
+  // pre-selects and highlights the category a vendor requested, so approving it
+  // is a single "Save" click instead of hunting for it in the full list.
+  const searchParams = useSearchParams();
+  const highlightCategoryId = searchParams.get("highlightCategory");
+  const [hasAppliedHighlight, setHasAppliedHighlight] = useState(false);
+  const categoriesSectionRef = useRef<HTMLDivElement | null>(null);
+
   const [vendor, setVendor] = useState<Vendor | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -219,6 +228,27 @@ export default function AdminVendorDetailsPage({
       mounted = false;
     };
   }, [loadVendor]);
+
+  // Once categories are loaded, auto-select + scroll to the one requested
+  // via ?highlightCategory=, so the admin lands ready to hit Save.
+  useEffect(() => {
+    if (hasAppliedHighlight || !highlightCategoryId || categories.length === 0) {
+      return;
+    }
+
+    const exists = categories.some((category) => category.id === highlightCategoryId);
+    if (!exists) return;
+
+    setSelectedCategoryIds((prev) =>
+      prev.includes(highlightCategoryId) ? prev : [...prev, highlightCategoryId]
+    );
+    setHasAppliedHighlight(true);
+
+    categoriesSectionRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+  }, [categories, highlightCategoryId, hasAppliedHighlight]);
 
   // ================================
   // Pending changes (diff)
@@ -657,7 +687,10 @@ export default function AdminVendorDetailsPage({
             {/* ================================
                 Categories
             ================================= */}
-            <section className="mt-5 rounded-2xl border border-[#e9e1dc] bg-white p-5 shadow-[0_8px_30px_rgba(48,37,31,0.035)]">
+            <section
+              ref={categoriesSectionRef}
+              className="mt-5 rounded-2xl border border-[#e9e1dc] bg-white p-5 shadow-[0_8px_30px_rgba(48,37,31,0.035)]"
+            >
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <h2 className="text-base font-semibold text-[#30251f]">
@@ -689,6 +722,32 @@ export default function AdminVendorDetailsPage({
                 </button>
               </div>
 
+              {/* Requested-category banner (deep link from the messages inbox) */}
+              {highlightCategoryId && hasAppliedHighlight && !categoriesSuccess && (
+                <div className="mt-4 flex flex-col gap-2 rounded-xl border border-[#e6cfa1] bg-[#fdf6e8] p-3 text-sm text-[#8a6a2a] sm:flex-row sm:items-center sm:justify-between">
+                  <span>
+                    {t("admin.vendorDetails.categories.requestedNotice", {
+                      category:
+                        categories.find((category) => category.id === highlightCategoryId)
+                          ?.name ?? "",
+                    })}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleSaveCategories}
+                    disabled={savingCategories}
+                    className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-[#a47e43] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[#8f6b37] disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {savingCategories ? (
+                      <Loader2 size={13} className="animate-spin" />
+                    ) : (
+                      <Check size={13} />
+                    )}
+                    {t("admin.vendorDetails.categories.activateNow")}
+                  </button>
+                </div>
+              )}
+
               {/* Error */}
               {categoriesError && (
                 <div className="mt-4 flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
@@ -712,14 +771,17 @@ export default function AdminVendorDetailsPage({
                     const selected = selectedCategoryIds.includes(
                       category.id
                     );
+                    const isRequested = category.id === highlightCategoryId;
 
                     return (
                       <label
                         key={category.id}
                         className={`flex cursor-pointer items-center gap-3 rounded-xl border p-3 transition ${
-                          selected
-                            ? "border-[#8b7464] bg-[#faf7f5]"
-                            : "border-[#eee8e4] bg-[#fdfcfb] hover:border-[#d8ccc4]"
+                          isRequested
+                            ? "border-[#a47e43] bg-[#fdf6e8] ring-2 ring-[#e6cfa1]"
+                            : selected
+                              ? "border-[#8b7464] bg-[#faf7f5]"
+                              : "border-[#eee8e4] bg-[#fdfcfb] hover:border-[#d8ccc4]"
                         }`}
                       >
                         <input
@@ -730,8 +792,13 @@ export default function AdminVendorDetailsPage({
                         />
 
                         <div className="min-w-0">
-                          <p className="text-sm font-medium text-[#403630]">
+                          <p className="flex items-center gap-1.5 text-sm font-medium text-[#403630]">
                             {category.name}
+                            {isRequested && (
+                              <span className="rounded-full bg-[#a47e43] px-1.5 py-0.5 text-[9px] font-semibold text-white">
+                                {t("admin.vendorDetails.categories.requestedBadge")}
+                              </span>
+                            )}
                           </p>
 
                           {category.description && (

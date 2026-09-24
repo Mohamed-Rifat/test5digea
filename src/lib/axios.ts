@@ -17,8 +17,9 @@ api.interceptors.request.use(
       config.headers.Authorization = `Bearer ${auth.token}`;
     }
 
-    const isUpload = typeof FormData !== "undefined" && config.data instanceof FormData;
-    loadingBus.show(isUpload ? " Loading..." : undefined);
+    // No text label — the animated 5Digea logo (hearts + wordmark) is the
+    // loading indicator on its own.
+    loadingBus.show();
 
     return config;
   },

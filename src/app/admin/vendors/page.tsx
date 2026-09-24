@@ -5,7 +5,9 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   FormEvent,
+  useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
   type ChangeEvent,
@@ -187,6 +189,35 @@ export default function AdminVendorsPage() {
   });
 
   const [createLoading, setCreateLoading] = useState(false);
+
+  // Deep link from the admin messages inbox (a vendor-application message):
+  // /admin/vendors?prefillName=...&prefillEmail=...[&prefillBusinessName=...]
+  // opens the create-vendor modal pre-filled so the admin doesn't retype it.
+  const appliedPrefillRef = useRef(false);
+
+  useEffect(() => {
+    if (appliedPrefillRef.current) return;
+
+    const prefillName = searchParams.get("prefillName");
+    const prefillEmail = searchParams.get("prefillEmail");
+    const prefillBusinessName = searchParams.get("prefillBusinessName");
+
+    if (!prefillName && !prefillEmail && !prefillBusinessName) return;
+
+    appliedPrefillRef.current = true;
+
+    setCreateForm((prev) => ({
+      ...prev,
+      fullName: prefillName ?? prev.fullName,
+      email: prefillEmail ?? prev.email,
+      businessName: prefillBusinessName ?? prev.businessName,
+    }));
+    setShowCreateModal(true);
+
+    // Strip the params so refreshing the page doesn't reopen the modal.
+    router.replace("/admin/vendors", { scroll: false });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   // ============================================================
   // Stats

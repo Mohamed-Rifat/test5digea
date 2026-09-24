@@ -135,6 +135,9 @@ const admin: Translation["admin"] = {
       updated: "Categories updated successfully.",
       failed: "Failed to update categories.",
       none: "No categories available.",
+      requestedNotice: "This vendor requested \"{category}\". Click Save to activate it.",
+      activateNow: "Activate now",
+      requestedBadge: "Requested",
     },
     review: {
       pendingTitle: "Changes awaiting your review",
@@ -644,6 +647,11 @@ const admin: Translation["admin"] = {
     },
     unknownSender: "Unknown sender",
     viewVendor: "View vendor profile",
+    actions: {
+      openAndActivateCategory: "Open vendor & activate category",
+      quickRegister: "Quick register (name + email)",
+      useAllData: "Use all submitted data",
+    },
     markHandled: "Mark handled",
     retry: "Retry",
     empty: "No messages match these filters.",

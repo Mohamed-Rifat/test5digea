@@ -5,15 +5,11 @@
 // one generic backend endpoint (POST /api/contact-messages):
 //   1. Roadmap — couple marks a step done with a vendor they
 //      booked outside 5digea, and optionally tells us about them.
-//   2. Public "become a vendor" (Join us) form.
-//   3. A registered vendor asking admin to add a category to
+//   2. A registered vendor asking admin to add a category to
 //      their account.
+//   3. Public "become a vendor" (Join us) form.
 //
-// The endpoint tells the three apart with a numeric `type`, but
-// which number means which form isn't documented anywhere yet.
-// The mapping below is our best guess — confirm it against real
-// admin data once the backend is live. If it's wrong, only this
-// enum needs to change; nothing else references the raw numbers.
+// Confirmed against the real backend.
 export enum ContactMessageType {
   ExternalVendorReferral = 1,
   VendorCategoryRequest = 2,

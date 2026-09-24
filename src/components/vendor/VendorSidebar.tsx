@@ -58,25 +58,68 @@ const navigationItems: {
   icon: typeof LayoutDashboard;
   disabled?: boolean;
 }[] = [
-    { labelKey: "vendor.sidebar.dashboard", href: "/vendor", icon: LayoutDashboard },
-    { labelKey: "vendor.sidebar.companyProfile", href: "/vendor/profile", icon: Building2 },
-    { labelKey: "vendor.sidebar.categories", href: "/vendor/categories", icon: Tags },
-    { labelKey: "vendor.sidebar.myServices", href: "/vendor/services", icon: BriefcaseBusiness },
-    { labelKey: "vendor.sidebar.reviews", href: "/vendor/reviews", icon: MessageSquareText },
-    { labelKey: "vendor.sidebar.security", href: "/vendor/security", icon: Shield },
-    { labelKey: "vendor.sidebar.userMode", href: "/", icon: Users, disabled: true },
-    { labelKey: "vendor.sidebar.subscriptions", href: "/vendor/subscriptions", icon: Crown },
-  ];
+  {
+    labelKey: "vendor.sidebar.dashboard",
+    href: "/vendor",
+    icon: LayoutDashboard,
+  },
+  {
+    labelKey: "vendor.sidebar.companyProfile",
+    href: "/vendor/profile",
+    icon: Building2,
+  },
+  {
+    labelKey: "vendor.sidebar.categories",
+    href: "/vendor/categories",
+    icon: Tags,
+  },
+  {
+    labelKey: "vendor.sidebar.myServices",
+    href: "/vendor/services",
+    icon: BriefcaseBusiness,
+  },
+  {
+    labelKey: "vendor.sidebar.reviews",
+    href: "/vendor/reviews",
+    icon: MessageSquareText,
+  },
+  {
+    labelKey: "vendor.sidebar.security",
+    href: "/vendor/security",
+    icon: Shield,
+  },
+  {
+    labelKey: "vendor.sidebar.userMode",
+    href: "/",
+    icon: Users,
+    disabled: true,
+  },
+  {
+    labelKey: "vendor.sidebar.subscriptions",
+    href: "/vendor/subscriptions",
+    icon: Crown,
+  },
+];
 
 // Quick actions
 const quickActions: {
   labelKey: TranslationKey;
   icon: typeof LayoutDashboard;
   href: string;
+  disabled?: boolean;
 }[] = [
-    { labelKey: "vendor.sidebar.helpCenter", icon: HelpCircle, href: "/vendor/support" },
-    { labelKey: "vendor.sidebar.settings", icon: Settings, href: "/vendor/profile" },
-  ];
+  {
+    labelKey: "vendor.sidebar.helpCenter",
+    icon: HelpCircle,
+    href: "/vendor/support",
+    disabled: true,
+  },
+  {
+    labelKey: "vendor.sidebar.settings",
+    icon: Settings,
+    href: "/vendor/profile",
+  },
+];
 
 export default function VendorSidebar({
   mobileOpen,
@@ -84,8 +127,10 @@ export default function VendorSidebar({
 }: VendorSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
+
   const { logout } = useAuth();
   const { t } = useLanguage();
+
   const { vendor, loading: vendorLoading } = useVendor();
   const { services, loading: servicesLoading } = useVendorServices();
   const { reviews, loading: reviewsLoading } = useVendorReviews();
@@ -94,7 +139,9 @@ export default function VendorSidebar({
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
+
     await logout();
+
     router.replace("/login");
   };
 
@@ -102,15 +149,18 @@ export default function VendorSidebar({
     if (href === "/vendor") {
       return pathname === "/vendor";
     }
+
     return pathname === href || pathname.startsWith(`${href}/`);
   };
 
-  // ✅ حساب الإحصائيات الحقيقية
+  // حساب الإحصائيات الحقيقية
   const totalServices = services.length;
   const totalReviews = reviews.length;
-  const pendingReviews = reviews.filter(r => r.status === ReviewStatus.Pending).length;
+  const pendingReviews = reviews.filter(
+    (r) => r.status === ReviewStatus.Pending
+  ).length;
 
-  // ✅ Vendor status config
+  // Vendor status config
   const statusConfig = {
     Approved: {
       labelKey: "vendor.status.approved" as const,
@@ -138,7 +188,8 @@ export default function VendorSidebar({
     ? statusConfig[vendor.status as keyof typeof statusConfig]
     : statusConfig.Pending;
 
-  const loading = vendorLoading || servicesLoading || reviewsLoading;
+  const loading =
+    vendorLoading || servicesLoading || reviewsLoading;
 
   return (
     <>
@@ -158,7 +209,11 @@ export default function VendorSidebar({
           border-e border-[#eee7e1] bg-white
           transition-transform duration-300 ease-in-out
           lg:static lg:z-auto lg:translate-x-0 lg:rtl:translate-x-0
-          ${mobileOpen ? "translate-x-0" : "-translate-x-full rtl:translate-x-full"}
+          ${
+            mobileOpen
+              ? "translate-x-0"
+              : "-translate-x-full rtl:translate-x-full"
+          }
         `}
       >
         {/* =================================================
@@ -166,7 +221,10 @@ export default function VendorSidebar({
         ================================================= */}
 
         <div className="flex h-18 items-center justify-between border-b border-[#eee7e1] px-5">
-          <Link href="/vendor" className="flex shrink-0 items-center gap-2">
+          <Link
+            href="/vendor"
+            className="flex shrink-0 items-center gap-2"
+          >
             <Image
               src="/Logo.png"
               alt="5Digea"
@@ -174,6 +232,7 @@ export default function VendorSidebar({
               height={36}
               className="rounded-full"
             />
+
             <span className="font-serif text-lg font-medium text-[#30251f]">
               5Digea
             </span>
@@ -202,13 +261,18 @@ export default function VendorSidebar({
               ) : vendor?.profileImageUrl ? (
                 <img
                   src={vendor.profileImageUrl}
-                  alt={vendor.businessName || t("vendor.header.vendor")}
+                  alt={
+                    vendor.businessName ||
+                    t("vendor.header.vendor")
+                  }
                   className="h-full w-full object-cover"
                 />
               ) : (
-                <Building2 size={22} className="text-[#8d7b70]" />
+                <Building2
+                  size={22}
+                  className="text-[#8d7b70]"
+                />
               )}
-
             </div>
 
             {/* Info */}
@@ -216,19 +280,31 @@ export default function VendorSidebar({
               {loading ? (
                 <>
                   <div className="h-4 w-28 animate-pulse rounded bg-[#eee7e1]" />
+
                   <div className="mt-2 h-3 w-16 animate-pulse rounded bg-[#f3eeea]" />
                 </>
               ) : (
                 <>
                   <p className="truncate text-sm font-semibold text-[#30251f]">
-                    {vendor?.businessName || t("vendor.sidebar.vendorAccount")}
+                    {vendor?.businessName ||
+                      t("vendor.sidebar.vendorAccount")}
                   </p>
 
                   <div className="mt-1 flex items-center gap-2">
-                    <span className={`inline-flex h-1.5 w-1.5 rounded-full ${status.dotColor} animate-pulse`} />
-                    <span className={`text-[10px] font-medium ${vendor?.status === "Approved" ? "text-emerald-700" : "text-amber-700"
-                      }`}>
-                      {status ? t(status.labelKey) : t("vendor.status.loading")}
+                    <span
+                      className={`inline-flex h-1.5 w-1.5 rounded-full ${status.dotColor} animate-pulse`}
+                    />
+
+                    <span
+                      className={`text-[10px] font-medium ${
+                        vendor?.status === "Approved"
+                          ? "text-emerald-700"
+                          : "text-amber-700"
+                      }`}
+                    >
+                      {status
+                        ? t(status.labelKey)
+                        : t("vendor.status.loading")}
                     </span>
                   </div>
                 </>
@@ -239,18 +315,39 @@ export default function VendorSidebar({
           {!loading && vendor && (
             <div className="mt-3 grid grid-cols-3 gap-1.5">
               <div className="rounded-lg bg-[#faf7f4] px-2 py-1.5 text-center">
-                <p className="text-xs font-semibold text-[#30251f]">{totalServices}</p>
-                <p className="text-[8px] text-[#9a8d84]">{t("vendor.sidebar.statServices")}</p>
+                <p className="text-xs font-semibold text-[#30251f]">
+                  {totalServices}
+                </p>
+
+                <p className="text-[8px] text-[#9a8d84]">
+                  {t("vendor.sidebar.statServices")}
+                </p>
               </div>
+
               <div className="rounded-lg bg-[#faf7f4] px-2 py-1.5 text-center">
-                <p className="text-xs font-semibold text-[#30251f]">{totalReviews}</p>
-                <p className="text-[8px] text-[#9a8d84]">{t("vendor.sidebar.statReviews")}</p>
+                <p className="text-xs font-semibold text-[#30251f]">
+                  {totalReviews}
+                </p>
+
+                <p className="text-[8px] text-[#9a8d84]">
+                  {t("vendor.sidebar.statReviews")}
+                </p>
               </div>
+
               <div className="rounded-lg bg-[#faf7f4] px-2 py-1.5 text-center">
-                <p className={`text-xs font-semibold ${pendingReviews > 0 ? "text-amber-600" : "text-[#30251f]"}`}>
+                <p
+                  className={`text-xs font-semibold ${
+                    pendingReviews > 0
+                      ? "text-amber-600"
+                      : "text-[#30251f]"
+                  }`}
+                >
                   {pendingReviews}
                 </p>
-                <p className="text-[8px] text-[#9a8d84]">{t("vendor.sidebar.statPending")}</p>
+
+                <p className="text-[8px] text-[#9a8d84]">
+                  {t("vendor.sidebar.statPending")}
+                </p>
               </div>
             </div>
           )}
@@ -274,7 +371,9 @@ export default function VendorSidebar({
                 return (
                   <Tooltip
                     key={item.href}
-                    title={t("vendor.sidebar.userModeTooltip")}
+                    title={t(
+                      "vendor.sidebar.userModeTooltip"
+                    )}
                     placement="right"
                     arrow
                     slotProps={{
@@ -292,12 +391,12 @@ export default function VendorSidebar({
                   >
                     <div
                       className="
-          group relative flex cursor-not-allowed items-center gap-3
-          rounded-xl px-3.5 py-2.5
-          text-sm font-medium
-          text-[#b8aea7]
-          opacity-60
-        "
+                        group relative flex cursor-not-allowed
+                        items-center gap-3 rounded-xl
+                        px-3.5 py-2.5
+                        text-sm font-medium
+                        text-[#b8aea7] opacity-60
+                      "
                     >
                       <Icon
                         size={18}
@@ -311,12 +410,12 @@ export default function VendorSidebar({
 
                       <span
                         className="
-            shrink-0 rounded-full
-            bg-[#f5f1ed]
-            px-2 py-0.5
-            text-[8px] font-medium
-            text-[#a99d94]
-          "
+                          shrink-0 rounded-full
+                          bg-[#f5f1ed]
+                          px-2 py-0.5
+                          text-[8px] font-medium
+                          text-[#a99d94]
+                        "
                       >
                         {t("vendor.sidebar.comingSoon")}
                       </span>
@@ -330,11 +429,17 @@ export default function VendorSidebar({
                   key={item.href}
                   href={item.href}
                   onClick={onClose}
-                  className={` group relative flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-all duration-200
-                      ${active
-                      ? "bg-[#30251f] text-white shadow-lg shadow-[#30251f]/10"
-                      : "text-[#665a52] hover:bg-[#faf7f4] hover:text-[#30251f]"
-                    } `}
+                  className={`
+                    group relative flex items-center gap-3
+                    rounded-xl px-3.5 py-2.5
+                    text-sm font-medium
+                    transition-all duration-200
+                    ${
+                      active
+                        ? "bg-[#30251f] text-white shadow-lg shadow-[#30251f]/10"
+                        : "text-[#665a52] hover:bg-[#faf7f4] hover:text-[#30251f]"
+                    }
+                  `}
                 >
                   {active && (
                     <span className="absolute start-0 top-1/2 h-6 w-0.5 -translate-y-1/2 rounded-e-full bg-[#a47e43]" />
@@ -350,33 +455,38 @@ export default function VendorSidebar({
                     }
                   />
 
-                  <span className="flex-1">{t(item.labelKey)}</span>
+                  <span className="flex-1">
+                    {t(item.labelKey)}
+                  </span>
 
-                  {item.href === "/vendor/reviews" && pendingReviews > 0 && (
-                    <Badge
-                      badgeContent={pendingReviews}
-                      color="warning"
-                      sx={{
-                        "& .MuiBadge-badge": {
-                          fontSize: 10,
-                          height: 20,
-                          minWidth: 20,
-                          fontWeight: 600,
-                          backgroundColor: "#f59e0b",
-                        },
-                      }}
-                    />
-                  )}
+                  {item.href === "/vendor/reviews" &&
+                    pendingReviews > 0 && (
+                      <Badge
+                        badgeContent={pendingReviews}
+                        color="warning"
+                        sx={{
+                          "& .MuiBadge-badge": {
+                            fontSize: 10,
+                            height: 20,
+                            minWidth: 20,
+                            fontWeight: 600,
+                            backgroundColor: "#f59e0b",
+                          },
+                        }}
+                      />
+                    )}
 
                   <ChevronRight
                     size={14}
                     className={`
-          transition-all duration-200 rtl:rotate-180
-          ${active
-                        ? "translate-x-0 opacity-100 text-white"
-                        : "-translate-x-1 rtl:translate-x-1 opacity-0 group-hover:translate-x-0 group-hover:opacity-60"
+                      transition-all duration-200
+                      rtl:rotate-180
+                      ${
+                        active
+                          ? "translate-x-0 opacity-100 text-white"
+                          : "-translate-x-1 rtl:translate-x-1 opacity-0 group-hover:translate-x-0 group-hover:opacity-60"
                       }
-        `}
+                    `}
                   />
                 </Link>
               );
@@ -386,7 +496,10 @@ export default function VendorSidebar({
           {/* Separator */}
           <div className="my-4 border-t border-[#f0eae5]" />
 
-          {/* Quick Actions */}
+          {/* =================================================
+              QUICK ACTIONS / SUPPORT
+          ================================================= */}
+
           <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.18em] rtl:tracking-normal text-[#a99d94]">
             {t("vendor.sidebar.support")}
           </p>
@@ -394,14 +507,85 @@ export default function VendorSidebar({
           <div className="space-y-1">
             {quickActions.map((item) => {
               const Icon = item.icon;
+
+              {/* Disabled Support */}
+              if (item.disabled) {
+                return (
+                  <Tooltip
+                    key={item.href}
+                    title={t("vendor.sidebar.comingSoon")}
+                    placement="right"
+                    arrow
+                    slotProps={{
+                      tooltip: {
+                        sx: {
+                          maxWidth: 280,
+                          fontSize: "12px",
+                          lineHeight: 1.6,
+                          textAlign: "start",
+                          padding: "10px 12px",
+                          borderRadius: "10px",
+                        },
+                      },
+                    }}
+                  >
+                    <div
+                      className="
+                        group relative flex cursor-not-allowed
+                        items-center gap-3
+                        rounded-xl px-3.5 py-2.5
+                        text-sm font-medium
+                        text-[#b8aea7]
+                        opacity-60
+                      "
+                    >
+                      <Icon
+                        size={18}
+                        strokeWidth={1.8}
+                        className="shrink-0 text-[#b8aea7]"
+                      />
+
+                      <span className="flex-1">
+                        {t(item.labelKey)}
+                      </span>
+
+                      <span
+                        className="
+                          shrink-0 rounded-full
+                          bg-[#f5f1ed]
+                          px-2 py-0.5
+                          text-[8px] font-medium
+                          text-[#a99d94]
+                        "
+                      >
+                        {t("vendor.sidebar.comingSoon")}
+                      </span>
+                    </div>
+                  </Tooltip>
+                );
+              }
+
               return (
                 <Link
                   key={item.href}
                   href={item.href}
                   onClick={onClose}
-                  className="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium text-[#665a52] transition hover:bg-[#faf7f4] hover:text-[#30251f]"
+                  className="
+                    flex items-center gap-3
+                    rounded-xl px-3.5 py-2.5
+                    text-sm font-medium
+                    text-[#665a52]
+                    transition
+                    hover:bg-[#faf7f4]
+                    hover:text-[#30251f]
+                  "
                 >
-                  <Icon size={18} strokeWidth={1.8} className="text-[#9a8d84]" />
+                  <Icon
+                    size={18}
+                    strokeWidth={1.8}
+                    className="text-[#9a8d84]"
+                  />
+
                   <span>{t(item.labelKey)}</span>
                 </Link>
               );
@@ -419,14 +603,29 @@ export default function VendorSidebar({
             type="button"
             onClick={handleLogout}
             disabled={isLoggingOut}
-            className="group flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium text-[#756860] transition-all hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+            className="
+              group flex w-full items-center gap-3
+              rounded-xl px-3.5 py-2.5
+              text-sm font-medium
+              text-[#756860]
+              transition-all
+              hover:bg-red-50
+              hover:text-red-600
+              disabled:opacity-50
+            "
           >
             <LogOut
               size={18}
               strokeWidth={1.8}
               className="transition-colors group-hover:text-red-500"
             />
-            <span>{isLoggingOut ? t("vendor.sidebar.loggingOut") : t("vendor.sidebar.logout")}</span>
+
+            <span>
+              {isLoggingOut
+                ? t("vendor.sidebar.loggingOut")
+                : t("vendor.sidebar.logout")}
+            </span>
+
             {isLoggingOut && (
               <span className="ms-auto inline-flex h-4 w-4 animate-spin rounded-full border-2 border-red-600 border-t-transparent" />
             )}
@@ -437,9 +636,14 @@ export default function VendorSidebar({
             <p className="text-[9px] text-[#b1a59d]">
               © {new Date().getFullYear()} 5digea
             </p>
+
             <div className="flex items-center gap-1.5">
-              <span className="text-[8px] text-[#b1a59d]">v2.0</span>
+              <span className="text-[8px] text-[#b1a59d]">
+                v2.0
+              </span>
+
               <span className="h-1 w-1 rounded-full bg-[#d5c8be]" />
+
               <span className="inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
             </div>
           </div>

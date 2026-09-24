@@ -12,8 +12,10 @@ import {
   Loader2,
   Mail,
   Phone,
+  Sparkles,
   Store,
   Tags,
+  UserPlus,
 } from "lucide-react";
 
 import Select from "@/components/shared/Select";
@@ -264,15 +266,6 @@ export default function AdminContactMessagesPage() {
                         <span>{formatDateTime(item.createdAt, dateLocale)}</span>
                       </div>
 
-                      {item.vendorId && (
-                        <Link
-                          href={`/admin/vendors/${item.vendorId}`}
-                          className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-[#a47e43] hover:underline"
-                        >
-                          {t("admin.messages.viewVendor")}
-                          <ArrowUpRight size={12} className="rtl:-scale-x-100" />
-                        </Link>
-                      )}
                     </div>
                   </div>
 
@@ -296,6 +289,8 @@ export default function AdminContactMessagesPage() {
                 <div className="mt-3 rounded-xl bg-[#faf7f4] p-3">
                   <MessageDetails item={item} language={language} t={t} />
                 </div>
+
+                <MessageActions item={item} t={t} />
               </div>
             );
           })}
@@ -417,6 +412,76 @@ function MessageDetails({
   }
 
   return <RawMessage message={item.message} />;
+}
+
+// =========================================================
+// Per-type quick actions — skip the "go find the right vendor /
+// category / field" step and land the admin ready to finish the job
+// in one more click.
+// =========================================================
+
+function MessageActions({
+  item,
+  t,
+}: {
+  item: ContactMessageAdminItem;
+  t: (key: TranslationKey, vars?: Record<string, string | number>) => string;
+}) {
+  if (item.type === ContactMessageType.VendorCategoryRequest && item.vendorId) {
+    const details = parseMessageDetails<VendorCategoryRequestDetails>(item.message);
+    const href = details?.categoryId
+      ? `/admin/vendors/${item.vendorId}?highlightCategory=${details.categoryId}`
+      : `/admin/vendors/${item.vendorId}`;
+
+    return (
+      <div className="mt-3">
+        <Link
+          href={href}
+          className="inline-flex items-center gap-1.5 rounded-lg bg-[#30251f] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[#40332c]"
+        >
+          {t("admin.messages.actions.openAndActivateCategory")}
+          <ArrowUpRight size={13} className="rtl:-scale-x-100" />
+        </Link>
+      </div>
+    );
+  }
+
+  if (item.type === ContactMessageType.VendorApplication) {
+    const details = parseMessageDetails<VendorApplicationDetails>(item.message);
+
+    const quickParams = new URLSearchParams({
+      prefillName: item.senderName || "",
+      prefillEmail: item.senderEmail || "",
+    });
+
+    const fullParams = new URLSearchParams({
+      prefillName: item.senderName || "",
+      prefillEmail: item.senderEmail || "",
+      prefillBusinessName: details?.brandName || "",
+    });
+
+    return (
+      <div className="mt-3 flex flex-wrap gap-2">
+        <Link
+          href={`/admin/vendors?${quickParams.toString()}`}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-[#dcd2c9] bg-white px-3 py-1.5 text-xs font-semibold text-[#5f544d] transition hover:border-[#a47e43] hover:text-[#a47e43]"
+        >
+          <UserPlus size={13} />
+          {t("admin.messages.actions.quickRegister")}
+        </Link>
+
+        <Link
+          href={`/admin/vendors?${fullParams.toString()}`}
+          className="inline-flex items-center gap-1.5 rounded-lg bg-[#a47e43] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[#8f6b37]"
+        >
+          <Sparkles size={13} />
+          {t("admin.messages.actions.useAllData")}
+        </Link>
+      </div>
+    );
+  }
+
+  return null;
 }
 
 function Row({ label, value }: { label: string; value: string }) {

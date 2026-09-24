@@ -133,6 +133,9 @@ const admin = {
       updated: "تم تحديث التصنيفات بنجاح.",
       failed: "معرفناش نحدّث التصنيفات.",
       none: "مفيش تصنيفات متاحة.",
+      requestedNotice: "الفيندر ده طلب كاتيجوري \"{category}\". دوس حفظ التصنيفات علشان تفعّلها.",
+      activateNow: "فعّلها دلوقتي",
+      requestedBadge: "مطلوبة",
     },
     review: {
       pendingTitle: "تعديلات في انتظار مراجعتك",
@@ -641,6 +644,11 @@ const admin = {
     },
     unknownSender: "مرسل غير معروف",
     viewVendor: "عرض بروفايل الفيندر",
+    actions: {
+      openAndActivateCategory: "افتح صفحة الفيندر وفعّل الكاتيجوري",
+      quickRegister: "تسجيل سريع (الاسم والإيميل)",
+      useAllData: "استخدام كل بيانات الطلب",
+    },
     markHandled: "تحديد كمتعالجة",
     retry: "إعادة المحاولة",
     empty: "مفيش رسائل مطابقة للفلاتر دي.",
