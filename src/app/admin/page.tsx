@@ -25,6 +25,7 @@ import {
   ClipboardList,
   Clock3,
   ImageIcon,
+  Mail,
   MapPin,
   MessageSquare,
   ShieldCheck,
@@ -44,6 +45,7 @@ import { useAdminCategories } from "@/features/categories/hooks/useAdminCategori
 import { useModerationDashboard } from "@/features/moderation/hooks/useModerationDashboard";
 import { useServices } from "@/features/services/hooks/useServices";
 import { useAdminVendors } from "@/features/vendors/hooks/useAdminVendors";
+import { useContactMessagesAdmin } from "@/features/contactMessages/hooks/useContactMessagesAdmin";
 import {
   ModerationEntityType,
   ModerationStatus,
@@ -308,6 +310,13 @@ export default function AdminPage() {
     error: dashboardError,
   } = useModerationDashboard();
 
+  // Only need the count, so page 1 with a small page size is enough.
+  const { totalCount: unhandledMessagesCount } = useContactMessagesAdmin({
+    isHandled: false,
+    page: 1,
+    pageSize: 1,
+  });
+
   const loading =
     categoriesLoading || servicesLoading || vendorsLoading || dashboardLoading;
 
@@ -535,6 +544,13 @@ export default function AdminPage() {
       description: t('admin.dashboard.awaitingModeration'),
       icon: ClipboardList,
       href: "/admin/moderation",
+    },
+    {
+      title: t('admin.dashboard.unhandledMessages'),
+      value: unhandledMessagesCount,
+      description: t('admin.dashboard.unhandledMessagesDesc'),
+      icon: Mail,
+      href: "/admin/messages",
     },
   ];
 

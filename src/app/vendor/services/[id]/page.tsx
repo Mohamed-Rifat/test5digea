@@ -1969,6 +1969,8 @@ export default function EditVendorServicePage({
             "vendor.services.detail.dialog.myBusiness"
           )
         }
+        vendorEmail={vendor?.contactEmail}
+        vendorPhone={vendor?.contactPhone}
         onClose={() => {
           setContactDialogOpen(false);
           setSelectedCategory(null);

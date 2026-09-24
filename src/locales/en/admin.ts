@@ -14,6 +14,7 @@ const admin: Translation["admin"] = {
     vendors: "Vendors",
     services: "Services",
     reviews: "Reviews",
+    messages: "Contact Messages",
     portalTitle: "Admin Portal",
     portalDescription: "Manage your 5Digea marketplace from one place.",
     logout: "Logout",
@@ -284,6 +285,9 @@ const admin: Translation["admin"] = {
     inactive: "Inactive",
     loadError: "Some dashboard data could not be loaded.",
     footer: "5Digea Admin Panel • 2026",
+
+    unhandledMessages: "New Contact Messages",
+    unhandledMessagesDesc: "Awaiting a reply",
 
     mostReviewed: "Most Reviewed",
     mostReviewedSubtitle: "Vendors with the most customer feedback",
@@ -608,6 +612,47 @@ const admin: Translation["admin"] = {
   ui: {
     clearSearch: "Clear search",
     close: "Close",
+  },
+  messages: {
+    eyebrow: "Inbox",
+    title: "Contact Messages",
+    subtitle:
+      "Everyone who reached out through the site: couples telling us about a vendor they booked outside 5digea, people applying to join as a vendor, and registered vendors requesting a new category.",
+    filters: {
+      type: "Type",
+      allTypes: "All types",
+      status: "Status",
+      allStatuses: "All statuses",
+      unhandled: "Unhandled",
+      handled: "Handled",
+    },
+    types: {
+      externalVendor: "External Vendor Referral",
+      vendorApplication: "Vendor Application",
+      categoryRequest: "Category Request",
+      unknown: "Message",
+    },
+    fields: {
+      category: "Category",
+      externalVendorName: "Vendor Name",
+      phone: "Phone",
+      link: "Link",
+      brandName: "Brand Name",
+      governorate: "Governorate",
+      categories: "Requested Categories",
+      note: "Note",
+    },
+    unknownSender: "Unknown sender",
+    viewVendor: "View vendor profile",
+    markHandled: "Mark handled",
+    retry: "Retry",
+    empty: "No messages match these filters.",
+    totalCount: "{count} messages in total",
+    messages: {
+      markedHandled: "Message marked as handled.",
+      markFailed: "Couldn't mark this message as handled. Try again.",
+      loadFailed: "Failed to load contact messages.",
+    },
   },
 
 };

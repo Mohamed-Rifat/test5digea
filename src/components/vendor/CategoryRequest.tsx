@@ -22,6 +22,11 @@ import {
 
 import { useLanguage } from "@/context/LanguageContext";
 import TextWithSlot from "@/components/shared/TextWithSlot";
+import { submitContactMessage } from "@/features/contactMessages/api";
+import {
+  ContactMessageType,
+  encodeMessageDetails,
+} from "@/features/contactMessages/types";
 
 // =========================================================
 // Category Card - عرض فقط بدون إضافة
@@ -120,12 +125,16 @@ export const ContactAdminDialog = ({
   open,
   category,
   vendorName,
+  vendorEmail,
+  vendorPhone,
   onClose,
   onSuccess,
 }: {
   open: boolean;
   category: any;
   vendorName: string;
+  vendorEmail?: string;
+  vendorPhone?: string;
   onClose: () => void;
   onSuccess?: () => void;
 }) => {
@@ -150,16 +159,17 @@ export const ContactAdminDialog = ({
     setIsSending(true);
 
     try {
-      // ✅ هنا هتحط الـ API call الفعلي
-      // await sendCategoryRequest({
-      //   categoryId: category.id,
-      //   categoryName: category.name,
-      //   message,
-      //   vendorId: vendor?.id,
-      // });
-
-      // مؤقتاً
-      await new Promise((resolve) => setTimeout(resolve, 1200));
+      await submitContactMessage({
+        type: ContactMessageType.VendorCategoryRequest,
+        senderName: vendorName,
+        senderEmail: vendorEmail || "",
+        senderPhone: vendorPhone || "",
+        message: encodeMessageDetails({
+          categoryId: String(category?.id ?? ""),
+          categoryName: category?.name ?? "",
+          note: message,
+        }),
+      });
 
       setIsSending(false);
       onSuccess?.();

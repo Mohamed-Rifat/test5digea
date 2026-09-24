@@ -250,6 +250,9 @@ export default function BecomeAVendorPage() {
                 personalEmail: form.personalEmail.trim(),
                 brandName: form.brandName.trim(),
                 categoryIds: selectedCategoryIds,
+                categoryNames: activeCategories
+                    .filter((category) => selectedCategoryIds.includes(category.id))
+                    .map((category) => category.name),
                 governorate: form.governorate,
             });
 

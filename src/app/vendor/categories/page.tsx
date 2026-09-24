@@ -441,6 +441,8 @@ export default function VendorCategoriesPage() {
         open={contactDialogOpen}
         category={selectedCategory}
         vendorName={vendor?.businessName || t("vendor.services.detail.dialog.myBusiness")}
+        vendorEmail={vendor?.contactEmail}
+        vendorPhone={vendor?.contactPhone}
         onClose={() => {
           setContactDialogOpen(false);
           setSelectedCategory(null);

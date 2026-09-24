@@ -12,6 +12,7 @@ const admin = {
     vendors: "مقدمو الخدمات",
     services: "الخدمات",
     reviews: "التقييمات",
+    messages: "رسائل التواصل",
     portalTitle: "بوابة الأدمن",
     portalDescription: "أدر سوق 5Digea كله من مكان واحد.",
     logout: "تسجيل الخروج",
@@ -281,6 +282,9 @@ const admin = {
     inactive: "غير نشط",
     loadError: "تعذر تحميل بعض بيانات لوحة التحكم.",
     footer: "لوحة تحكم 5Digea • 2026",
+
+    unhandledMessages: "رسائل تواصل جديدة",
+    unhandledMessagesDesc: "بانتظار الرد",
 
     mostReviewed: "الأكثر تقييمًا",
     mostReviewedSubtitle: "مقدمو الخدمات الأكثر حصولًا على تقييمات العملاء",
@@ -605,6 +609,47 @@ const admin = {
   ui: {
     clearSearch: "مسح البحث",
     close: "إغلاق",
+  },
+  messages: {
+    eyebrow: "صندوق الرسائل",
+    title: "رسائل التواصل",
+    subtitle:
+      "كل اللي تواصل معانا من الموقع: عرايس بلّغونا عن فيندر خدموا معاه برا 5digea، ناس قدّمت طلب انضمام كفيندر، وفيندورز مسجلين طالبين إضافة كاتيجوري جديدة.",
+    filters: {
+      type: "النوع",
+      allTypes: "كل الأنواع",
+      status: "الحالة",
+      allStatuses: "كل الحالات",
+      unhandled: "لسه متعالجة",
+      handled: "اتعالجت",
+    },
+    types: {
+      externalVendor: "ترشيح فيندر خارجي",
+      vendorApplication: "طلب انضمام فيندر",
+      categoryRequest: "طلب إضافة كاتيجوري",
+      unknown: "رسالة",
+    },
+    fields: {
+      category: "الكاتيجوري",
+      externalVendorName: "اسم الفيندر",
+      phone: "التليفون",
+      link: "لينك",
+      brandName: "اسم البراند",
+      governorate: "المحافظة",
+      categories: "الكاتيجوريز المطلوبة",
+      note: "ملاحظة",
+    },
+    unknownSender: "مرسل غير معروف",
+    viewVendor: "عرض بروفايل الفيندر",
+    markHandled: "تحديد كمتعالجة",
+    retry: "إعادة المحاولة",
+    empty: "مفيش رسائل مطابقة للفلاتر دي.",
+    totalCount: "{count} رسالة إجمالاً",
+    messages: {
+      markedHandled: "تم تحديد الرسالة كمتعالجة.",
+      markFailed: "مقدرناش نحدد الرسالة كمتعالجة. جرّب تاني.",
+      loadFailed: "فشل تحميل رسائل التواصل.",
+    },
   },
 
 };

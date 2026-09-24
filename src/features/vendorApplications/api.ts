@@ -1,19 +1,15 @@
 // ============================================================
 // Vendor applications ("Join us" form)
 // ============================================================
-// The backend endpoint for this doesn't exist yet. Once it's ready:
-//
-//   1. Replace the request/response shape below with whatever the real
-//      API expects/returns (this is a best guess based on the form).
-//   2. Uncomment the real `api.post(...)` call inside
-//      `submitVendorApplication` and delete the simulated block under
-//      "TEMPORARY" beneath it.
-//
-// Nothing else in the page needs to change — it already calls
-// `submitVendorApplication` and just awaits the result.
+// Wired to the generic contact-messages endpoint: this submits as a
+// ContactMessageType.VendorApplication message, with the form's fields
+// (brand name, categories, governorate) JSON-encoded into `message`.
 
-// Once the real endpoint exists, add this import back:
-// import api from "@/lib/axios";
+import { submitContactMessage } from "@/features/contactMessages/api";
+import {
+  ContactMessageType,
+  encodeMessageDetails,
+} from "@/features/contactMessages/types";
 
 export interface VendorApplicationRequest {
   fullName: string;
@@ -21,20 +17,23 @@ export interface VendorApplicationRequest {
   personalEmail: string;
   brandName: string;
   categoryIds: string[];
+  categoryNames?: string[];
   governorate: string;
 }
 
 export const submitVendorApplication = async (
   data: VendorApplicationRequest
 ): Promise<void> => {
-  // Referenced so lint doesn't flag it as unused until the real call
-  // below is uncommented and actually sends it.
-  void data;
-
-  // TODO: swap in the real endpoint once it exists on the backend, e.g.:
-  // await api.post("/api/VendorApplications", data);
-
-  // --- TEMPORARY: no backend endpoint yet, simulate a network call so
-  // the form's loading/success states work while it's being built ---
-  await new Promise((resolve) => setTimeout(resolve, 700));
+  await submitContactMessage({
+    type: ContactMessageType.VendorApplication,
+    senderName: data.fullName,
+    senderEmail: data.personalEmail,
+    senderPhone: data.whatsappNumber,
+    message: encodeMessageDetails({
+      brandName: data.brandName,
+      categoryIds: data.categoryIds,
+      categoryNames: data.categoryNames,
+      governorate: data.governorate,
+    }),
+  });
 };

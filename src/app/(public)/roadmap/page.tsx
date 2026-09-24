@@ -48,6 +48,11 @@ import { RoadmapItemStatus } from "@/types/roadmap";
 import WriteReviewModal from "@/components/reviews/WriteReviewModal";
 import { authStorage } from "@/lib/auth-storage";
 import { useCurrentUser } from "@/features/auth/hooks/useCurrentUser";
+import { submitContactMessage } from "@/features/contactMessages/api";
+import {
+  ContactMessageType,
+  encodeMessageDetails,
+} from "@/features/contactMessages/types";
 import { useLanguage } from "@/context/LanguageContext";
 import type { TranslationKey } from "@/locales";
 
@@ -1781,13 +1786,25 @@ function RoadmapContent() {
     setExternalSubmitting(true);
 
     if (feedback && (feedback.vendorName || feedback.phone || feedback.link)) {
-      // TODO: wire this up to the real endpoint once it exists, e.g.
-      // await roadmapApi.suggestExternalVendor(externalCompleteItem.categoryId, feedback)
-      console.log(
-        "External vendor suggestion for category",
-        externalCompleteItem.categoryId,
-        feedback
-      );
+      try {
+        await submitContactMessage({
+          type: ContactMessageType.ExternalVendorReferral,
+          senderName: currentUser?.fullName || "",
+          senderEmail: currentUser?.email || "",
+          senderPhone: currentUser?.phoneNumber || "",
+          message: encodeMessageDetails({
+            categoryId: String(externalCompleteItem.categoryId),
+            categoryName: externalCompleteItem.categoryName,
+            vendorName: feedback.vendorName,
+            vendorPhone: feedback.phone,
+            vendorLink: feedback.link,
+          }),
+        });
+      } catch (err) {
+        // Non-blocking: the couple's step still completes even if this
+        // "let us know about the vendor" note fails to send.
+        console.error("Failed to send external vendor referral", err);
+      }
     }
 
     const ok = await complete(String(externalCompleteItem.categoryId));

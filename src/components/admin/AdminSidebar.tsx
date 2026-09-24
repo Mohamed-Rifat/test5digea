@@ -14,6 +14,7 @@ import {
   LogOut,
   X,
   Heart,
+  Mail,
 } from "lucide-react";
 
 import { useAuth } from "@/context/AuthContext";
@@ -44,6 +45,7 @@ const navigation: {
       { labelKey: "admin.sidebar.vendors", href: "/admin/vendors", icon: Store },
       { labelKey: "admin.sidebar.services", href: "/admin/services", icon: BriefcaseBusiness },
       { labelKey: "admin.sidebar.reviews", href: "/admin/reviews", icon: Star },
+      { labelKey: "admin.sidebar.messages", href: "/admin/messages", icon: Mail },
     ],
   },
 ];
