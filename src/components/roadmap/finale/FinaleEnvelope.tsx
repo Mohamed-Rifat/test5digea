@@ -89,7 +89,7 @@ export function FinaleEnvelope({ letter }: { letter: WeddingLetterState }) {
             <div
               className="absolute inset-0 rounded-t-2xl bg-linear-to-t from-[#a87843] to-[#c99a5e] [backface-visibility:hidden]"
               style={{
-                clipPath: "polygon(0 0, 100% 0, 50% 100%)",
+                clipPath: "polygon(0 100%, 100% 100%, 50% 0)",
                 transform: "rotateX(180deg)",
               }}
             />

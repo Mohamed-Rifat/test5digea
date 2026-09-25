@@ -61,7 +61,6 @@ export function useWeddingLetter({
     const timers: number[] = [];
     const at = (ms: number, fn: () => void) =>
       timers.push(window.setTimeout(fn, ms));
-    if (stage === "intro") at(3600, () => setStage("opening"));
     if (stage === "opening") at(1050, () => setStage("rising"));
     if (stage === "rising") at(1000, () => setStage("letter"));
     if (stage === "letter") {

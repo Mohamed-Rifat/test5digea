@@ -36,13 +36,13 @@ export function FinaleLetterCard({ letter }: { letter: WeddingLetterState }) {
 
   return (
     <div
-      className={`relative w-full max-w-2xl transition-all duration-[850ms] ease-[cubic-bezier(.2,.85,.25,1)] ${
+      className={`relative w-full lg:max-w-10/12 transition-all duration-[850ms] ease-[cubic-bezier(.2,.85,.25,1)] ${
         showLetter
           ? "translate-y-0 scale-100 opacity-100"
           : "pointer-events-none translate-y-24 scale-75 opacity-0"
       }`}
     >
-      <div className="relative max-h-[90vh] overflow-y-auto overscroll-contain rounded-[28px] bg-[#fbf6ee] bg-[radial-gradient(circle_at_20%_0%,rgba(226,183,119,0.18),transparent_45%),radial-gradient(circle_at_100%_100%,rgba(198,138,114,0.12),transparent_40%)] px-6 py-12 text-center shadow-[0_50px_120px_-20px_rgba(0,0,0,0.75)] sm:px-12 sm:py-14">
+      <div className="relative  overflow-y-auto overscroll-contain rounded-[28px] bg-[#fbf6ee] bg-[radial-gradient(circle_at_20%_0%,rgba(226,183,119,0.18),transparent_45%),radial-gradient(circle_at_100%_100%,rgba(198,138,114,0.12),transparent_40%)] px-6 py-12 text-center shadow-[0_50px_120px_-20px_rgba(0,0,0,0.75)] sm:px-12 sm:py-14">
         <div className="pointer-events-none absolute inset-3 rounded-[22px] border border-[#d9a363]/35" />
         <div className="pointer-events-none absolute inset-[18px] rounded-[18px] border border-[#d9a363]/15" />
 
