@@ -32,6 +32,7 @@ import {
 import { findGovernorate, governorateLabel } from "@/lib/governorates";
 import { formatDateTime } from "@/lib/format";
 import { useLanguage } from "@/context/LanguageContext";
+import { localizeText } from "@/lib/bilingual";
 import { useToast } from "@/components/providers/ToastProvider";
 import { LANGUAGE_DATE_LOCALE, type TranslationKey } from "@/locales";
 
@@ -314,6 +315,8 @@ function MessageDetails({
   language: "ar" | "en";
   t: (key: TranslationKey, vars?: Record<string, string | number>) => string;
 }) {
+  const localize = (value: string | null | undefined) =>
+    localizeText(value, language);
   if (item.type === ContactMessageType.ExternalVendorReferral) {
     const details = parseMessageDetails<ExternalVendorReferralDetails>(item.message);
 
@@ -322,7 +325,7 @@ function MessageDetails({
     return (
       <dl className="grid grid-cols-1 gap-x-4 gap-y-1.5 text-xs text-[#5f544d] sm:grid-cols-2">
         {details.categoryName && (
-          <Row label={t("admin.messages.fields.category")} value={details.categoryName} />
+          <Row label={t("admin.messages.fields.category")} value={localize(details.categoryName)} />
         )}
         <Row label={t("admin.messages.fields.externalVendorName")} value={details.vendorName} />
         {details.vendorPhone && (
@@ -367,7 +370,7 @@ function MessageDetails({
             {t("admin.messages.fields.categories")}:{" "}
           </span>
           {details.categoryNames && details.categoryNames.length > 0
-            ? details.categoryNames.join(language === "ar" ? "، " : ", ")
+            ? details.categoryNames.map((n) => localize(n)).join(language === "ar" ? "، " : ", ")
             : details.categoryIds.join(", ")}
         </div>
       </dl>
@@ -381,7 +384,7 @@ function MessageDetails({
 
     return (
       <dl className="grid grid-cols-1 gap-x-4 gap-y-1.5 text-xs text-[#5f544d] sm:grid-cols-2">
-        <Row label={t("admin.messages.fields.category")} value={details.categoryName} />
+        <Row label={t("admin.messages.fields.category")} value={localize(details.categoryName)} />
         {details.note && (
           <div className="sm:col-span-2">
             <span className="font-semibold text-[#30251f]">

@@ -70,7 +70,7 @@ const navUnderlineClass = (active: boolean) =>
 export default function SiteNavbar() {
   const router = useRouter();
   const pathname = usePathname();
-  const { t } = useLanguage();
+  const { t, localize } = useLanguage();
   const { isAuthenticated, isAdmin, isVendor, isUser, user, role, logout } =
     useAuth();
   const { categories } = useCategories();
@@ -315,7 +315,7 @@ export default function SiteNavbar() {
                         onClick={() => goToCategory(category.id)}
                         className="rounded-2xl px-3.5 py-2.5 text-start text-sm text-[#5f544d] transition-all duration-200 hover:bg-[#faf3ea] hover:text-[#30251f] hover:shadow-[inset_0_0_0_1px_#eadfce]"
                       >
-                        {category.name}
+                        {localize(category.name)}
                       </button>
                     ))}
                   </div>
@@ -826,7 +826,7 @@ export default function SiteNavbar() {
                         onClick={() => goToCategory(category.id)}
                         className="rounded-lg px-3 py-2 text-start text-sm text-[#5f544d] transition-colors duration-150 hover:bg-[#f0e9e0] hover:text-[#30251f]"
                       >
-                        {category.name}
+                        {localize(category.name)}
                       </button>
                     ))
                   )}

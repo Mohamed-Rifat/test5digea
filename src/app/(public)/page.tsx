@@ -27,6 +27,9 @@ import { FaGooglePlay, FaApple } from "react-icons/fa";
 
 import ServiceCard from "@/components/public/ServiceCard";
 import VendorCard from "@/components/public/VendorCard";
+import CategoryCarousel from "@/components/home/CategoryCarousel";
+import PartnersMarquee from "@/components/home/PartnersMarquee";
+import { topServices, topVendors } from "@/lib/ranking";
 import RatingStars from "@/components/shared/RatingStars";
 import { useAuth } from "@/context/AuthContext";
 import { useLanguage } from "@/context/LanguageContext";
@@ -40,8 +43,7 @@ import type { Vendor } from "@/types/vendor";
 import type { Review } from "@/types/review";
 import { media } from "@/lib/media";
 
-const FEATURED_COUNT = 6;
-const VISIBLE_CATEGORIES = 6;
+const FEATURED_COUNT = 8;
 
 // 3 seconds
 const TESTIMONIAL_INTERVAL = 3000;
@@ -74,11 +76,6 @@ export default function Home() {
     loading: categoriesLoading,
     error: categoriesError,
   } = useCategories();
-
-  const visibleCategories = useMemo(
-    () => categories.slice(0, VISIBLE_CATEGORIES),
-    [categories]
-  );
 
   // ------------------------------------------------------------------
   // Featured services
@@ -119,7 +116,6 @@ export default function Home() {
     };
   }, []);
 
-  const featuredServices = allServices.slice(0, FEATURED_COUNT);
 
   // ------------------------------------------------------------------
   // Featured vendors
@@ -167,7 +163,16 @@ export default function Home() {
     };
   }, []);
 
-  const featuredVendors = vendors.slice(0, FEATURED_COUNT);
+  // Best first: weighted rating (Bayesian), then number of reviews.
+  const featuredVendors = useMemo(
+    () => topVendors(vendors, FEATURED_COUNT),
+    [vendors]
+  );
+  // Services borrow their vendor's score, with one per vendor per round.
+  const featuredServices = useMemo(
+    () => topServices(allServices, vendors, FEATURED_COUNT),
+    [allServices, vendors]
+  );
 
   // ------------------------------------------------------------------
   // Testimonials
@@ -430,22 +435,20 @@ export default function Home() {
             </h2>
           </div>
 
-          {categories.length > VISIBLE_CATEGORIES && (
-            <Link
-              href="/vendors"
-              className="hidden shrink-0 items-center gap-1.5 text-sm font-semibold text-[#8e685e] hover:text-[#30251f] sm:inline-flex"
-            >
-              {t("common.viewAll")} <ArrowRight size={14} className="rtl:rotate-180" />
-            </Link>
-          )}
+          <Link
+            href="/vendors"
+            className="hidden shrink-0 items-center gap-1.5 text-sm font-semibold text-[#8e685e] hover:text-[#30251f] sm:inline-flex"
+          >
+            {t("common.viewAll")} <ArrowRight size={14} className="rtl:rotate-180" />
+          </Link>
         </div>
 
         {categoriesLoading && (
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {Array.from({ length: 6 }).map((_, i) => (
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+            {Array.from({ length: 8 }).map((_, i) => (
               <div
                 key={i}
-                className="h-40 animate-pulse rounded-2xl border border-[#eee5df] bg-white"
+                className="h-44 animate-pulse rounded-2xl border border-[#eee5df] bg-white"
               />
             ))}
           </div>
@@ -472,47 +475,7 @@ export default function Home() {
         {!categoriesLoading &&
           !categoriesError &&
           categories.length > 0 && (
-            <>
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {visibleCategories.map((category) => (
-                  <Link
-                    key={category.id}
-                    href={`/vendors?categoryId=${category.id}`}
-                    className="group rounded-2xl border border-[#eee5df] bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
-                  >
-                    {category.iconUrl ? (
-                      <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-xl bg-[#faf7f4]">
-                        <img
-                          loading="lazy"
-                          decoding="async"
-                          src={category.iconUrl}
-                          alt={category.name}
-                          className="h-10 w-10 object-contain"
-                        />
-                      </div>
-                    ) : (
-                      <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-xl bg-[#faf7f4]">
-                        <span className="text-2xl text-[#c9b8a8]">
-                          ✦
-                        </span>
-                      </div>
-                    )}
-
-                    <h3 className="mb-2 text-xl font-semibold text-[#30251f]">
-                      {category.name}
-                    </h3>
-
-                    <p className="line-clamp-3 text-sm leading-6 text-[#81746d]">
-                      {category.description}
-                    </p>
-
-                    <span className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-[#8e685e]">
-                      {t("home.categories.browseVendors")} <ArrowRight size={14} className="rtl:rotate-180" />
-                    </span>
-                  </Link>
-                ))}
-              </div>
-            </>
+            <CategoryCarousel categories={categories} />
           )}
       </section>
 
@@ -540,8 +503,8 @@ export default function Home() {
         </div>
 
         {vendorsLoading && (
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {Array.from({ length: 6 }).map((_, i) => (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {Array.from({ length: 8 }).map((_, i) => (
               <div
                 key={i}
                 className="h-72 animate-pulse rounded-2xl border border-[#eee5df] bg-white"
@@ -571,7 +534,7 @@ export default function Home() {
         {!vendorsLoading &&
           !vendorsError &&
           vendors.length > 0 && (
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {featuredVendors.map((vendor) => (
                 <VendorCard
                   key={vendor.id}
@@ -588,6 +551,12 @@ export default function Home() {
           {t("home.vendors.viewAllVendors")} <ArrowRight size={14} className="rtl:rotate-180" />
         </Link>
       </section>
+
+      {/* ================= Trusted partners ================= */}
+
+      {!vendorsLoading && !vendorsError && (
+        <PartnersMarquee vendors={topVendors(vendors, 24)} />
+      )}
 
       {/* ================= Featured services ================= */}
 
@@ -615,8 +584,8 @@ export default function Home() {
           </div>
 
           {servicesLoading && (
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {Array.from({ length: 6 }).map((_, i) => (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {Array.from({ length: 8 }).map((_, i) => (
                 <div
                   key={i}
                   className="h-80 animate-pulse rounded-2xl border border-[#eee5df] bg-white"
@@ -646,7 +615,7 @@ export default function Home() {
           {!servicesLoading &&
             !servicesError &&
             featuredServices.length > 0 && (
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 {featuredServices.map((service) => (
                   <ServiceCard
                     key={service.id}

@@ -23,7 +23,7 @@ export default function ReviewsSection({ serviceId }: { serviceId: string }) {
   const reviews = data?.items ?? [];
   const totalPages = data?.totalPages ?? 1;
   return (
-    <section className="mt-10">
+    <section className="mt-12">
       <div className="mb-4 flex items-center gap-2">
         <MessageSquareText size={18} className="text-[#a47e43]" />
         <h2 className="font-serif text-lg text-[#30251f]">
@@ -57,7 +57,7 @@ export default function ReviewsSection({ serviceId }: { serviceId: string }) {
 
       {!loading && !error && reviews.length > 0 && (
         <>
-          <div className="space-y-4">
+          <div className={`grid gap-3 ${reviews.length > 1 ? "md:grid-cols-2" : ""}`}>
             {reviews.map((review) => (
               <div
                 key={review.id}

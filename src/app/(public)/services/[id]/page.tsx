@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   ArrowLeft,
+  ChevronLeft,
   ImageOff,
   Store,
   Loader2,
@@ -17,25 +18,26 @@ import {
 import FavoriteButton from "@/components/shared/FavoriteButton";
 import ImageLightbox from "@/components/shared/ImageLightbox";
 import ReviewsSection from "@/components/reviews/ReviewsSection";
-import SimilarServices from "@/components/public/SimilarServices";
+import RelatedServices from "@/components/public/RelatedServices";
 import { useFavorites } from "@/features/favorites/hooks/useFavorites";
 import { useCompare } from "@/context/CompareContext";
 import { useRoadmapPicker } from "@/features/roadmap/hooks/useRoadmapPicker";
 import RoadmapPickButton from "@/components/roadmap/RoadmapPickButton";
 import { getService } from "@/features/services/api";
-import { formatPrice } from "@/lib/format";
+import { formatPrice, startingPrice } from "@/lib/format";
 import { FavoriteTargetType } from "@/types/favorite";
 import type { Service } from "@/types/service";
 
 export default function ServiceDetailPage() {
   const params = useParams<{ id: string }>();
-  const { t } = useLanguage();
+  const { t, localize } = useLanguage();
 
   const [service, setService] = useState<Service | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [activeImage, setActiveImage] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [descriptionOpen, setDescriptionOpen] = useState(false);
 
   const { isFavorited, toggleFavorite, actionLoading } = useFavorites();
   const { isSelected, toggleService } = useCompare();
@@ -91,75 +93,86 @@ export default function ServiceDetailPage() {
     );
   }
 
+  const images = service.images ?? [];
+  const hasImages = images.length > 0;
+  const fromPrice = startingPrice(service.prices);
+  const longDescription = (service.description ?? "").length > 280;
+
   return (
     <main className="min-h-screen bg-[#faf8f6]">
-
-      <div className="mx-auto lg:max-w-10/12 px-4 py-10 sm:px-6 lg:px-8">
-        <Link
-          href="/services"
-          className="mb-6 inline-flex items-center gap-2 text-sm font-medium text-[#766d67] hover:text-[#30251f]"
+      <div className="mx-auto px-4 pb-14 pt-5 sm:px-6 lg:max-w-10/12 lg:px-8">
+        {/* Breadcrumb */}
+        <nav
+          aria-label={t("services.detail.breadcrumb")}
+          className="mb-5 flex min-w-0 items-center gap-1.5 text-xs text-[#8b7e76]"
         >
-          <ArrowLeft size={16} className="rtl:rotate-180" />
-          {t("services.detail.backToServices")}
-        </Link>
+          <Link href="/services" className="shrink-0 hover:text-[#30251f]">
+            {t("navbar.services")}
+          </Link>
+          {service.categoryName && (
+            <>
+              <ChevronLeft size={13} className="shrink-0 ltr:rotate-180" aria-hidden="true" />
+              <Link
+                href={`/services?categoryId=${service.categoryId}`}
+                className="shrink-0 hover:text-[#30251f]"
+              >
+                {localize(service.categoryName)}
+              </Link>
+            </>
+          )}
+          <ChevronLeft size={13} className="shrink-0 ltr:rotate-180" aria-hidden="true" />
+          <span className="truncate font-medium text-[#5f544d]">{service.name}</span>
+        </nav>
 
-        <div className="grid gap-10 lg:grid-cols-[1.2fr_0.8fr]">
-          {/* Left: gallery + description */}
+        <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:gap-10">
+          {/* Gallery */}
           <div>
             <div
-              className={`group relative aspect-4/3 w-full overflow-hidden rounded-2xl border border-[#eee7e1] bg-[#f4eee9] ${
-                service.images && service.images.length > 0 ? "cursor-zoom-in" : ""
+              className={`group relative aspect-[16/11] max-h-[440px] w-full overflow-hidden rounded-2xl border border-[#eee7e1] bg-[#f4eee9] ${
+                hasImages ? "cursor-zoom-in" : ""
               }`}
               onClick={() => {
-                if (service.images && service.images.length > 0) setLightboxOpen(true);
+                if (hasImages) setLightboxOpen(true);
               }}
             >
-              {service.images && service.images.length > 0 ? (
+              {hasImages ? (
                 <>
                   <img
                     loading="eager"
                     fetchPriority="high"
                     decoding="async"
-                    src={service.images[activeImage]?.url}
+                    src={images[activeImage]?.url}
                     alt={service.name}
-                    className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
+                    className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
                   />
-
-                  {/* Zoom hint overlay */}
-                  <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/0 transition group-hover:bg-black/10">
-                    <span className="flex items-center gap-2 rounded-full bg-black/60 px-3 py-1.5 text-xs font-medium text-white opacity-0 backdrop-blur transition group-hover:opacity-100">
-                      <Maximize2 size={13} />
-                      {t("services.detail.viewFullSize")}
-                    </span>
-                  </div>
-
-                  {/* Image counter */}
-                  {service.images.length > 1 && (
-                    <span className="absolute bottom-4 end-4 rounded-full bg-black/55 px-2.5 py-1 text-[11px] font-medium text-white backdrop-blur">
-                      {activeImage + 1} / {service.images.length}
-                    </span>
-                  )}
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      setLightboxOpen(true);
+                    }}
+                    className="absolute bottom-3 end-3 inline-flex items-center gap-1.5 rounded-full bg-black/55 px-3 py-1.5 text-[11px] font-medium text-white backdrop-blur transition hover:bg-black/70"
+                  >
+                    {images.length > 1 ? <ImagesIcon size={13} /> : <Maximize2 size={13} />}
+                    {images.length > 1
+                      ? `${activeImage + 1} / ${images.length}`
+                      : t("services.detail.viewFullSize")}
+                  </button>
                 </>
               ) : (
                 <div className="flex h-full w-full items-center justify-center text-[#c9bcae]">
-                  <ImageOff size={40} />
+                  <ImageOff size={36} />
                 </div>
               )}
 
               <FavoriteButton
                 targetType={FavoriteTargetType.Service}
                 targetId={service.id}
-                isFavorited={isFavorited(
-                  FavoriteTargetType.Service,
-                  service.id
-                )}
-                loading={
-                  actionLoading ===
-                  `${FavoriteTargetType.Service}:${service.id}`
-                }
+                isFavorited={isFavorited(FavoriteTargetType.Service, service.id)}
+                loading={actionLoading === `${FavoriteTargetType.Service}:${service.id}`}
                 onToggle={toggleFavorite}
                 size="lg"
-                className="absolute end-4 top-4 shadow-sm"
+                className="absolute end-3 top-3 shadow-sm"
               />
 
               <button
@@ -173,151 +186,140 @@ export default function ServiceDetailPage() {
                     name: service.name,
                   });
                 }}
-                className={`absolute start-4 top-4 inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold shadow-sm backdrop-blur ${
-                  isSelected(service.id)
-                    ? "bg-[#30251f] text-white"
-                    : "bg-white/90 text-[#514740]"
+                className={`absolute start-3 top-3 inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold shadow-sm backdrop-blur ${
+                  isSelected(service.id) ? "bg-[#30251f] text-white" : "bg-white/90 text-[#514740]"
                 }`}
               >
-                <GitCompare size={14} />
+                <GitCompare size={13} />
                 {isSelected(service.id)
                   ? t("services.detail.addedToCompare")
                   : t("services.detail.compare")}
               </button>
             </div>
 
-            {service.images && service.images.length > 1 && (
-              <div className="mt-3 flex gap-2.5 overflow-x-auto pb-1">
-                {service.images.map((img, index) => (
+            {images.length > 1 && (
+              <div className="mt-2.5 flex gap-2 overflow-x-auto pb-1">
+                {images.map((img, index) => (
                   <button
                     key={img.id}
                     type="button"
                     onClick={() => setActiveImage(index)}
+                    onDoubleClick={() => setLightboxOpen(true)}
                     aria-label={t("common.imageNumber", { number: index + 1 })}
                     aria-pressed={index === activeImage}
-                    onDoubleClick={() => setLightboxOpen(true)}
-                    className={`relative h-16 w-16 shrink-0 overflow-hidden rounded-xl border-2 transition sm:h-20 sm:w-20 ${
+                    className={`h-14 w-14 shrink-0 overflow-hidden rounded-lg border-2 transition sm:h-16 sm:w-16 ${
                       index === activeImage
                         ? "border-[#b99a62]"
-                        : "border-transparent opacity-80 hover:opacity-100"
+                        : "border-transparent opacity-75 hover:opacity-100"
                     }`}
                   >
-                    <img
-                      loading="lazy"
-                      decoding="async"
-                      src={img.url}
-                      alt=""
-                      className="h-full w-full object-cover"
-                    />
+                    <img loading="lazy" decoding="async" src={img.url} alt="" className="h-full w-full object-cover" />
                   </button>
                 ))}
               </div>
             )}
 
-            {service.images && service.images.length > 0 && (
-              <button
-                type="button"
-                onClick={() => setLightboxOpen(true)}
-                className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-[#a47e43] hover:underline"
-              >
-                <ImagesIcon size={13} />
-                {service.images.length > 1
-                  ? t("services.detail.viewAllPhotosMany", {
-                      count: service.images.length,
-                    })
-                  : t("services.detail.viewAllPhotosOne", {
-                      count: service.images.length,
-                    })}
-              </button>
-            )}
-
             <ImageLightbox
-              images={service.images || []}
+              images={images}
               initialIndex={activeImage}
               open={lightboxOpen}
               onClose={() => setLightboxOpen(false)}
               title={service.name}
             />
-
-            <div className="mt-8">
-              {service.categoryName && (
-                <span className="inline-block rounded-full bg-[#f0e9e0] px-3 py-1 text-xs font-medium text-[#a47e43]">
-                  {service.categoryName}
-                </span>
-              )}
-
-              <h1 className="mt-3 font-serif text-3xl font-light text-[#30251f]">
-                {service.name}
-              </h1>
-
-              <Link
-                href={`/vendors/${service.vendorId}`}
-                className="mt-2 inline-flex items-center gap-2 text-sm font-medium text-[#a47e43] hover:underline"
-              >
-                <Store size={14} />
-                {service.vendorBusinessName}
-              </Link>
-
-              <p className="mt-6 whitespace-pre-line text-sm leading-7 text-[#5f544d]">
-                {service.description}
-              </p>
-            </div>
-
-            <ReviewsSection serviceId={service.id} />
           </div>
 
-          {/* Right: pricing + actions */}
-          <div>
-            {/* The whole column sticks together; if it is taller than the
-                screen it scrolls on its own so nothing gets cut off. */}
-            <div className="space-y-6 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto">
-              <div className="rounded-2xl border border-[#eee7e1] bg-white p-6">
-                <h2 className="mb-4 font-serif text-lg text-[#30251f]">
-                  {t("services.detail.pricing")}
-                </h2>
+          {/* Details + booking */}
+          <div className="lg:sticky lg:top-24">
+            {service.categoryName && (
+              <Link
+                href={`/services?categoryId=${service.categoryId}`}
+                className="inline-block rounded-full bg-[#f0e9e0] px-3 py-1 text-xs font-medium text-[#a47e43] transition hover:bg-[#e9dfd2]"
+              >
+                {localize(service.categoryName)}
+              </Link>
+            )}
 
-                {service.prices && service.prices.length > 0 ? (
-                  <div className="space-y-3">
-                    {service.prices.map((price) => (
-                      <div
-                        key={price.id}
-                        className="flex items-center justify-between rounded-xl bg-[#faf7f4] px-4 py-3"
-                      >
-                        <span className="text-sm text-[#5f544d]">
-                          {price.label}
-                        </span>
-                        <span className="font-serif text-base text-[#a47e43]">
-                          {formatPrice(price.price)} {t("common.currency")}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-[#9b8f86]">
-                    {t("services.detail.contactForPricing")}
-                  </p>
-                )}
+            <h1 className="mt-3 font-serif text-2xl leading-snug text-[#30251f] sm:text-3xl">
+              {service.name}
+            </h1>
 
-                <div className="mt-6 space-y-3 border-t border-[#f0e9e0] pt-6">
-                  <Link
-                    href={`/vendors/${service.vendorId}`}
-                    className="flex w-full items-center justify-center rounded-full border border-[#e4dbd0] px-5 py-3 text-sm font-medium text-[#30251f] transition hover:border-[#b99a62]"
+            <Link
+              href={`/vendors/${service.vendorId}`}
+              className="mt-2 inline-flex items-center gap-2 text-sm font-medium text-[#a47e43] hover:underline"
+            >
+              <Store size={14} />
+              {service.vendorBusinessName}
+            </Link>
+
+            {service.description && (
+              <div className="mt-4">
+                <p
+                  className={`whitespace-pre-line text-sm leading-7 text-[#5f544d] ${
+                    longDescription && !descriptionOpen ? "line-clamp-4" : ""
+                  }`}
+                >
+                  {service.description}
+                </p>
+                {longDescription && (
+                  <button
+                    type="button"
+                    onClick={() => setDescriptionOpen((open) => !open)}
+                    className="mt-1 text-xs font-semibold text-[#a47e43] hover:underline"
                   >
-                    {t("services.detail.viewVendorProfile")}
-                  </Link>
+                    {descriptionOpen ? t("services.detail.readLess") : t("services.detail.readMore")}
+                  </button>
+                )}
+              </div>
+            )}
 
-                  <RoadmapPickButton
-                    picker={roadmapPicker}
-                    vendor={{ id: service.vendorId, name: service.vendorBusinessName }}
-                    item={roadmapPicker.findItem(service.categoryId, service.categoryName)}
-                  />
-                </div>
+            {/* Price + actions */}
+            <div className="mt-5 rounded-2xl border border-[#eee7e1] bg-white p-4 sm:p-5">
+              <div className="flex items-baseline justify-between gap-3">
+                <span className="text-xs text-[#9b8f86]">{t("common.startingAt")}</span>
+                <span className="font-serif text-2xl text-[#a47e43]">
+                  {fromPrice !== null
+                    ? `${formatPrice(fromPrice)} ${t("common.currency")}`
+                    : t("common.priceOnRequest")}
+                </span>
               </div>
 
-              <SimilarServices service={service} />
+              {service.prices && service.prices.length > 0 ? (
+                <div className="mt-3 divide-y divide-[#f3ede6] rounded-xl bg-[#faf7f4] px-3.5">
+                  {service.prices.map((price) => (
+                    <div key={price.id} className="flex items-center justify-between gap-3 py-2.5">
+                      <span className="text-sm text-[#5f544d]">{price.label}</span>
+                      <span className="shrink-0 text-sm font-semibold text-[#30251f]">
+                        {formatPrice(price.price)} {t("common.currency")}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-2 text-sm text-[#9b8f86]">{t("services.detail.contactForPricing")}</p>
+              )}
+
+              <div className="mt-4 space-y-2.5">
+                <RoadmapPickButton
+                  picker={roadmapPicker}
+                  vendor={{ id: service.vendorId, name: service.vendorBusinessName }}
+                  item={roadmapPicker.findItem(service.categoryId, service.categoryName)}
+                  size="sm"
+                />
+                <Link
+                  href={`/vendors/${service.vendorId}`}
+                  className="flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-[#e4dbd0] px-4 text-sm font-medium text-[#30251f] transition hover:border-[#b99a62]"
+                >
+                  <Store size={15} />
+                  {t("services.detail.viewVendorProfile")}
+                </Link>
+              </div>
             </div>
           </div>
         </div>
+
+        <ReviewsSection serviceId={service.id} />
+
+        <RelatedServices service={service} roadmap={roadmapPicker.roadmap} />
       </div>
     </main>
   );

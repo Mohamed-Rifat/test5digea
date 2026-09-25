@@ -283,7 +283,7 @@ function ChartTooltip({
 /* ========================================================= */
 
 export default function AdminPage() {
-  const { t, language } = useLanguage();
+  const { t, language, localize } = useLanguage();
   const {
     categories,
     loading: categoriesLoading,
@@ -339,10 +339,10 @@ export default function AdminPage() {
           (service) => service.categoryId === category.id
         ).length;
 
-        return { ...category, serviceCount };
+        return { ...category, name: localize(category.name), serviceCount };
       })
       .sort((a, b) => b.serviceCount - a.serviceCount);
-  }, [categories, services]);
+  }, [categories, services, localize]);
 
   const topCategories = categoryStats.slice(0, 6);
 

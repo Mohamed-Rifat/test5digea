@@ -65,7 +65,7 @@ const commonCategoryNames = (vendors: Vendor[]): string[] => {
 
 function FavoritesContent() {
   const { favorites, loading, error, remove, actionLoading } = useFavorites();
-  const { t } = useLanguage();
+  const { t, localize } = useLanguage();
   const { toast } = useToast();
   const { categories } = useCategories();
   const { getDetail } = useFavoriteDetails(favorites);
@@ -132,10 +132,11 @@ function FavoritesContent() {
     [selectedVendors]
   );
 
-  const compareCategoryLabel =
+  const compareCategoryLabel = localize(
     compare.type === FavoriteTargetType.Service
       ? selectedServices[0]?.categoryName ?? ""
-      : sharedVendorCategory;
+      : sharedVendorCategory,
+  );
 
   // Link to the full comparison page (needs a category id).
   const compareFullPageHref = useMemo(() => {

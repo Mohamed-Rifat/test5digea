@@ -26,6 +26,7 @@ import {
   type Language,
   type TranslationKey,
 } from "@/locales";
+import { localizeText } from "@/lib/bilingual";
 
 type TranslationParams = Record<string, string | number>;
 
@@ -40,6 +41,11 @@ interface LanguageContextValue {
   t: (key: TranslationKey, params?: TranslationParams) => string;
   isArabic: boolean;
   dir: Direction;
+  /**
+   * Picks the current-language half of admin-entered bilingual text
+   * (category names/descriptions stored as "عربي ‖ English").
+   */
+  localize: (value: string | null | undefined) => string;
 }
 
 const LanguageContext = createContext<LanguageContextValue | undefined>(
@@ -107,6 +113,11 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     [language],
   );
 
+  const localize = useCallback(
+    (text: string | null | undefined) => localizeText(text, language),
+    [language],
+  );
+
   const value = useMemo<LanguageContextValue>(
     () => ({
       language,
@@ -114,8 +125,9 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       t,
       isArabic: language === "ar",
       dir: LANGUAGE_DIRECTION[language],
+      localize,
     }),
-    [language, setLanguage, t],
+    [language, setLanguage, t, localize],
   );
 
   return (

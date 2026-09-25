@@ -29,7 +29,7 @@ const normalize = (value: string | null | undefined) =>
 export function useRoadmapPicker() {
   const { isAuthenticated, isUser, isLoading: authLoading } = useAuth();
   const { roadmap, loading, refetch } = useRoadmap();
-  const { t } = useLanguage();
+  const { t, localize } = useLanguage();
   const { toast } = useToast();
   const confirm = useConfirm();
   const [pickingCategoryId, setPickingCategoryId] = useState<string | null>(null);
@@ -66,7 +66,7 @@ export function useRoadmapPicker() {
           title: t("roadmap.pick.replaceTitle"),
           message: t("roadmap.pick.replaceBody", {
             old: item.selectedVendorName || "—",
-            category: item.categoryName,
+            category: localize(item.categoryName),
             new: vendor.name,
           }),
           confirmText: t("roadmap.pick.replaceConfirm"),
@@ -80,19 +80,36 @@ export function useRoadmapPicker() {
         await selectRoadmapVendor(categoryId, { vendorId: vendor.id });
         await refetch();
         toast(
-          t("roadmap.pick.success", { vendor: vendor.name, category: item.categoryName }),
+          t("roadmap.pick.success", { vendor: vendor.name, category: localize(item.categoryName) }),
           "success",
           { action: { label: t("roadmap.pick.openRoadmap"), href: "/roadmap" } }
         );
         return true;
       } catch (err) {
-        toast(getApiErrorMessage(err, t("roadmap.pick.failed")), "error");
+        const message = getApiErrorMessage(err, t("roadmap.pick.failed"));
+        // The API refuses vendors without an approved service in that
+        // category - explain it in plain words instead of the raw message.
+        toast(
+          /offer|provide|category|service/i.test(message)
+            ? t("roadmap.pick.notOffered", {
+                vendor: vendor.name,
+                category: localize(item.categoryName),
+              })
+            : message,
+          "error",
+          {
+            action: {
+              label: t("roadmap.pick.otherVendors"),
+              href: `/vendors?categoryId=${encodeURIComponent(categoryId)}`,
+            },
+          }
+        );
         return false;
       } finally {
         setPickingCategoryId(null);
       }
     },
-    [confirm, refetch, t, toast]
+    [confirm, refetch, t, toast, localize]
   );
 
   return {

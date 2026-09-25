@@ -38,7 +38,7 @@ export default function RoadmapPickButton({
   showHelpers = true,
   className = "",
 }: Props) {
-  const { t } = useLanguage();
+  const { t, localize } = useLanguage();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const here = `${pathname}${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
@@ -91,7 +91,7 @@ export default function RoadmapPickButton({
   const isChosen = item.selectedVendorId === vendor.id;
   const isPicking = picker.pickingCategoryId === String(item.categoryId);
   const label = showCategory
-    ? t("roadmap.pick.chooseFor", { category: item.categoryName })
+    ? t("roadmap.pick.chooseFor", { category: localize(item.categoryName) })
     : t("roadmap.pick.choose");
 
   if (isChosen) {
@@ -105,7 +105,7 @@ export default function RoadmapPickButton({
           <CheckCircle2 size={17} aria-hidden="true" />
           <span className="truncate">
             {done ? t("roadmap.pick.completed") : t("roadmap.pick.chosen")}
-            {showCategory ? ` · ${item.categoryName}` : ""}
+            {showCategory ? ` · ${localize(item.categoryName)}` : ""}
           </span>
         </div>
         {showHelpers && (
@@ -117,6 +117,28 @@ export default function RoadmapPickButton({
             {t("roadmap.pick.viewRoadmap")}
           </Link>
         )}
+      </div>
+    );
+  }
+
+  // Step already done with another vendor: nothing to pick - just say so.
+  if (item.status === RoadmapItemStatus.Completed) {
+    return (
+      <div className={`space-y-1.5 ${className}`}>
+        <div
+          className={`${base} cursor-default bg-[#f6f1ec] text-[#7d7068] ring-1 ring-[#e8dfd7]`}
+          role="status"
+        >
+          <CheckCircle2 size={16} className="shrink-0 text-emerald-600" aria-hidden="true" />
+          <span className="truncate">
+            {item.selectedVendorName
+              ? t("roadmap.pick.doneWith", {
+                  category: localize(item.categoryName),
+                  name: item.selectedVendorName,
+                })
+              : t("roadmap.pick.doneOutside", { category: localize(item.categoryName) })}
+          </span>
+        </div>
       </div>
     );
   }

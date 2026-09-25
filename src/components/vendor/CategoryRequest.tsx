@@ -42,7 +42,7 @@ export const CategoryCard = ({
   isAssigned: boolean;
   onRequest: (category: Category) => void;
 }) => {
-  const { t } = useLanguage();
+  const { t, localize } = useLanguage();
 
   return (
     <div
@@ -65,13 +65,13 @@ export const CategoryCard = ({
                 isAssigned ? "text-emerald-800" : "text-[#30251f]"
               }`}
             >
-              {category.name}
+              {localize(category.name)}
             </h4>
           </div>
 
           {category.description && (
             <p className="mt-1 line-clamp-2 text-[10px] leading-4 text-[#9b8f86] sm:text-xs">
-              {category.description}
+              {localize(category.description)}
             </p>
           )}
         </div>
@@ -139,7 +139,7 @@ export const ContactAdminDialog = ({
   onClose: () => void;
   onSuccess?: () => void;
 }) => {
-  const { t } = useLanguage();
+  const { t, localize } = useLanguage();
   const [message, setMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [sendError, setSendError] = useState("");
@@ -209,7 +209,7 @@ export const ContactAdminDialog = ({
               <TextWithSlot
                 text={t("vendor.services.detail.dialog.subtitle")}
                 token="{bold}"
-                slot={<strong className="text-[#30251f]">{category?.name}</strong>}
+                slot={<strong className="text-[#30251f]">{localize(category?.name)}</strong>}
               />
             </p>
           </div>
@@ -235,7 +235,7 @@ export const ContactAdminDialog = ({
         <div className="mb-4 flex flex-wrap items-center gap-2">
           <Chip
             icon={<Tag size={12} />}
-            label={category?.name}
+            label={localize(category?.name)}
             size="small"
             sx={{
               height: 26,

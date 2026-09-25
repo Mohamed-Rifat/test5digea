@@ -707,7 +707,7 @@ function RoadmapOverview({
   onMarkNextDone: (item: RoadmapItem) => void;
   onOpenLetter?: () => void;
 }) {
-  const { t, isArabic } = useLanguage();
+  const { t, isArabic, localize } = useLanguage();
 
   const counts = items.reduce(
     (acc, item) => {
@@ -836,7 +836,7 @@ function RoadmapOverview({
               </span>
               <div className="min-w-0">
                 <h3 className="truncate text-xl font-bold">
-                  {nextItem.categoryName}
+                  {localize(nextItem.categoryName)}
                 </h3>
                 <p className="text-xs text-white/55">
                   {t("roadmap.cardExtra.stepOf", {
@@ -848,7 +848,7 @@ function RoadmapOverview({
             </div>
 
             <p className="mt-3 text-sm leading-relaxed text-white/65">
-              {t("roadmap.next.hint", { category: nextItem.categoryName })}
+              {t("roadmap.next.hint", { category: localize(nextItem.categoryName) })}
             </p>
 
             <div className="mt-auto flex flex-col gap-2 pt-5 sm:flex-row sm:flex-wrap">
@@ -1152,7 +1152,7 @@ function JourneyCard({
   total: number;
   isNext: boolean;
 } & JourneyHandlers) {
-  const { t, isArabic } = useLanguage();
+  const { t, isArabic, localize } = useLanguage();
   const state = getStepState(item);
   const styles = STATE_STYLES[state];
   const isCompleted = state === "completed";
@@ -1188,7 +1188,7 @@ function JourneyCard({
   return (
     <article
       ref={ref}
-      aria-label={`${t("roadmap.cardExtra.stepOf", { number: index + 1, total })}: ${item.categoryName}`}
+      aria-label={`${t("roadmap.cardExtra.stepOf", { number: index + 1, total })}: ${localize(item.categoryName)}`}
       className={`group relative flex h-full flex-col rounded-3xl border p-5 shadow-[0_10px_30px_rgba(65,46,37,0.06)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_45px_rgba(65,46,37,0.12)] ${styles.card} ${
         isNext
           ? "ring-2 ring-[#d9ab6b] ring-offset-2 ring-offset-[#fbf8f4]"
@@ -1234,7 +1234,7 @@ function JourneyCard({
         </span>
         <div className="min-w-0 flex-1">
           <h3 className="text-lg font-bold leading-snug text-[#30251f]">
-            {item.categoryName}
+            {localize(item.categoryName)}
           </h3>
           {hasVendor ? (
             <p className="mt-1 flex min-w-0 items-center gap-1.5 text-sm text-[#8d6d4c]">
@@ -1436,7 +1436,7 @@ function ExternalVendorModal({
   onSubmit: (data: { vendorName: string; phone: string; link: string }) => void;
   onClose: () => void;
 }) {
-  const { t } = useLanguage();
+  const { t, localize } = useLanguage();
   const [vendorName, setVendorName] = useState("");
   const [phone, setPhone] = useState("");
   const [link, setLink] = useState("");
@@ -1515,8 +1515,8 @@ function ExternalVendorModal({
             </h3>
             <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-white/70">
               {mode === "share"
-                ? t("roadmap.external.shareBody", { category: categoryName })
-                : t("roadmap.external.body", { category: categoryName })}
+                ? t("roadmap.external.shareBody", { category: localize(categoryName) })
+                : t("roadmap.external.body", { category: localize(categoryName) })}
             </p>
           </div>
         </div>
@@ -1653,7 +1653,7 @@ function ReviewPromptModal({
   onReviewNow: () => void;
   onLater: () => void;
 }) {
-  const { t } = useLanguage();
+  const { t, localize } = useLanguage();
 
   return (
     <div
@@ -1667,7 +1667,7 @@ function ReviewPromptModal({
         </div>
 
         <h3 className="mt-4 text-xl font-bold text-[#30251f]">
-          {t("roadmap.reviewPrompt.heading", { category: categoryName })}
+          {t("roadmap.reviewPrompt.heading", { category: localize(categoryName) })}
         </h3>
 
         <p className="mt-2 text-sm leading-relaxed text-[#8b7e76]">

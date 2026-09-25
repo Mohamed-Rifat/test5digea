@@ -81,7 +81,7 @@ const STATUS_FILTERS: {
 ];
 
 function VendorServicesContent() {
-  const { t } = useLanguage();
+  const { t, localize } = useLanguage();
   const {
     services,
     loading,
@@ -551,7 +551,7 @@ function VendorServicesContent() {
 
                       {/* Category */}
                       <p className="mt-0.5 text-[11px] text-[#81746d] sm:mt-1 sm:text-sm">
-                        {service.categoryName || t("vendor.services.list.uncategorized")}
+                        {localize(service.categoryName) || t("vendor.services.list.uncategorized")}
                       </p>
 
                       {/* Description */}

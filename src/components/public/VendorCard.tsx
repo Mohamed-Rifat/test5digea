@@ -32,7 +32,7 @@ export default function VendorCard({
   href,
   footer,
 }: VendorCardProps) {
-  const { t } = useLanguage();
+  const { t, localize } = useLanguage();
 
   return (
     <div
@@ -86,7 +86,7 @@ export default function VendorCard({
                   key={cat}
                   className="rounded-full bg-[#f0e9e0] px-2.5 py-1 text-[11px] font-medium text-[#5f544d]"
                 >
-                  {cat}
+                  {localize(cat)}
                 </span>
               ))}
             </div>

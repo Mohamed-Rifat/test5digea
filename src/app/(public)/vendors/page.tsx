@@ -55,7 +55,7 @@ export default function VendorsPage() {
 
 function VendorsPageContent() {
   const searchParams = useSearchParams();
-  const { t, language } = useLanguage();
+  const { t, language, localize } = useLanguage();
   const initialCategoryId = searchParams.get("categoryId") || "";
   const initialSearch = searchParams.get("search") || "";
 
@@ -238,7 +238,7 @@ function VendorsPageContent() {
         vendor,
         options: options.map((category) => ({
           id: category.id,
-          name: category.name,
+          name: localize(category.name),
         })),
       });
       return;
@@ -426,7 +426,7 @@ function VendorsPageContent() {
                                 : "border-[#eee7e1] bg-white text-[#5f544d] hover:border-[#d9cbb8] hover:bg-[#faf7f4]"
                             }`}
                           >
-                            <span className="truncate">{c.name}</span>
+                            <span className="truncate">{localize(c.name)}</span>
                             {active && (
                               <Check size={12} className="shrink-0" />
                             )}
@@ -605,7 +605,7 @@ function VendorsPageContent() {
             <p className="flex items-start gap-2.5 text-sm font-medium text-[#6f5433]">
               <MapIcon size={18} className="mt-0.5 shrink-0 text-[#a47e43]" aria-hidden="true" />
               <span>
-                {t("roadmap.pick.browsingFor", { category: roadmapStep.categoryName })}
+                {t("roadmap.pick.browsingFor", { category: localize(roadmapStep.categoryName) })}
                 {roadmapStep.selectedVendorName && (
                   <span className="mt-0.5 block text-xs text-[#9b8367]">
                     {t("roadmap.pick.currently", { name: roadmapStep.selectedVendorName })}
@@ -672,7 +672,7 @@ function VendorsPageContent() {
               </p>
               {selectedCategory && (
                 <span className="rounded-full border border-[#eadbce] bg-[#f9f1e9] px-3 py-1.5 text-xs font-semibold text-[#8c6a3c]">
-                  {selectedCategory.name}
+                  {localize(selectedCategory.name)}
                 </span>
               )}
             </div>

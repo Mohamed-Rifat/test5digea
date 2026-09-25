@@ -37,7 +37,7 @@ const MAX_IMAGES = 5;
 
 export default function NewVendorServicePage() {
   const router = useRouter();
-  const { t } = useLanguage();
+  const { t, localize } = useLanguage();
 
   const { create, uploadImages, actionError } = useVendorServices();
   const { categories, loading: categoriesLoading } = useCategories();
@@ -61,9 +61,9 @@ export default function NewVendorServicePage() {
     () =>
       availableCategories.map((category) => ({
         value: category.id,
-        label: category.name,
+        label: localize(category.name),
       })),
-    [availableCategories]
+    [availableCategories, localize]
   );
 
   const categoriesLoadingCombined =

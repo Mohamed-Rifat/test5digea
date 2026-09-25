@@ -10,6 +10,7 @@ import {
 } from "@/lib/seo";
 import { SITE_NAME, absoluteUrl } from "@/lib/site";
 import type { Service } from "@/types/service";
+import { bothLanguages, localizeText } from "@/lib/bilingual";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -49,7 +50,7 @@ export async function generateMetadata({
   const priceText = from !== null ? ` - تبدأ من ${from.toLocaleString("en-US")} ج.م` : "";
 
   return buildMetadata({
-    title: `${service.name}${service.categoryName ? ` | ${service.categoryName}` : ""}`,
+    title: `${service.name}${service.categoryName ? ` | ${localizeText(service.categoryName, "ar")}` : ""}`,
     titleEn: service.vendorBusinessName || undefined,
     description:
       toDescription(
@@ -57,7 +58,7 @@ export async function generateMetadata({
       ) || `${service.name} - ${SITE_NAME}`,
     path: `/services/${id}`,
     image: service.images?.[0]?.url ?? null,
-    keywords: [service.name, service.categoryName, service.vendorBusinessName].filter(
+    keywords: [service.name, ...bothLanguages(service.categoryName), service.vendorBusinessName].filter(
       Boolean,
     ) as string[],
   });
@@ -79,7 +80,7 @@ export default async function ServiceLayout({ params, children }: Props) {
           "@id": absoluteUrl(`/services/${id}#service`),
           name: service.name,
           description: toDescription(service.description, 500),
-          serviceType: service.categoryName,
+          serviceType: localizeText(service.categoryName, "ar") || undefined,
           url: absoluteUrl(`/services/${id}`),
           image: (service.images ?? []).map((img) => img.url).slice(0, 6),
           areaServed: { "@type": "Country", name: "Egypt" },

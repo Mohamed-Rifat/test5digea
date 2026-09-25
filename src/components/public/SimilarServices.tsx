@@ -13,7 +13,7 @@ interface SimilarServicesProps {
 }
 
 export default function SimilarServices({ service }: SimilarServicesProps) {
-  const { t } = useLanguage();
+  const { t, localize } = useLanguage();
   const { mode, services, loading } = useSimilarServices(service);
 
   if (loading) {
@@ -35,7 +35,7 @@ export default function SimilarServices({ service }: SimilarServicesProps) {
   if (!mode || services.length === 0) return null;
 
   const isSameVendor = mode === "sameVendor";
-  const category = service.categoryName;
+  const category = localize(service.categoryName);
 
   return (
     <section className="rounded-2xl border border-[#eee7e1] bg-white p-6">

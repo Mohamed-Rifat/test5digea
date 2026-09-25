@@ -217,6 +217,10 @@ const roadmap = {
     replaceConfirm: "استبدال",
     createdReturn: "خطة فرحك جاهزة! كمّل واختار مقدم الخدمة.",
     viewRoadmap: "شوفه في الخطة",
+    doneWith: "«{category}» خلصت مع {name}",
+    doneOutside: "«{category}» خلصت من برا 5Digea",
+    notOffered: "{vendor} لسه مالوش خدمة متاحة في «{category}»، فمينفعش يتضاف للخطوة دي دلوقتي.",
+    otherVendors: "شوف مقدمي خدمات تانيين",
     sectionTitle: "أضفه لخطة فرحك",
   },
   filter: {

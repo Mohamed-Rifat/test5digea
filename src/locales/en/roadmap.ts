@@ -220,6 +220,10 @@ const roadmap: Translation["roadmap"] = {
     replaceConfirm: "Replace",
     createdReturn: "Your roadmap is ready! Now pick your vendor.",
     viewRoadmap: "View in roadmap",
+    doneWith: "“{category}” is done with {name}",
+    doneOutside: "“{category}” was completed outside 5Digea",
+    notOffered: "{vendor} doesn't have an available service in “{category}” yet, so they can't be added to this step right now.",
+    otherVendors: "See other vendors",
     sectionTitle: "Add to your wedding roadmap",
   },
   filter: {

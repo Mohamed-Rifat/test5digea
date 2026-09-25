@@ -20,6 +20,7 @@ import {
     Trash2,
     X,
     Zap,
+    Languages,
 } from "lucide-react";
 
 import { useAdminCategories } from "@/features/categories/hooks/useAdminCategories";
@@ -33,12 +34,37 @@ import {
 } from "@/features/categories/api";
 
 import type { Category } from "@/types/category";
+import type { TranslationKey } from "@/locales";
+import BilingualField from "@/components/admin/BilingualField";
+import IconPicker from "@/components/admin/IconPicker";
+import {
+    decodeBilingual,
+    encodeBilingual,
+    isBilingual,
+    type BilingualText,
+} from "@/lib/bilingual";
+
+const EMPTY_BILINGUAL: BilingualText = { ar: "", en: "" };
+
+/** Both names are required; one description (either language) is enough. */
+function validateBilingual(
+    name: BilingualText,
+    description: BilingualText,
+    iconUrl: string
+): TranslationKey | null {
+    if (!name.ar.trim() || !name.en.trim())
+        return "admin.categories.needBothNames";
+    if (!description.ar.trim() && !description.en.trim())
+        return "admin.categories.fillRequired";
+    if (!iconUrl.trim()) return "admin.categories.fillRequired";
+    return null;
+}
 
 type ModalType = "create" | "edit" | "delete" | null;
 type StatusFilter = "all" | "active" | "inactive";
 
 export default function AdminCategoriesPage() {
-  const { t } = useLanguage();
+  const { t, localize } = useLanguage();
     const {
         categories,
         loading,
@@ -73,17 +99,21 @@ export default function AdminCategoriesPage() {
     // CREATE
     // =========================
 
-    const [name, setName] = useState("");
-    const [description, setDescription] = useState("");
+    // Name/description are entered in Arabic + English and stored together
+    // in the single API field ("عربي ‖ English") - see src/lib/bilingual.ts.
+    const [name, setName] = useState<BilingualText>(EMPTY_BILINGUAL);
+    const [description, setDescription] =
+        useState<BilingualText>(EMPTY_BILINGUAL);
     const [iconUrl, setIconUrl] = useState("");
 
     // =========================
     // EDIT
     // =========================
 
-    const [editName, setEditName] = useState("");
+    const [editName, setEditName] =
+        useState<BilingualText>(EMPTY_BILINGUAL);
     const [editDescription, setEditDescription] =
-        useState("");
+        useState<BilingualText>(EMPTY_BILINGUAL);
     const [editIconUrl, setEditIconUrl] = useState("");
 
     // =========================
@@ -177,8 +207,8 @@ export default function AdminCategoriesPage() {
     // =========================
 
     const openCreateModal = () => {
-        setName("");
-        setDescription("");
+        setName(EMPTY_BILINGUAL);
+        setDescription(EMPTY_BILINGUAL);
         setIconUrl("");
         resetMessages();
         setSelectedCategory(null);
@@ -192,12 +222,9 @@ export default function AdminCategoriesPage() {
     ) => {
         event.preventDefault();
 
-        if (
-            !name.trim() ||
-            !description.trim() ||
-            !iconUrl.trim()
-        ) {
-            setActionError(t('admin.categories.fillRequired'));
+        const createError = validateBilingual(name, description, iconUrl);
+        if (createError) {
+            setActionError(t(createError));
             return;
         }
 
@@ -206,8 +233,8 @@ export default function AdminCategoriesPage() {
             resetMessages();
 
             await createCategory({
-                name: name.trim(),
-                description: description.trim(),
+                name: encodeBilingual(name.ar, name.en),
+                description: encodeBilingual(description.ar, description.en),
                 iconUrl: iconUrl.trim(),
             });
 
@@ -215,8 +242,8 @@ export default function AdminCategoriesPage() {
 
             setModal(null);
 
-            setName("");
-            setDescription("");
+            setName(EMPTY_BILINGUAL);
+            setDescription(EMPTY_BILINGUAL);
             setIconUrl("");
 
             setSuccessMessage(
@@ -239,8 +266,8 @@ export default function AdminCategoriesPage() {
     const openEditModal = (category: Category) => {
         setSelectedCategory(category);
 
-        setEditName(category.name);
-        setEditDescription(category.description);
+        setEditName(decodeBilingual(category.name));
+        setEditDescription(decodeBilingual(category.description));
         setEditIconUrl(category.iconUrl);
 
         resetMessages();
@@ -257,12 +284,13 @@ export default function AdminCategoriesPage() {
 
         if (!selectedCategory) return;
 
-        if (
-            !editName.trim() ||
-            !editDescription.trim() ||
-            !editIconUrl.trim()
-        ) {
-            setActionError(t('admin.categories.fillRequired'));
+        const editError = validateBilingual(
+            editName,
+            editDescription,
+            editIconUrl
+        );
+        if (editError) {
+            setActionError(t(editError));
             return;
         }
 
@@ -272,8 +300,11 @@ export default function AdminCategoriesPage() {
 
             await updateCategory(selectedCategory.id, {
                 id: selectedCategory.id,
-                name: editName.trim(),
-                description: editDescription.trim(),
+                name: encodeBilingual(editName.ar, editName.en),
+                description: encodeBilingual(
+                    editDescription.ar,
+                    editDescription.en
+                ),
                 iconUrl: editIconUrl.trim(),
             });
 
@@ -316,8 +347,8 @@ export default function AdminCategoriesPage() {
 
             setSuccessMessage(
                 category.isActive
-                    ? t('admin.categories.disabledMsg', { name: category.name })
-                    : t('admin.categories.activatedMsg', { name: category.name })
+                    ? t('admin.categories.disabledMsg', { name: localize(category.name) })
+                    : t('admin.categories.activatedMsg', { name: localize(category.name) })
             );
         } catch {
 
@@ -348,7 +379,7 @@ export default function AdminCategoriesPage() {
             setActionLoading(true);
             resetMessages();
 
-            const deletedName = selectedCategory.name;
+            const deletedName = localize(selectedCategory.name);
 
             await deleteCategory(selectedCategory.id);
 
@@ -798,7 +829,7 @@ export default function AdminCategoriesPage() {
                                                 loading="lazy"
                                                 decoding="async"
                                                 src={category.iconUrl}
-                                                alt={category.name}
+                                                alt={localize(category.name)}
                                                 className="relative h-16 w-16 object-contain transition duration-300 group-hover:scale-105"
                                             />
                                         ) : (
@@ -848,7 +879,7 @@ export default function AdminCategoriesPage() {
                                                     actionLoading || isToggling
                                                 }
                                                 className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-[#756960] shadow-sm transition hover:bg-[#30251f] hover:text-white disabled:opacity-50"
-                                                aria-label={t('admin.categories.actionsFor', { name: category.name })}
+                                                aria-label={t('admin.categories.actionsFor', { name: localize(category.name) })}
                                             >
                                                 <MoreVertical size={15} />
                                             </button>
@@ -890,13 +921,23 @@ export default function AdminCategoriesPage() {
                                     <div className="p-3.5">
                                         <div className="min-h-14.5">
                                             <h2 className="line-clamp-1 text-sm font-semibold text-[#30251f]">
-                                                {category.name}
+                                                {localize(category.name)}
                                             </h2>
 
                                             <p className="mt-1.5 line-clamp-2 text-[11px] leading-4.5 text-[#91847c]">
-                                                {category.description ||
+                                                {localize(category.description) ||
                                                     t('admin.categories.noDescription')}
                                             </p>
+                                            {!isBilingual(category.name) && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => openEditModal(category)}
+                                                    className="mt-2 inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700 ring-1 ring-amber-200 transition hover:bg-amber-100"
+                                                >
+                                                    <Languages size={11} />
+                                                    {t('admin.categories.missingTranslation')}
+                                                </button>
+                                            )}
                                         </div>
 
                                         {/* SERVICE COUNT */}
@@ -934,7 +975,7 @@ export default function AdminCategoriesPage() {
                                                 aria-label={`${category.isActive
                                                         ? t('admin.categories.disable')
                                                         : t('admin.categories.activate')
-                                                    } ${category.name}`}
+                                                    } ${localize(category.name)}`}
                                             >
                                                 <span className="text-[9px] font-semibold text-[#8c7d74]">
                                                     {isToggling
@@ -1042,128 +1083,70 @@ export default function AdminCategoriesPage() {
                             }
                             className="space-y-5 p-6"
                         >
-                            <div>
-                                <label
-                                    htmlFor="category-name"
-                                    className="mb-2 block text-xs font-semibold text-[#55483f]"
-                                >
-                                    {t('admin.categories.name')}
-                                </label>
+                            <BilingualField
+                                idPrefix="category-name"
+                                label={t('admin.categories.name')}
+                                value={modal === "create" ? name : editName}
+                                onChange={
+                                    modal === "create" ? setName : setEditName
+                                }
+                                placeholders={{
+                                    ar: t('admin.categories.namePlaceholderAr'),
+                                    en: t('admin.categories.namePlaceholderEn'),
+                                }}
+                                required
+                                disabled={actionLoading}
+                            />
 
-                                <input
-                                    id="category-name"
-                                    type="text"
-                                    value={
-                                        modal === "create"
-                                            ? name
-                                            : editName
-                                    }
-                                    onChange={(event) =>
-                                        modal === "create"
-                                            ? setName(event.target.value)
-                                            : setEditName(
-                                                event.target.value
-                                            )
-                                    }
-                                    placeholder={t('admin.categories.namePlaceholder')}
-                                    required
-                                    disabled={actionLoading}
-                                    className="h-12 w-full rounded-xl border border-[#e7ded8] bg-[#fcfaf8] px-4 text-sm text-[#30251f] outline-none transition placeholder:text-[#afa19a] focus:border-[#bba99d] focus:bg-white focus:ring-4 focus:ring-[#f3ece7]"
-                                />
-                            </div>
+                            <BilingualField
+                                idPrefix="category-description"
+                                label={t('admin.categories.description')}
+                                value={
+                                    modal === "create"
+                                        ? description
+                                        : editDescription
+                                }
+                                onChange={
+                                    modal === "create"
+                                        ? setDescription
+                                        : setEditDescription
+                                }
+                                placeholders={{
+                                    ar: t('admin.categories.descriptionPlaceholderAr'),
+                                    en: t('admin.categories.descriptionPlaceholderEn'),
+                                }}
+                                multiline
+                                disabled={actionLoading}
+                            />
 
-                            <div>
-                                <label
-                                    htmlFor="category-description"
-                                    className="mb-2 block text-xs font-semibold text-[#55483f]"
-                                >
-                                    {t('admin.categories.description')}
-                                </label>
-
-                                <textarea
-                                    id="category-description"
-                                    value={
-                                        modal === "create"
-                                            ? description
-                                            : editDescription
-                                    }
-                                    onChange={(event) =>
-                                        modal === "create"
-                                            ? setDescription(
-                                                event.target.value
-                                            )
-                                            : setEditDescription(
-                                                event.target.value
-                                            )
-                                    }
-                                    placeholder={t('admin.categories.descriptionPlaceholder')}
-                                    rows={4}
-                                    required
-                                    disabled={actionLoading}
-                                    className="w-full resize-none rounded-xl border border-[#e7ded8] bg-[#fcfaf8] px-4 py-3 text-sm leading-6 text-[#30251f] outline-none transition placeholder:text-[#afa19a] focus:border-[#bba99d] focus:bg-white focus:ring-4 focus:ring-[#f3ece7]"
-                                />
-                            </div>
+                            <p className="-mt-2 flex items-start gap-2 rounded-xl bg-[#faf5ef] px-3.5 py-2.5 text-[11px] leading-5 text-[#8a7a6e]">
+                                <Languages size={14} className="mt-0.5 shrink-0 text-[#a47e43]" />
+                                {t('admin.categories.bilingualHint')}
+                            </p>
 
                             <div>
-                                <label
-                                    htmlFor="category-icon-url"
-                                    className="mb-2 block text-xs font-semibold text-[#55483f]"
-                                >
+                                <p className="mb-2 block text-xs font-semibold text-[#55483f]">
                                     {t('admin.categories.iconUrl')}
-                                </label>
-
-                                <input
-                                    id="category-icon-url"
-                                    type="url"
+                                    <span className="ms-0.5 text-red-500">*</span>
+                                </p>
+                                <IconPicker
                                     value={
                                         modal === "create"
                                             ? iconUrl
                                             : editIconUrl
                                     }
-                                    onChange={(event) =>
+                                    onChange={
                                         modal === "create"
-                                            ? setIconUrl(event.target.value)
-                                            : setEditIconUrl(
-                                                event.target.value
-                                            )
+                                            ? setIconUrl
+                                            : setEditIconUrl
                                     }
-                                    placeholder={t('admin.categories.iconPlaceholder')}
-                                    required
+                                    hints={
+                                        modal === "create"
+                                            ? [name.ar, name.en]
+                                            : [editName.ar, editName.en]
+                                    }
                                     disabled={actionLoading}
-                                    className="h-12 w-full rounded-xl border border-[#e7ded8] bg-[#fcfaf8] px-4 text-sm text-[#30251f] outline-none transition placeholder:text-[#afa19a] focus:border-[#bba99d] focus:bg-white focus:ring-4 focus:ring-[#f3ece7]"
                                 />
-
-                                {(modal === "create"
-                                    ? iconUrl
-                                    : editIconUrl) && (
-                                        <div className="mt-3 flex items-center gap-3 rounded-xl border border-[#eee7e2] bg-[#faf8f6] p-3">
-                                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-white">
-                                                <img
-                                                    loading="lazy"
-                                                    decoding="async"
-                                                    src={
-                                                        modal === "create"
-                                                            ? iconUrl
-                                                            : editIconUrl
-                                                    }
-                                                    alt={t('admin.categories.iconPreviewAlt')}
-                                                    className="h-9 w-9 object-contain"
-                                                />
-                                            </div>
-
-                                            <div>
-                                                <p className="text-xs font-semibold text-[#55483f]">
-                                                    {t('admin.categories.iconPreview')}
-                                                </p>
-
-                                                <p className="mt-0.5 max-w-87.5 truncate text-[10px] text-[#9d9087]">
-                                                    {modal === "create"
-                                                        ? iconUrl
-                                                        : editIconUrl}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    )}
                             </div>
 
                             {actionError && (
@@ -1228,7 +1211,7 @@ export default function AdminCategoriesPage() {
                         <p className="mt-2 text-sm leading-6 text-[#8f8179]">
                             {t("admin.categories.deleteWarning")}{" "}
                             <strong className="font-semibold text-[#50423a]">
-                                {selectedCategory.name}
+                                {localize(selectedCategory.name)}
                             </strong>
                             {t("admin.categories.deleteWarningSuffix")}
                         </p>

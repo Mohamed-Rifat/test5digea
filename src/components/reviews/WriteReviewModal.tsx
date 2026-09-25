@@ -67,7 +67,7 @@ export default function WriteReviewModal({
   onViewReview?: (review: MyReview) => void;
 }) {
   const { toast } = useToast();
-  const { t } = useLanguage();
+  const { t, localize } = useLanguage();
   const { reviewableServices: allReviewable, loading, error, actionLoading, submit } =
     useWriteReview(roadmapItemId);
   const reviewedServiceIds = myReviews?.reviewedServiceIds;
@@ -178,7 +178,7 @@ export default function WriteReviewModal({
             <h2 id="write-review-title" className="text-lg font-semibold text-[#30251f]">
               {t("reviews.write.title")}
             </h2>
-            <p className="mt-1 text-sm text-[#9b8f86]">{categoryName}</p>
+            <p className="mt-1 text-sm text-[#9b8f86]">{localize(categoryName)}</p>
           </div>
 
           <button

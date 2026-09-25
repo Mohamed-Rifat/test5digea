@@ -49,7 +49,7 @@ type FormState = {
 type TouchedState = Partial<Record<keyof FormState | "categories", boolean>>;
 
 export default function BecomeAVendorPage() {
-    const { t, language, isArabic } = useLanguage();
+    const { t, language, isArabic, localize } = useLanguage();
     const { categories, loading: categoriesLoading } = useCategories();
     const activeCategories = categories.filter((category) => category.isActive);
     const [loading, setLoading] = useState(false);
@@ -728,7 +728,7 @@ export default function BecomeAVendorPage() {
                                                                     }`}
                                                             >
                                                                 <span className="min-w-0 truncate">
-                                                                    {category.name}
+                                                                    {localize(category.name)}
                                                                 </span>
 
                                                                 <span

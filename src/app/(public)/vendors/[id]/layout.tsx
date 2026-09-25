@@ -11,6 +11,7 @@ import {
 import { SITE_NAME, absoluteUrl } from "@/lib/site";
 import { normalizeVendor } from "@/lib/vendor-normalizer";
 import type { Vendor, VendorApiResponse } from "@/types/vendor";
+import { bothLanguages, localizeText } from "@/lib/bilingual";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -67,7 +68,7 @@ export async function generateMetadata({
     });
   }
 
-  const categories = vendor.categories?.join("، ");
+  const categories = vendor.categories?.map((c) => localizeText(c, "ar")).join("، ");
   const where = vendor.location ? ` في ${vendor.location}` : "";
 
   return buildMetadata({
@@ -79,7 +80,7 @@ export async function generateMetadata({
     path: `/vendors/${id}`,
     image: vendor.profileImageUrl || null,
     type: "profile",
-    keywords: [vendor.businessName, ...(vendor.categories ?? []), vendor.location].filter(
+    keywords: [vendor.businessName, ...(vendor.categories ?? []).flatMap(bothLanguages), vendor.location].filter(
       Boolean,
     ) as string[],
   });
@@ -122,7 +123,7 @@ export default async function VendorLayout({ params, children }: Props) {
                 }
               : undefined,
           sameAs: socialLinks(vendor.socialLinksJson),
-          knowsAbout: vendor.categories,
+          knowsAbout: (vendor.categories ?? []).flatMap(bothLanguages),
           aggregateRating:
             vendor.reviewsCount > 0
               ? {

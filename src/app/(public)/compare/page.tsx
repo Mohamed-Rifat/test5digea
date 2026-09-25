@@ -106,7 +106,7 @@ export default function ComparePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
-  const { t } = useLanguage();
+  const { t, localize } = useLanguage();
   const { selected, hydrated, removeService, clearAll } = useCompare();
 
   const tRef = useRef(t);
@@ -287,7 +287,7 @@ export default function ComparePage() {
         {
           key: "category",
           label: t("compare.rows.category"),
-          get: (s: Service) => s.categoryName || "—",
+          get: (s: Service) => localize(s.categoryName) || "—",
         },
         {
           key: "description",
@@ -311,7 +311,7 @@ export default function ComparePage() {
       {
         key: "category",
         label: t("compare.rows.category"),
-        get: (v: Vendor) => v.categories?.join(", ") || "—",
+        get: (v: Vendor) => v.categories?.map((c) => localize(c)).join(", ") || "—",
       },
       {
         key: "location",
@@ -325,7 +325,7 @@ export default function ComparePage() {
         multiline: true,
       },
     ];
-  }, [isServiceComparison, t]);
+  }, [isServiceComparison, t, localize]);
 
   const visibleRows = useMemo(() => {
     if (!showOnlyDiff || items.length < 2) return rows;

@@ -16,6 +16,15 @@ const home: Translation["home"] = {
     browseVendors: "Browse vendors",
     empty: "No categories available yet.",
     loadError: "Failed to load categories.",
+    prev: "Previous categories",
+    next: "Next categories",
+    pages: "Category pages",
+    goToPage: "Page {number} of {total}",
+  },
+  partners: {
+    eyebrow: "Partners in success",
+    title: "Our trusted partners",
+    description: "Together with our partners we're building a name every couple can trust — vendors rated by real couples who have proven themselves on the most important day.",
   },
   vendors: {
     eyebrow: "Featured",

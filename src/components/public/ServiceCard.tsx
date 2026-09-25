@@ -16,6 +16,8 @@ interface ServiceCardProps {
   onToggleFavorite?: (targetType: FavoriteTargetType, targetId: string) => void;
   selected?: boolean;
   onSelect?: (service: Service) => void;
+  /** Smaller card for rails / dense grids. */
+  compact?: boolean;
 }
 
 export default function ServiceCard({
@@ -25,8 +27,9 @@ export default function ServiceCard({
   onToggleFavorite,
   selected,
   onSelect,
+  compact,
 }: ServiceCardProps) {
-  const { t } = useLanguage();
+  const { t, localize } = useLanguage();
   const price = startingPrice(service.prices);
   const image = [...(service.images ?? [])].sort((a, b) => a.displayOrder - b.displayOrder)[0]?.url;
 
@@ -37,7 +40,7 @@ export default function ServiceCard({
       }`}
     >
       <Link href={`/services/${service.id}`} className="flex min-h-0 flex-1 flex-col">
-        <div className="relative h-48 w-full shrink-0 overflow-hidden sm:h-52 bg-[#f4eee9]">
+        <div className={`relative w-full shrink-0 overflow-hidden bg-[#f4eee9] ${compact ? "aspect-[4/3]" : "h-48 sm:h-52"}`}>
           {image ? (
             <img
               loading="lazy"
@@ -54,13 +57,13 @@ export default function ServiceCard({
 
           {service.categoryName && (
             <span className="absolute start-3 top-3 rounded-full bg-white/90 px-3 py-1 text-[11px] font-medium text-[#5f544d] backdrop-blur">
-              {service.categoryName}
+              {localize(service.categoryName)}
             </span>
           )}
         </div>
 
-        <div className="flex min-w-0 flex-1 flex-col p-4 sm:p-5">
-          <h3 className="line-clamp-1 text-base font-semibold text-[#30251f]">
+        <div className={`flex min-w-0 flex-1 flex-col ${compact ? "p-3.5" : "p-4 sm:p-5"}`}>
+          <h3 className={`line-clamp-1 font-semibold text-[#30251f] ${compact ? "text-sm" : "text-base"}`}>
             {service.name}
           </h3>
 
@@ -68,13 +71,17 @@ export default function ServiceCard({
             {t("common.byVendor", { name: service.vendorBusinessName })}
           </p>
 
-          <p className="mt-3 line-clamp-2 flex-1 text-sm leading-6 text-[#766d67]">
-            {service.description}
-          </p>
+          {compact ? (
+            <span className="flex-1" />
+          ) : (
+            <p className="mt-3 line-clamp-2 flex-1 text-sm leading-6 text-[#766d67]">
+              {service.description}
+            </p>
+          )}
 
-          <div className="mt-4 flex items-center justify-between border-t border-[#f0e9e0] pt-4">
+          <div className={`flex items-center justify-between border-t border-[#f0e9e0] ${compact ? "mt-3 pt-3" : "mt-4 pt-4"}`}>
             <span className="text-xs text-[#9b8f86]">{t("common.startingAt")}</span>
-            <span className="font-serif text-lg text-[#a47e43]">
+            <span className={`font-serif text-[#a47e43] ${compact ? "text-base" : "text-lg"}`}>
               {price !== null
                 ? `${formatPrice(price)} ${t("common.currency")}`
                 : t("common.priceOnRequest")}

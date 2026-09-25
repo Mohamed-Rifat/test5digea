@@ -130,7 +130,7 @@ export default function AdminVendorDetailsPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
-  const { t, language } = useLanguage();
+  const { t, language, localize } = useLanguage();
   const dateLocale = LANGUAGE_DATE_LOCALE[language];
 
   // Deep link from the admin messages inbox: /admin/vendors/{id}?highlightCategory={categoryId}
@@ -792,7 +792,7 @@ export default function AdminVendorDetailsPage({
 
                         <div className="min-w-0">
                           <p className="flex items-center gap-1.5 text-sm font-medium text-[#403630]">
-                            {category.name}
+                            {localize(category.name)}
                             {isRequested && (
                               <span className="rounded-full bg-[#a47e43] px-1.5 py-0.5 text-[9px] font-semibold text-white">
                                 {t("admin.vendorDetails.categories.requestedBadge")}
@@ -802,7 +802,7 @@ export default function AdminVendorDetailsPage({
 
                           {category.description && (
                             <p className="mt-0.5 line-clamp-1 text-xs text-[#9b918b]">
-                              {category.description}
+                              {localize(category.description)}
                             </p>
                           )}
                         </div>

@@ -122,7 +122,7 @@ export default function EditVendorServicePage({
   params,
 }: PageProps) {
   const { id } = use(params);
-  const { t } = useLanguage();
+  const { t, localize } = useLanguage();
 
   const {
     services,
@@ -844,7 +844,7 @@ export default function EditVendorServicePage({
                 <Chip
                   icon={<Tag size={12} />}
                   label={
-                    service.categoryName ||
+                    localize(service.categoryName) ||
                     t(
                       "vendor.dashboard.services.uncategorized"
                     )

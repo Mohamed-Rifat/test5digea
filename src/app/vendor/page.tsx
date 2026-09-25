@@ -549,7 +549,7 @@ const ReviewStatusBadge = ({ status }: { status: ReviewStatus }) => {
 // =========================================================
 
 export default function VendorDashboardPage() {
-  const { t, language } = useLanguage();
+  const { t, language, localize } = useLanguage();
   const { vendor, loading: vendorLoading, error: vendorError, refetch: refetchVendor } = useVendorContext();
   const { services, loading: servicesLoading, error: servicesError, refetch: refetchServices } = useVendorServices();
   const { reviews, loading: reviewsLoading, error: reviewsError, refetch: refetchReviews } = useVendorReviews();
@@ -964,7 +964,7 @@ export default function VendorDashboardPage() {
                   <div className="flex items-start justify-between">
                     <div className="min-w-0 flex-1">
                       <h4 className="truncate text-sm font-semibold text-[#30251f]">{service.name}</h4>
-                      <p className="mt-0.5 text-xs text-[#9a8d85]">{service.categoryName || t("vendor.dashboard.services.uncategorized")}</p>
+                      <p className="mt-0.5 text-xs text-[#9a8d85]">{localize(service.categoryName) || t("vendor.dashboard.services.uncategorized")}</p>
                     </div>
                     <ServiceStatus status={service.status} />
                   </div>

@@ -47,7 +47,7 @@ export default function FavoritesCompareModal({
   fullPageHref,
   onRemove,
 }: FavoritesCompareModalProps) {
-  const { t } = useLanguage();
+  const { t, localize } = useLanguage();
   const closeRef = useRef<HTMLButtonElement>(null);
 
   // Escape closes, the page behind doesn't scroll while the popup is open.
@@ -275,7 +275,7 @@ export default function FavoritesCompareModal({
                     key={`category-${service.id}`}
                     className="border-b border-[#eee5df] p-4 text-xs leading-6 text-[#756960]"
                   >
-                    {service.categoryName || "—"}
+                    {localize(service.categoryName) || "—"}
                   </div>
                 ))}
 
@@ -387,7 +387,7 @@ export default function FavoritesCompareModal({
                             key={category}
                             className="rounded-full bg-[#f0e9e0] px-2.5 py-1 text-[11px] font-medium text-[#5f544d]"
                           >
-                            {category}
+                            {localize(category)}
                           </span>
                         ))}
                       </div>

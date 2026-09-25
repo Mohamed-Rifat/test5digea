@@ -35,7 +35,7 @@ const VENDOR_STATUS: Record<string, { labelKey: TranslationKey; dot: string }> =
 };
 
 export default function VendorCategoriesPage() {
-  const { t } = useLanguage();
+  const { t, localize } = useLanguage();
   const { vendor, loading, refetch } = useVendorContext();
   const { categories: allCategories, loading: categoriesLoading } = useCategories();
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -263,7 +263,7 @@ export default function VendorCategoriesPage() {
                       className="group inline-flex items-center gap-1.5 rounded-full border border-[#e3d9d1] bg-[#fcfaf8] px-3 py-1.5 text-xs font-medium text-[#40352f] transition-all hover:border-[#a47e43] hover:bg-[#fbf6f1] hover:shadow-sm sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
                     >
                       <Tags className="h-3 w-3 text-[#a47e43] transition-transform group-hover:scale-110 sm:h-3.5 sm:w-3.5" />
-                      {name}
+                      {localize(name)}
                       <span className="hidden opacity-0 transition-opacity group-hover:opacity-100 sm:inline">
                         <ChevronRight size={12} className="text-[#a47e43]" />
                       </span>

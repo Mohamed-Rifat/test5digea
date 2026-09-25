@@ -1,4 +1,5 @@
 import { getLanguageSnapshot } from "@/lib/i18n";
+import { localizeText } from "@/lib/bilingual";
 import {
   DEFAULT_LANGUAGE,
   translations,
@@ -26,4 +27,11 @@ export function translateNow(key: TranslationKey): string {
   const language =
     typeof window === "undefined" ? DEFAULT_LANGUAGE : getLanguageSnapshot();
   return lookup(language, key) ?? lookup(DEFAULT_LANGUAGE, key) ?? key;
+}
+
+/** `localize()` outside components (toasts from hooks, API helpers). */
+export function localizeNow(value: string | null | undefined): string {
+  const language =
+    typeof window === "undefined" ? DEFAULT_LANGUAGE : getLanguageSnapshot();
+  return localizeText(value, language);
 }

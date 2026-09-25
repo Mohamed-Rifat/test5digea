@@ -59,7 +59,7 @@ export default function ServicesPage() {
 
 function ServicesPageContent() {
   const searchParams = useSearchParams();
-  const { t } = useLanguage();
+  const { t, localize } = useLanguage();
   const initialCategoryId = searchParams.get("categoryId") || "";
   const initialSearch = searchParams.get("search") || "";
 
@@ -378,7 +378,7 @@ function ServicesPageContent() {
                                 : "border-[#eee7e1] bg-white text-[#5f544d] hover:border-[#d9cbb8] hover:bg-[#faf7f4]"
                             }`}
                           >
-                            <span className="truncate">{c.name}</span>
+                            <span className="truncate">{localize(c.name)}</span>
                             {active && <Check size={12} className="shrink-0" />}
                           </button>
                         );
@@ -554,7 +554,7 @@ function ServicesPageContent() {
 
               {selectedCategory && (
                 <span className="rounded-full border border-[#eadbce] bg-[#f9f1e9] px-3 py-1.5 text-xs font-semibold text-[#8c6a3c]">
-                  {selectedCategory.name}
+                  {localize(selectedCategory.name)}
                 </span>
               )}
             </div>
@@ -625,11 +625,11 @@ function ServicesPageContent() {
               {selected.length > 1
                 ? t("services.list.selectedMany", {
                     count: selected.length,
-                    category: selected[0].categoryName,
+                    category: localize(selected[0].categoryName),
                   })
                 : t("services.list.selectedOne", {
                     count: selected.length,
-                    category: selected[0].categoryName,
+                    category: localize(selected[0].categoryName),
                   })}
             </span>
 

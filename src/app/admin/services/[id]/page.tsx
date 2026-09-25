@@ -153,7 +153,7 @@ const getStatusStyles = (status: string) => {
 ========================= */
 
 export default function AdminServiceDetailsPage() {
-  const { t, language } = useLanguage();
+  const { t, language, localize } = useLanguage();
   const { toast } = useToast();
   const confirm = useConfirm();
   const dateLocale = LANGUAGE_DATE_LOCALE[language];
@@ -713,7 +713,7 @@ export default function AdminServiceDetailsPage() {
                   icon={Tag}
                   label={t('admin.services.category')}
                   value={
-                    service.categoryName ||
+                    localize(service.categoryName) ||
                     "-"
                   }
                 />
@@ -968,7 +968,7 @@ export default function AdminServiceDetailsPage() {
 
             <div className="p-5">
               <p className="text-sm font-semibold text-gray-900">
-                {service.categoryName ||
+                {localize(service.categoryName) ||
                   t('admin.serviceDetails.uncategorized')}
               </p>
 

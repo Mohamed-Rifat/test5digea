@@ -254,7 +254,7 @@ function ContactRow({
 export default function VendorDetailPage() {
   const params = useParams<{ id: string }>();
   const searchParams = useSearchParams();
-  const { t } = useLanguage();
+  const { t, localize } = useLanguage();
   const roadmapPicker = useRoadmapPicker();
 
   const [vendor, setVendor] = useState<Vendor | null>(null);
@@ -493,21 +493,23 @@ export default function VendorDetailPage() {
      Loading
   ========================================================= */
 
-  // Roadmap steps this vendor can fill: the category the couple came from
-  // (?categoryId=… from the roadmap), otherwise every roadmap category the
-  // vendor offers (from its services and its assigned categories).
+  // Roadmap steps this vendor can fill. The API only accepts a vendor for a
+  // step when they have an *approved* service in that category, so the
+  // buttons come from approved services only - not from the vendor's
+  // assigned categories (a category with no approved service would fail).
   const roadmapTargets: RoadmapItem[] = (() => {
     if (!roadmapPicker.roadmap) return [];
-    const fromUrl = roadmapPicker.findItem(searchParams.get("categoryId"));
-    if (fromUrl) return [fromUrl];
+    const offered = services.filter(
+      (s) => s.status === "Approved" || s.status === "approved"
+    );
     const found = new Map<string, RoadmapItem>();
-    services.forEach((s) => {
+    offered.forEach((s) => {
       const item = roadmapPicker.findItem(s.categoryId, s.categoryName);
       if (item) found.set(String(item.categoryId), item);
     });
-    roadmapPicker.matchingItems(vendor?.categories).forEach((item) =>
-      found.set(String(item.categoryId), item)
-    );
+    // Came from a roadmap step: show just that one (if the vendor offers it).
+    const fromUrl = roadmapPicker.findItem(searchParams.get("categoryId"));
+    if (fromUrl && found.has(String(fromUrl.categoryId))) return [fromUrl];
     return Array.from(found.values());
   })();
 
@@ -584,7 +586,7 @@ export default function VendorDetailPage() {
     } else {
       categoryMap.set(service.categoryId, {
         id: service.categoryId,
-        name: service.categoryName || t("vendors.detail.services.otherCategory"),
+        name: localize(service.categoryName) || t("vendors.detail.services.otherCategory"),
         count: 1,
       });
     }
@@ -1009,7 +1011,7 @@ export default function VendorDetailPage() {
                                 : "border border-[#e4dbd0] bg-white text-[#5f544d] hover:border-[#c9bcae]"
                             }`}
                           >
-                            {category.name}{" "}
+                            {localize(category.name)}{" "}
                             <span
                               className={
                                 activeCategoryId === category.id

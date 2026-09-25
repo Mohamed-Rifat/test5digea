@@ -129,7 +129,7 @@ const getStartingPrice = (service: Service) => {
 ========================= */
 
 export default function AdminServicesPage() {
-  const { t, language } = useLanguage();
+  const { t, language, localize } = useLanguage();
   const { toast } = useToast();
   const confirm = useConfirm();
   const dateLocale = LANGUAGE_DATE_LOCALE[language];
@@ -578,7 +578,7 @@ export default function AdminServicesPage() {
                 key={category.id}
                 value={category.id}
               >
-                {category.name}
+                {localize(category.name)}
               </option>
             ))}
           </select>
@@ -728,7 +728,7 @@ export default function AdminServicesPage() {
 
                 <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-gray-500">
                   <span className="inline-flex rounded-lg bg-gray-100 px-2.5 py-1 font-medium text-gray-700">
-                    {service.categoryName || "-"}
+                    {localize(service.categoryName) || "-"}
                   </span>
 
                   <span>
@@ -1010,7 +1010,7 @@ export default function AdminServicesPage() {
 
                       <td className="px-5 py-4">
                         <span className="inline-flex rounded-lg bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-700">
-                          {service.categoryName ||
+                          {localize(service.categoryName) ||
                             "-"}
                         </span>
                       </td>
