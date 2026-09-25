@@ -207,7 +207,10 @@ function TheIdea({ order = 0 }: { order?: number }) {
 
       <ul className="mt-3 space-y-2.5">
         {COUPLE_ACTIONS.map(({ icon: Icon, text }) => (
-          <li key={text} className="flex items-center gap-3 text-sm text-[#5f544d]">
+          <li
+            key={text}
+            className="flex items-center gap-3 text-sm text-[#5f544d]"
+          >
             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#faf8f6] text-[#a47e43]">
               <Icon size={15} />
             </span>
@@ -302,13 +305,7 @@ function StepsTimeline({
   );
 }
 
-function ItemGrid({
-  items,
-  columns,
-}: {
-  items: Item[];
-  columns: string;
-}) {
+function ItemGrid({ items, columns }: { items: Item[]; columns: string }) {
   const { t } = useLanguage();
 
   return (

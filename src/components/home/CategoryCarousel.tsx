@@ -17,7 +17,11 @@ const RESUME_AFTER_INTERACTION = 8000;
  * seconds - but never while the visitor is pointing at, focusing or has just
  * touched a card, so nothing moves out from under their finger.
  */
-export default function CategoryCarousel({ categories }: { categories: Category[] }) {
+export default function CategoryCarousel({
+  categories,
+}: {
+  categories: Category[];
+}) {
   const { t, localize } = useLanguage();
   const pages = Math.max(1, Math.ceil(categories.length / PAGE_SIZE));
   const [page, setPage] = useState(0);
@@ -41,24 +45,34 @@ export default function CategoryCarousel({ categories }: { categories: Category[
     };
   }, []);
 
-  const paused = pages < 2 || hovered || focused || holding || hidden || reduced;
+  const paused =
+    pages < 2 || hovered || focused || holding || hidden || reduced;
 
   // Advance every INTERVAL while not paused (restarts when the page changes).
   useEffect(() => {
     if (paused) return;
-    const id = window.setTimeout(() => setPage((p) => (p + 1) % pages), INTERVAL);
+    const id = window.setTimeout(
+      () => setPage((p) => (p + 1) % pages),
+      INTERVAL,
+    );
     return () => window.clearTimeout(id);
   }, [paused, page, pages]);
 
   const hold = useCallback(() => {
     setHolding(true);
     if (holdTimer.current) window.clearTimeout(holdTimer.current);
-    holdTimer.current = window.setTimeout(() => setHolding(false), RESUME_AFTER_INTERACTION);
+    holdTimer.current = window.setTimeout(
+      () => setHolding(false),
+      RESUME_AFTER_INTERACTION,
+    );
   }, []);
 
-  useEffect(() => () => {
-    if (holdTimer.current) window.clearTimeout(holdTimer.current);
-  }, []);
+  useEffect(
+    () => () => {
+      if (holdTimer.current) window.clearTimeout(holdTimer.current);
+    },
+    [],
+  );
 
   const go = (next: number) => {
     setPage(((next % pages) + pages) % pages);
@@ -66,7 +80,10 @@ export default function CategoryCarousel({ categories }: { categories: Category[
   };
 
   const safePage = Math.min(page, pages - 1);
-  const visible = categories.slice(safePage * PAGE_SIZE, safePage * PAGE_SIZE + PAGE_SIZE);
+  const visible = categories.slice(
+    safePage * PAGE_SIZE,
+    safePage * PAGE_SIZE + PAGE_SIZE,
+  );
 
   return (
     <div
@@ -74,7 +91,8 @@ export default function CategoryCarousel({ categories }: { categories: Category[
       onMouseLeave={() => setHovered(false)}
       onFocus={() => setFocused(true)}
       onBlur={(e) => {
-        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setFocused(false);
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null))
+          setFocused(false);
       }}
       onPointerDown={(e) => e.pointerType !== "mouse" && hold()}
       aria-roledescription="carousel"
@@ -106,7 +124,9 @@ export default function CategoryCarousel({ categories }: { categories: Category[
                   className="h-7 w-7 object-contain transition-transform duration-500 ease-[cubic-bezier(.34,1.56,.64,1)] group-hover:-rotate-6 group-hover:scale-115 motion-reduce:transition-none sm:h-8 sm:w-8"
                 />
               ) : (
-                <span className="text-xl text-[#c9b8a8]" aria-hidden="true">✦</span>
+                <span className="text-xl text-[#c9b8a8]" aria-hidden="true">
+                  ✦
+                </span>
               )}
             </div>
             <h3 className="line-clamp-1 text-sm font-bold text-[#30251f] sm:text-base">
@@ -117,7 +137,10 @@ export default function CategoryCarousel({ categories }: { categories: Category[
             </p>
             <span className="mt-auto inline-flex items-center gap-1 pt-3 text-[11px] font-semibold text-[#8e685e] transition-colors group-hover:text-[#a47e43] sm:text-xs">
               {t("home.categories.browseVendors")}
-              <ArrowRight size={13} className="transition-transform duration-300 group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5" />
+              <ArrowRight
+                size={13}
+                className="transition-transform duration-300 group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5"
+              />
             </span>
           </Link>
         ))}
@@ -134,7 +157,11 @@ export default function CategoryCarousel({ categories }: { categories: Category[
             <ChevronLeft size={16} className="rtl:rotate-180" />
           </button>
 
-          <div className="flex items-center gap-2" role="tablist" aria-label={t("home.categories.pages")}>
+          <div
+            className="flex items-center gap-2"
+            role="tablist"
+            aria-label={t("home.categories.pages")}
+          >
             {Array.from({ length: pages }).map((_, i) => {
               const active = i === safePage;
               return (
@@ -143,10 +170,15 @@ export default function CategoryCarousel({ categories }: { categories: Category[
                   type="button"
                   role="tab"
                   aria-selected={active}
-                  aria-label={t("home.categories.goToPage", { number: i + 1, total: pages })}
+                  aria-label={t("home.categories.goToPage", {
+                    number: i + 1,
+                    total: pages,
+                  })}
                   onClick={() => go(i)}
                   className={`relative h-2 overflow-hidden rounded-full transition-all duration-500 ${
-                    active ? "w-10 bg-[#eadfd2]" : "w-2 bg-[#ddd0c4] hover:bg-[#c9b39a]"
+                    active
+                      ? "w-10 bg-[#eadfd2]"
+                      : "w-2 bg-[#ddd0c4] hover:bg-[#c9b39a]"
                   }`}
                 >
                   {active && (
@@ -156,7 +188,9 @@ export default function CategoryCarousel({ categories }: { categories: Category[
                       style={
                         paused
                           ? { width: "100%" }
-                          : { animation: `catProgress ${INTERVAL}ms linear both` }
+                          : {
+                              animation: `catProgress ${INTERVAL}ms linear both`,
+                            }
                       }
                     />
                   )}

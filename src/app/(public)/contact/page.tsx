@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 
 import { useLanguage } from "@/context/LanguageContext";
 import { useToast } from "@/components/providers/ToastProvider";
+import { TextField, TextAreaField } from "@/components/ui";
 import {
   ArrowRight,
   Clock3,
@@ -60,24 +61,6 @@ export default function ContactPage() {
 
     toast(t("contact.form.opened"), "success");
   };
-
-  const fieldClass = (field: Field) =>
-    `w-full rounded-2xl border bg-white/50 px-4 py-3.5 text-sm text-[#30251f] outline-none transition-all duration-300 placeholder:text-[#a69a91] focus:bg-white/80 focus:ring-2 ${
-      errors[field]
-        ? "border-red-300 focus:border-red-400 focus:ring-red-100"
-        : "border-[#b99a62]/20 focus:border-[#b99a62]/60 focus:ring-[#b99a62]/10"
-    }`;
-
-  const fieldError = (field: Field) =>
-    errors[field] ? (
-      <p
-        id={`${field}-error`}
-        role="alert"
-        className="mt-1.5 text-xs text-red-600"
-      >
-        {errors[field]}
-      </p>
-    ) : null;
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#f8f5ef] px-4 py-4 text-[#30251f] sm:px-6 sm:py-6">
@@ -224,99 +207,48 @@ export default function ContactPage() {
 
               <form className="space-y-5" onSubmit={handleSubmit} noValidate>
                 <div className="grid gap-5 sm:grid-cols-2">
-                  <div>
-                    <label
-                      htmlFor="name"
-                      className="mb-2 block text-xs font-medium text-[#493b32]"
-                    >
-                      {t("contact.form.name")}
-                    </label>
-
-                    <input
-                      id="name"
-                      type="text"
-                      placeholder={t("contact.form.namePlaceholder")}
-                      className={fieldClass("name")}
-                      value={form.name}
-                      onChange={(e) => update("name", e.target.value)}
-                      aria-invalid={!!errors.name}
-                      aria-describedby={errors.name ? "name-error" : undefined}
-                      required
-                    />
-                    {fieldError("name")}
-                  </div>
-
-                  <div>
-                    <label
-                      htmlFor="email"
-                      className="mb-2 block text-xs font-medium text-[#493b32]"
-                    >
-                      {t("contact.form.email")}
-                    </label>
-
-                    <input
-                      id="email"
-                      type="email"
-                      placeholder="you@example.com"
-                      className={`[unicode-bidi:plaintext] rtl:text-right ${fieldClass("email")}`}
-                      value={form.email}
-                      onChange={(e) => update("email", e.target.value)}
-                      aria-invalid={!!errors.email}
-                      aria-describedby={
-                        errors.email ? "email-error" : undefined
-                      }
-                      autoComplete="email"
-                      required
-                    />
-                    {fieldError("email")}
-                  </div>
-                </div>
-
-                <div>
-                  <label
-                    htmlFor="subject"
-                    className="mb-2 block text-xs font-medium text-[#493b32]"
-                  >
-                    {t("contact.form.subject")}
-                  </label>
-
-                  <input
-                    id="subject"
-                    type="text"
-                    placeholder={t("contact.form.subjectPlaceholder")}
-                    className={fieldClass("subject")}
-                    value={form.subject}
-                    onChange={(e) => update("subject", e.target.value)}
-                    aria-invalid={!!errors.subject}
-                    aria-describedby={
-                      errors.subject ? "subject-error" : undefined
-                    }
-                  />
-                </div>
-
-                <div>
-                  <label
-                    htmlFor="message"
-                    className="mb-2 block text-xs font-medium text-[#493b32]"
-                  >
-                    {t("contact.form.message")}
-                  </label>
-
-                  <textarea
-                    id="message"
-                    rows={6}
-                    placeholder={t("contact.form.messagePlaceholder")}
-                    className="w-full resize-none rounded-2xl border border-[#b99a62]/20 bg-white/50 px-4 py-3.5 text-sm text-[#30251f] outline-none transition-all duration-300 placeholder:text-[#a69a91] focus:border-[#b99a62]/60 focus:bg-white/80 focus:ring-2 focus:ring-[#b99a62]/10"
-                    value={form.message}
-                    onChange={(e) => update("message", e.target.value)}
-                    aria-invalid={!!errors.message}
-                    aria-describedby={
-                      errors.message ? "message-error" : undefined
-                    }
+                  <TextField
+                    id="name"
+                    label={t("contact.form.name")}
+                    placeholder={t("contact.form.namePlaceholder")}
+                    value={form.name}
+                    onChange={(e) => update("name", e.target.value)}
+                    error={errors.name}
                     required
                   />
-                  {fieldError("message")}
+
+                  <TextField
+                    id="email"
+                    type="email"
+                    label={t("contact.form.email")}
+                    placeholder="you@example.com"
+                    value={form.email}
+                    onChange={(e) => update("email", e.target.value)}
+                    error={errors.email}
+                    autoComplete="email"
+                    required
+                  />
                 </div>
+
+                <TextField
+                  id="subject"
+                  label={t("contact.form.subject")}
+                  placeholder={t("contact.form.subjectPlaceholder")}
+                  value={form.subject}
+                  onChange={(e) => update("subject", e.target.value)}
+                  error={errors.subject}
+                />
+
+                <TextAreaField
+                  id="message"
+                  rows={6}
+                  label={t("contact.form.message")}
+                  placeholder={t("contact.form.messagePlaceholder")}
+                  value={form.message}
+                  onChange={(e) => update("message", e.target.value)}
+                  error={errors.message}
+                  required
+                />
 
                 <button
                   type="submit"

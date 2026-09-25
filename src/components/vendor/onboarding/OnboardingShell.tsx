@@ -17,11 +17,7 @@ import { delay } from "./motion";
  * language, logout — there is no dashboard yet) over a softly animated
  * wedding-themed background.
  */
-export default function OnboardingShell({
-  children,
-}: {
-  children: ReactNode;
-}) {
+export default function OnboardingShell({ children }: { children: ReactNode }) {
   const router = useRouter();
   const { logout } = useAuth();
   const { t } = useLanguage();

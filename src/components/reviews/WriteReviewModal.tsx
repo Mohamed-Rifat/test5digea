@@ -12,6 +12,8 @@ import {
 import { ReviewStatus } from "@/types/review";
 import { useToast } from "@/components/providers/ToastProvider";
 import { useLanguage } from "@/context/LanguageContext";
+import SharedSelect from "@/components/shared/Select";
+import { TextAreaField } from "@/components/ui";
 
 function StarRatingInput({
   value,
@@ -228,18 +230,15 @@ export default function WriteReviewModal({
                   <label className="mb-1.5 block text-xs font-medium text-[#766d67]">
                     {t("reviews.write.chooseService")}
                   </label>
-                  <select
+                  <SharedSelect
                     value={serviceId}
-                    onChange={(e) => setServiceId(e.target.value)}
-                    className="w-full rounded-xl border border-[#e4dbd0] px-3 py-2.5 text-sm outline-none focus:border-[#b99a62]"
-                  >
-                    <option value="">{t("reviews.write.selectService")}</option>
-                    {reviewableServices.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.name}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={setServiceId}
+                    placeholder={t("reviews.write.selectService")}
+                    options={reviewableServices.map((s) => ({
+                      value: s.id,
+                      label: s.name,
+                    }))}
+                  />
                 </div>
               )}
 
@@ -250,18 +249,13 @@ export default function WriteReviewModal({
                 <StarRatingInput value={rating} onChange={setRating} />
               </div>
 
-              <div>
-                <label className="mb-1.5 block text-xs font-medium text-[#766d67]">
-                  {t("reviews.write.yourComment")}
-                </label>
-                <textarea
-                  value={comment}
-                  onChange={(e) => setComment(e.target.value)}
-                  rows={4}
-                  placeholder={t("reviews.write.commentPlaceholder")}
-                  className="w-full resize-none rounded-xl border border-[#e4dbd0] px-3 py-2.5 text-sm outline-none focus:border-[#b99a62]"
-                />
-              </div>
+              <TextAreaField
+                label={t("reviews.write.yourComment")}
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                rows={4}
+                placeholder={t("reviews.write.commentPlaceholder")}
+              />
 
               {formError && (
                 <p className="text-xs font-medium text-red-600">

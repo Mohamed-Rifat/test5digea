@@ -1,7 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { AlertCircle, CheckCircle2, ChevronRight, Plus, XCircle } from "lucide-react";
+import {
+  AlertCircle,
+  CheckCircle2,
+  ChevronRight,
+  Plus,
+  XCircle,
+} from "lucide-react";
 
 import { useLanguage } from "@/context/LanguageContext";
 import type { Service } from "@/types/service";
@@ -22,7 +28,7 @@ export default function AttentionPanel({ services }: { services: Service[] }) {
   const withoutImages = services.filter(
     (service) =>
       (service.status === "Approved" || service.status === "Pending") &&
-      (!service.images || service.images.length === 0)
+      (!service.images || service.images.length === 0),
   );
 
   const hasNoServices = services.length === 0;

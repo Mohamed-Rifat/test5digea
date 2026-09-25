@@ -17,8 +17,8 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  TextField,
 } from "@mui/material";
+import { TextAreaField } from "@/components/ui";
 
 import { useLanguage } from "@/context/LanguageContext";
 import TextWithSlot from "@/components/shared/TextWithSlot";
@@ -262,32 +262,14 @@ export const ContactAdminDialog = ({
         </div>
 
         {/* Message */}
-        <div>
-          <label className="mb-1.5 block text-xs font-medium text-[#40352f] sm:text-sm">
-            {t("vendor.services.detail.dialog.yourMessage")}
-          </label>
-          <TextField
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            multiline
-            rows={8}
-            fullWidth
-            placeholder={t("vendor.services.detail.dialog.messagePlaceholder")}
-            sx={{
-              "& .MuiOutlinedInput-root": {
-                borderRadius: "12px",
-                backgroundColor: "#fcfaf8",
-                fontSize: "13px",
-                "& fieldset": { borderColor: "#e3d9d1" },
-                "&:hover fieldset": { borderColor: "#d5c8be" },
-                "&.Mui-focused fieldset": { borderColor: "#a47e43", borderWidth: "1px" },
-              },
-            }}
-          />
-          <p className="mt-1 text-[10px] text-[#9b8f86] sm:text-xs">
-            {t("vendor.services.detail.dialog.messageHint")}
-          </p>
-        </div>
+        <TextAreaField
+          label={t("vendor.services.detail.dialog.yourMessage")}
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          rows={8}
+          placeholder={t("vendor.services.detail.dialog.messagePlaceholder")}
+          helperText={t("vendor.services.detail.dialog.messageHint")}
+        />
 
         {/* Error */}
         {sendError && (

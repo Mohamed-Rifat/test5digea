@@ -6,6 +6,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import { getChangedFields } from "@/lib/vendor-normalizer";
 import type { TranslationKey } from "@/locales";
 import type { Vendor, VendorProfileData } from "@/types/vendor";
+import { TextAreaField } from "@/components/ui";
 
 // ================================
 // Diff rows
@@ -256,13 +257,13 @@ export function RejectReasonDialog({
           {t("admin.vendorDetails.review.modal.text")}
         </p>
 
-        <textarea
+        <TextAreaField
           value={reason}
           onChange={(event) => onReasonChange(event.target.value)}
           disabled={loading}
           placeholder={t("admin.vendorDetails.review.modal.placeholder")}
           rows={4}
-          className="mt-3 w-full rounded-xl border border-[#e3d9d1] bg-[#fcfaf8] px-3 py-2.5 text-sm text-[#30251f] outline-none transition placeholder:text-[#a99d94] focus:border-[#30251f]"
+          containerClassName="mt-3"
         />
 
         <div className="mt-4 flex justify-end gap-2">

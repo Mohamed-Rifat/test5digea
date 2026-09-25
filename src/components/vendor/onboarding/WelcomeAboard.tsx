@@ -1,7 +1,13 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import { ArrowRight, BriefcaseBusiness, Camera, Heart, Tags } from "lucide-react";
+import {
+  ArrowRight,
+  BriefcaseBusiness,
+  Camera,
+  Heart,
+  Tags,
+} from "lucide-react";
 
 import { useLanguage } from "@/context/LanguageContext";
 import type { TranslationKey } from "@/locales";
@@ -113,7 +119,11 @@ export default function WelcomeAboard({
               strokeLinejoin="round"
               aria-hidden="true"
             >
-              <path d="M5 12.5l4.5 4.5L19 7.5" className="onb-draw" style={delay(650)} />
+              <path
+                d="M5 12.5l4.5 4.5L19 7.5"
+                className="onb-draw"
+                style={delay(650)}
+              />
             </svg>
           </div>
         </div>
@@ -129,7 +139,9 @@ export default function WelcomeAboard({
           className="onb-rise mt-3 font-serif text-4xl font-light leading-tight tracking-tight sm:text-5xl rtl:leading-snug"
           style={delay(620)}
         >
-          <span className="onb-shine">{t("vendorOnboarding.welcome.title")}</span>
+          <span className="onb-shine">
+            {t("vendorOnboarding.welcome.title")}
+          </span>
         </h1>
 
         <div

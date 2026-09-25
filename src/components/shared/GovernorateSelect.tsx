@@ -9,11 +9,19 @@ import {
   governorateLabel,
   searchGovernorates,
 } from "@/lib/governorates";
+import { fieldClass } from "@/components/ui/fieldStyles";
 
 interface GovernorateSelectProps {
   /** English name of the selected governorate, or "" for none. */
   value: string;
   onChange: (value: string) => void;
+  /** Small label above the field. */
+  label?: React.ReactNode;
+  /** Red underline (validation error). */
+  invalid?: boolean;
+  /** Called when the list closes after the field was used. */
+  onBlur?: () => void;
+  id?: string;
 }
 
 /**
@@ -23,6 +31,10 @@ interface GovernorateSelectProps {
 export default function GovernorateSelect({
   value,
   onChange,
+  label,
+  invalid = false,
+  onBlur,
+  id,
 }: GovernorateSelectProps) {
   const { t, language } = useLanguage();
 
@@ -45,12 +57,13 @@ export default function GovernorateSelect({
       if (rootRef.current && !rootRef.current.contains(event.target as Node)) {
         setOpen(false);
         setQuery("");
+        onBlur?.();
       }
     };
 
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
-  }, [open]);
+  }, [open, onBlur]);
 
   // Keep the highlighted option visible while moving with the arrow keys.
   useEffect(() => {
@@ -70,6 +83,7 @@ export default function GovernorateSelect({
     onChange(en);
     setOpen(false);
     setQuery("");
+    onBlur?.();
   };
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -100,53 +114,66 @@ export default function GovernorateSelect({
 
   return (
     <div ref={rootRef} className="relative">
-      <MapPin className="pointer-events-none absolute start-3.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#b0a69c]" />
+      {label && (
+        <label
+          htmlFor={id}
+          className={`mb-0.5 block text-xs ${invalid ? "text-red-500" : "text-[#a59a92]"}`}
+        >
+          {label}
+        </label>
+      )}
 
-      <input
-        type="text"
-        role="combobox"
-        aria-expanded={open}
-        aria-controls="governorate-listbox"
-        aria-autocomplete="list"
-        autoComplete="off"
-        value={open ? query : selectedLabel}
-        onFocus={openList}
-        onClick={() => {
-          if (!open) openList();
-        }}
-        onChange={(event) => {
-          setQuery(event.target.value);
-          setActiveIndex(0);
-          setOpen(true);
-        }}
-        onKeyDown={handleKeyDown}
-        placeholder={
-          open && selectedLabel
-            ? selectedLabel
-            : open
-              ? t("common.governorate.searchHint")
-              : t("common.governorate.placeholder")
-        }
-        className="w-full rounded-xl border border-[#eee7e1] bg-[#faf7f4] py-2.5 ps-10 pe-16 text-sm text-[#30251f] outline-none transition placeholder:text-[#b0a69c] focus:border-[#b99a62] focus:bg-white focus:ring-4 focus:ring-[#b99a62]/10"
-      />
+      <div className="relative">
+        <MapPin className="pointer-events-none absolute start-0 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#b0a69c]" />
 
-      <div className="absolute inset-y-0 end-2 flex items-center gap-0.5">
-        {selected && (
-          <button
-            type="button"
-            onClick={() => pick("")}
-            aria-label={t("common.governorate.clear")}
-            className="flex h-6 w-6 items-center justify-center rounded-full text-[#9b8f86] transition hover:bg-[#f0e9e0] hover:text-[#30251f]"
-          >
-            <X size={13} />
-          </button>
-        )}
-        <ChevronDown
-          size={15}
-          className={`pointer-events-none text-[#b0a69c] transition-transform ${
-            open ? "rotate-180" : ""
-          }`}
+        <input
+          id={id}
+          type="text"
+          role="combobox"
+          aria-invalid={invalid || undefined}
+          aria-expanded={open}
+          aria-controls="governorate-listbox"
+          aria-autocomplete="list"
+          autoComplete="off"
+          value={open ? query : selectedLabel}
+          onFocus={openList}
+          onClick={() => {
+            if (!open) openList();
+          }}
+          onChange={(event) => {
+            setQuery(event.target.value);
+            setActiveIndex(0);
+            setOpen(true);
+          }}
+          onKeyDown={handleKeyDown}
+          placeholder={
+            open && selectedLabel
+              ? selectedLabel
+              : open
+                ? t("common.governorate.searchHint")
+                : t("common.governorate.placeholder")
+          }
+          className={`${fieldClass({ size: "sm", tone: invalid ? "error" : "default" })} ps-6 pe-16 placeholder:text-[#b0a69c]`}
         />
+
+        <div className="absolute inset-y-0 end-0 flex items-center gap-0.5">
+          {selected && (
+            <button
+              type="button"
+              onClick={() => pick("")}
+              aria-label={t("common.governorate.clear")}
+              className="flex h-6 w-6 items-center justify-center rounded-full text-[#9b8f86] transition hover:bg-[#f0e9e0] hover:text-[#30251f]"
+            >
+              <X size={13} />
+            </button>
+          )}
+          <ChevronDown
+            size={15}
+            className={`pointer-events-none text-[#b0a69c] transition-transform ${
+              open ? "rotate-180" : ""
+            }`}
+          />
+        </div>
       </div>
 
       {open && (

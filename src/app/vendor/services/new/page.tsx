@@ -1,296 +1,25 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useMemo, useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
-import {
-  AlertCircle,
-  ArrowLeft,
-  Info,
-  Loader2,
-  Plus,
-  Save,
-  Trash2,
-  HelpCircle,
-} from "lucide-react";
+import { ArrowLeft, Info, Loader2, Save } from "lucide-react";
 
-import {
-  Tooltip,
-  TextField,
-  InputAdornment,
-} from "@mui/material";
-
-import Select from "@/components/shared/Select";
-import { useVendorServices } from "@/features/services/hooks/useVendorServices";
-import { useCategories } from "@/features/categories/hooks/useCategories";
-import { useVendorContext } from "@/context/VendorContext";
 import { useLanguage } from "@/context/LanguageContext";
+import Select from "@/components/shared/Select";
 import TextWithSlot from "@/components/shared/TextWithSlot";
-import type { CreateServicePriceRequest } from "@/types/service";
-
-type PriceFormRow = {
-  label: string;
-  price: number | "";
-};
-
-const MAX_IMAGES = 5;
+import { FieldMessage, RequiredLabel, TextAreaField, TextField } from "@/components/ui";
+import FormErrorAlert from "@/components/vendor/services/FormErrorAlert";
+import NewServiceImagePicker from "@/components/vendor/services/NewServiceImagePicker";
+import PriceRowsEditor, { AddPriceButton } from "@/components/vendor/services/PriceRowsEditor";
+import ServiceHelpNote from "@/components/vendor/services/ServiceHelpNote";
+import { useNewServiceForm } from "@/components/vendor/services/useNewServiceForm";
 
 export default function NewVendorServicePage() {
-  const router = useRouter();
-  const { t, localize } = useLanguage();
-
-  const { create, uploadImages, actionError } = useVendorServices();
-  const { categories, loading: categoriesLoading } = useCategories();
-  const { vendor, loading: vendorLoading } = useVendorContext();
-
-  // A vendor can only publish services under categories that were assigned
-  // to their business — showing the full category catalog would let them
-  // pick one the backend will reject.
-  const availableCategories = useMemo(() => {
-    if (!vendor) return [];
-
-    const assignedNames = new Set(vendor.categories);
-
-    return categories.filter(
-      (category) =>
-        category.isActive && assignedNames.has(category.name)
-    );
-  }, [categories, vendor]);
-
-  const categoryOptions = useMemo(
-    () =>
-      availableCategories.map((category) => ({
-        value: category.id,
-        label: localize(category.name),
-      })),
-    [availableCategories, localize]
-  );
-
-  const categoriesLoadingCombined =
-    categoriesLoading || vendorLoading;
-
-  const hasNoAssignedCategories =
-    !categoriesLoadingCombined &&
-    availableCategories.length === 0;
-
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [categoryId, setCategoryId] = useState("");
-
-  // Form state allows an empty price while the vendor is typing.
-  // The value is converted to a number only before sending to the API.
-  const [prices, setPrices] = useState<PriceFormRow[]>([
-    { label: "", price: "" },
-  ]);
-
-  const [images, setImages] = useState<File[]>([]);
-  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
-  const [formError, setFormError] = useState("");
-
-  // Covers the whole create + upload-images sequence.
-  // Prevents double-clicking the submit button from creating
-  // the service more than once.
-  const [submitting, setSubmitting] = useState(false);
-
-  const isSubmitting = submitting;
-
-  const handleImagesSelected = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      const files = Array.from(event.target.files ?? []);
-
-      if (files.length === 0) return;
-
-      setImages((prevImages) => {
-        const remainingSlots =
-          MAX_IMAGES - prevImages.length;
-
-        if (remainingSlots <= 0) {
-          return prevImages;
-        }
-
-        const filesToAdd = files.slice(
-          0,
-          remainingSlots
-        );
-
-        setImagePreviews((prevPreviews) => [
-          ...prevPreviews,
-          ...filesToAdd.map((file) =>
-            URL.createObjectURL(file)
-          ),
-        ]);
-
-        return [...prevImages, ...filesToAdd];
-      });
-
-      // Allow re-selecting the same file again later.
-      event.target.value = "";
-    },
-    []
-  );
-
-  const removeImage = useCallback((index: number) => {
-    setImages((prev) =>
-      prev.filter((_, i) => i !== index)
-    );
-
-    setImagePreviews((prev) => {
-      if (prev[index]) {
-        URL.revokeObjectURL(prev[index]);
-      }
-
-      return prev.filter((_, i) => i !== index);
-    });
-  }, []);
-
-  const addPriceRow = useCallback(() => {
-    setPrices((prev) => [
-      ...prev,
-      {
-        label: "",
-        price: "",
-      },
-    ]);
-  }, []);
-
-  const removePriceRow = useCallback((index: number) => {
-    setPrices((prev) =>
-      prev.filter((_, i) => i !== index)
-    );
-  }, []);
-
-  const updatePriceRow = useCallback(
-    (
-      index: number,
-      field: "label" | "price",
-      value: string
-    ) => {
-      setPrices((prev) =>
-        prev.map((row, i) =>
-          i === index
-            ? {
-                ...row,
-                [field]:
-                  field === "price"
-                    ? value === ""
-                      ? ""
-                      : Number(value)
-                    : value,
-              }
-            : row
-        )
-      );
-    },
-    []
-  );
-
-  const handleSubmit = useCallback(
-    async (event: FormEvent) => {
-      event.preventDefault();
-
-      if (submitting) return;
-
-      setFormError("");
-
-      if (
-        !name.trim() ||
-        !description.trim() ||
-        !categoryId
-      ) {
-        setFormError(
-          t("vendor.services.form.errors.fillNew")
-        );
-        return;
-      }
-
-      // Extra protection against submitting more than 5 images.
-      if (images.length > MAX_IMAGES) {
-        setFormError(
-          "You can upload a maximum of 5 images."
-        );
-        return;
-      }
-
-      // Convert the form values into the API request type.
-      // Empty price inputs are ignored.
-      const validPrices: CreateServicePriceRequest[] =
-        prices
-          .filter(
-            (price) =>
-              price.label.trim() !== "" &&
-              price.price !== "" &&
-              price.price >= 0
-          )
-          .map((price) => ({
-            label: price.label.trim(),
-            price: price.price as number,
-          }));
-
-      if (validPrices.length === 0) {
-        setFormError(
-          t(
-            "vendor.services.form.errors.atLeastOnePrice"
-          )
-        );
-        return;
-      }
-
-      setSubmitting(true);
-
-      try {
-        const id = await create({
-          categoryId,
-          name: name.trim(),
-          description: description.trim(),
-          prices: validPrices,
-        });
-
-        if (id) {
-          if (images.length > 0) {
-            const uploaded = await uploadImages(
-              id,
-              images
-            );
-
-            if (!uploaded) {
-              // Service was created, but images failed.
-              // Let the vendor add them from the edit page.
-              router.push(`/vendor/services/${id}`);
-              return;
-            }
-          }
-
-          router.push("/vendor/services");
-        }
-      } finally {
-        setSubmitting(false);
-      }
-    },
-    [
-      name,
-      description,
-      categoryId,
-      prices,
-      images,
-      create,
-      uploadImages,
-      router,
-      t,
-      submitting,
-    ]
-  );
-
-  const handleCancel = useCallback(() => {
-    router.push("/vendor/services");
-  }, [router]);
+  const { t } = useLanguage();
+  const form = useNewServiceForm();
 
   return (
     <div className="min-h-screen bg-[#faf8f6]">
       <div className="mx-auto px-3 py-4 sm:px-4 sm:py-6 lg:max-w-full lg:px-6 lg:py-8 xl:px-8 xl:py-10">
-        {/* =================================================
-            Header
-        ================================================= */}
-
         <header className="mb-4 sm:mb-6 lg:mb-8">
           <Link
             href="/vendor/services"
@@ -300,498 +29,170 @@ export default function NewVendorServicePage() {
             {t("vendor.services.add.back")}
           </Link>
 
-          <div className="flex items-center gap-2 sm:gap-3">
-            <div>
-              <h1 className="text-2xl font-semibold tracking-tight text-[#30251f] sm:text-3xl lg:text-4xl">
-                {t("vendor.services.add.title")}
-              </h1>
-            </div>
-          </div>
+          <h1 className="text-2xl font-semibold tracking-tight text-[#30251f] sm:text-3xl lg:text-4xl">
+            {t("vendor.services.add.title")}
+          </h1>
 
           <p className="mt-2 max-w-2xl text-xs leading-5 text-[#756b65] sm:mt-3 sm:text-sm sm:leading-6">
             {t("vendor.services.add.intro")}
           </p>
         </header>
 
-        {/* =================================================
-            Form
-        ================================================= */}
-
         <form
-          onSubmit={handleSubmit}
-          className="rounded-3xl border border-[#e8dfd8] bg-white p-4 shadow-sm sm:p-6 lg:p-8"
+          onSubmit={form.handleSubmit}
+          className="space-y-7 rounded-3xl border border-[#e8dfd8] bg-white p-4 shadow-sm sm:p-6 lg:p-8"
         >
-          {/* =================================================
-              Errors
-          ================================================= */}
+          <FormErrorAlert message={form.formError || form.actionError} />
 
-          {(formError || actionError) && (
-            <div className="mb-6 flex items-start gap-3 rounded-2xl border border-red-100 bg-red-50 p-3 text-xs text-red-700 sm:mb-8 sm:p-4 sm:text-sm">
-              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 sm:h-5 sm:w-5" />
+          <TextField
+            id="service-name"
+            label={<RequiredLabel text={t("vendor.services.form.name")} />}
+            value={form.name}
+            onChange={(event) => form.setName(event.target.value)}
+            placeholder={t("vendor.services.form.namePlaceholder")}
+            helperText={t("vendor.services.form.nameHint")}
+          />
 
-              <span className="leading-5 sm:leading-6">
-                {formError || actionError}
-              </span>
-            </div>
-          )}
+          <CategoryField form={form} />
 
-          {/* =================================================
-              Service Name
-          ================================================= */}
+          <TextAreaField
+            id="service-description"
+            label={<RequiredLabel text={t("vendor.services.form.description")} />}
+            value={form.description}
+            onChange={(event) => form.setDescription(event.target.value)}
+            rows={5}
+            placeholder={t("vendor.services.form.descriptionPlaceholder")}
+            helperText={t("vendor.services.form.descriptionHint")}
+          />
 
-          <div className="mb-5 sm:mb-6">
-            <label className="mb-1.5 block text-xs font-medium text-[#40352f] sm:mb-2 sm:text-sm">
-              {t("vendor.services.form.name")}{" "}
-              <span className="text-red-500">*</span>
-            </label>
-
-            <TextField
-              type="text"
-              value={name}
-              onChange={(event) =>
-                setName(event.target.value)
-              }
-              placeholder={t(
-                "vendor.services.form.namePlaceholder"
-              )}
-              fullWidth
-              size="small"
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  borderRadius: "12px",
-                  backgroundColor: "#fcfaf8",
-                  fontSize: "13px",
-                  "& fieldset": {
-                    borderColor: "#e3d9d1",
-                  },
-                  "&:hover fieldset": {
-                    borderColor: "#d5c8be",
-                  },
-                  "&.Mui-focused fieldset": {
-                    borderColor: "#a47e43",
-                    borderWidth: "1px",
-                  },
-                },
-              }}
-            />
-
-            <p className="mt-1 text-[10px] text-[#9b8f86] sm:text-xs">
-              {t("vendor.services.form.nameHint")}
-            </p>
-          </div>
-
-          {/* =================================================
-              Category
-          ================================================= */}
-
-          <div className="mb-5 sm:mb-6">
-            <label className="mb-1.5 block text-xs font-medium text-[#40352f] sm:mb-2 sm:text-sm">
-              {t("vendor.services.form.category")}{" "}
-              <span className="text-red-500">*</span>
-            </label>
-
-            {categoriesLoadingCombined ? (
-              <div className="flex items-center gap-3 rounded-xl border border-[#e3d9d1] bg-[#fcfaf8] px-4 py-3">
-                <Loader2 className="h-4 w-4 animate-spin text-[#a47e43]" />
-
-                <span className="text-sm text-[#9b8f86]">
-                  {t(
-                    "vendor.services.form.loadingCategories"
-                  )}
-                </span>
-              </div>
-            ) : (
-              <Select
-                value={categoryId}
-                onChange={setCategoryId}
-                options={categoryOptions}
-                loading={categoriesLoadingCombined}
-                placeholder={t(
-                  "vendor.services.form.selectCategory"
-                )}
-                emptyMessage={t(
-                  "vendor.services.form.noCategoriesEmpty"
-                )}
-              />
-            )}
-
-            {hasNoAssignedCategories ? (
-              <div className="mt-2 flex items-start gap-2 rounded-xl bg-amber-50 p-2.5 text-xs text-amber-700 sm:p-3">
-                <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-
-                <span className="leading-5">
-                  <TextWithSlot
-                    text={t(
-                      "vendor.services.form.noAssigned"
-                    )}
-                    token="{link}"
-                    slot={
-                      <Link
-                        href="/vendor/support"
-                        className="font-semibold underline hover:no-underline"
-                      >
-                        {t(
-                          "vendor.services.form.contactSupportLink"
-                        )}
-                      </Link>
-                    }
-                  />
-                </span>
-              </div>
-            ) : (
-              <p className="mt-1 text-[10px] text-[#9b8f86] sm:text-xs">
-                {t(
-                  "vendor.services.form.categoryHint"
-                )}
+          <div>
+            <div className="mb-2 flex items-center justify-between">
+              <p className="text-xs font-medium text-[#40352f] sm:text-sm">
+                <RequiredLabel text={t("vendor.services.form.pricing")} />
               </p>
-            )}
-          </div>
+              <AddPriceButton onClick={form.addPriceRow} />
+            </div>
 
-          {/* =================================================
-              Description
-          ================================================= */}
-
-          <div className="mb-5 sm:mb-6">
-            <label className="mb-1.5 block text-xs font-medium text-[#40352f] sm:mb-2 sm:text-sm">
-              {t(
-                "vendor.services.form.description"
-              )}{" "}
-              <span className="text-red-500">*</span>
-            </label>
-
-            <TextField
-              value={description}
-              onChange={(event) =>
-                setDescription(event.target.value)
-              }
-              multiline
-              rows={5}
-              placeholder={t(
-                "vendor.services.form.descriptionPlaceholder"
-              )}
-              fullWidth
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  borderRadius: "12px",
-                  backgroundColor: "#fcfaf8",
-                  fontSize: "13px",
-                  "& fieldset": {
-                    borderColor: "#e3d9d1",
-                  },
-                  "&:hover fieldset": {
-                    borderColor: "#d5c8be",
-                  },
-                  "&.Mui-focused fieldset": {
-                    borderColor: "#a47e43",
-                    borderWidth: "1px",
-                  },
-                },
-              }}
+            <PriceRowsEditor
+              rows={form.prices}
+              onChange={form.updatePriceRow}
+              onRemove={form.removePriceRow}
             />
 
-            <p className="mt-1 text-[10px] text-[#9b8f86] sm:text-xs">
-              {t(
-                "vendor.services.form.descriptionHint"
-              )}
-            </p>
+            <FieldMessage tone="info" plain>
+              {t("vendor.services.form.pricesHint")}
+            </FieldMessage>
           </div>
 
-          {/* =================================================
-              Pricing Options
-          ================================================= */}
+          <NewServiceImagePicker
+            previews={form.imagePreviews}
+            onSelect={form.handleImagesSelected}
+            onRemove={form.removeImage}
+          />
 
-          <div className="mb-5 sm:mb-6">
-            <div className="mb-1.5 flex items-center justify-between sm:mb-2">
-              <label className="text-xs font-medium text-[#40352f] sm:text-sm">
-                {t("vendor.services.form.pricing")}{" "}
-                <span className="text-red-500">*</span>
-              </label>
+          <FormActions
+            submitting={form.isSubmitting}
+            disabled={form.hasNoAssignedCategories}
+            onCancel={form.handleCancel}
+          />
 
-              <button
-                type="button"
-                onClick={addPriceRow}
-                className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-[#604b3e] transition hover:bg-[#f5eee9] hover:text-[#30251f] sm:gap-1.5 sm:px-2.5 sm:py-1.5 sm:text-sm"
-              >
-                <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-
-                {t("vendor.services.form.addPrice")}
-              </button>
-            </div>
-
-            <div className="space-y-2.5 sm:space-y-3">
-              {prices.map((price, index) => (
-                <div
-                  key={index}
-                  className="flex flex-col gap-2 rounded-xl border border-[#f0eae5] bg-[#fcfaf8] p-3 sm:flex-row sm:items-center sm:gap-3 sm:p-3.5"
-                >
-                  <div className="flex-1">
-                    <TextField
-                      type="text"
-                      value={price.label}
-                      onChange={(event) =>
-                        updatePriceRow(
-                          index,
-                          "label",
-                          event.target.value
-                        )
-                      }
-                      placeholder={t(
-                        "vendor.services.form.labelPlaceholder"
-                      )}
-                      size="small"
-                      fullWidth
-                      sx={{
-                        "& .MuiOutlinedInput-root": {
-                          borderRadius: "10px",
-                          backgroundColor: "white",
-                          fontSize: "12px",
-                          "& fieldset": {
-                            borderColor: "#e3d9d1",
-                          },
-                          "&:hover fieldset": {
-                            borderColor: "#d5c8be",
-                          },
-                          "&.Mui-focused fieldset": {
-                            borderColor: "#a47e43",
-                            borderWidth: "1px",
-                          },
-                        },
-                      }}
-                    />
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <div className="w-full sm:w-40">
-                      <TextField
-                        type="number"
-                        value={price.price}
-                        onChange={(event) =>
-                          updatePriceRow(
-                            index,
-                            "price",
-                            event.target.value
-                          )
-                        }
-                        placeholder={t(
-                          "vendor.services.form.pricePlaceholder"
-                        )}
-                        size="small"
-                        fullWidth
-                        slotProps={{
-                          input: {
-                            startAdornment: (
-                              <InputAdornment position="start">
-                                <span className="text-[#9b8f86]">
-                                  {t("common.currency")}
-                                </span>
-                              </InputAdornment>
-                            ),
-                            inputProps: {
-                              min: 0,
-                              step: "0.01",
-                            },
-                          },
-                        }}
-                        sx={{
-                          "& .MuiOutlinedInput-root": {
-                            borderRadius: "10px",
-                            backgroundColor: "white",
-                            fontSize: "12px",
-                            "& fieldset": {
-                              borderColor: "#e3d9d1",
-                            },
-                            "&:hover fieldset": {
-                              borderColor: "#d5c8be",
-                            },
-                            "&.Mui-focused fieldset": {
-                              borderColor: "#a47e43",
-                              borderWidth: "1px",
-                            },
-                          },
-                        }}
-                      />
-                    </div>
-
-                    {prices.length > 1 && (
-                      <Tooltip
-                        title={t(
-                          "vendor.services.form.removePrice"
-                        )}
-                        arrow
-                      >
-                        <button
-                          type="button"
-                          onClick={() =>
-                            removePriceRow(index)
-                          }
-                          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#e3d9d1] text-[#9a5555] transition hover:border-red-200 hover:bg-red-50 sm:h-11 sm:w-11"
-                        >
-                          <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                        </button>
-                      </Tooltip>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <p className="mt-1.5 text-[10px] text-[#9b8f86] sm:mt-2 sm:text-xs">
-              {t(
-                "vendor.services.form.pricesHint"
-              )}
-            </p>
-          </div>
-
-          {/* =================================================
-              Images
-          ================================================= */}
-
-          <div className="mb-5 sm:mb-6">
-            <div className="mb-1.5 flex items-center justify-between sm:mb-2">
-              <label className="text-xs font-medium text-[#40352f] sm:text-sm">
-                {t("vendor.services.form.images")}
-              </label>
-
-              <span className="text-[10px] font-medium text-[#9b8f86] sm:text-xs">
-                {images.length}/{MAX_IMAGES}
-              </span>
-            </div>
-
-            <div className="flex flex-wrap gap-2.5 sm:gap-3">
-              {imagePreviews.map((src, index) => (
-                <div
-                  key={src}
-                  className="group relative h-20 w-20 overflow-hidden rounded-xl border border-[#e3d9d1] sm:h-24 sm:w-24"
-                >
-                  <img
-                    loading="lazy"
-                    decoding="async"
-                    src={src}
-                    alt={t(
-                      "vendor.services.form.selectedImageAlt",
-                      {
-                        number: index + 1,
-                      }
-                    )}
-                    className="h-full w-full object-cover"
-                  />
-
-                  <button
-                    type="button"
-                    onClick={() => removeImage(index)}
-                    className="absolute inset-e-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition group-hover:opacity-100"
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </button>
-                </div>
-              ))}
-
-              {images.length < MAX_IMAGES && (
-                <label className="flex h-20 w-20 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-[#d5c8be] bg-[#fcfaf8] text-[#9b8f86] transition hover:border-[#a47e43] hover:text-[#a47e43] sm:h-24 sm:w-24">
-                  <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
-
-                  <span className="text-[10px]">
-                    {t("vendor.services.form.addPhoto")}
-                  </span>
-
-                  <input
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    onChange={handleImagesSelected}
-                    className="hidden"
-                  />
-                </label>
-              )}
-            </div>
-
-            <p className="mt-1.5 text-[10px] text-[#9b8f86] sm:mt-2 sm:text-xs">
-              {t("vendor.services.form.imagesHint")}
-              {" "}
-              <span className="font-medium text-[#756b65]">
-                ({images.length}/{MAX_IMAGES})
-              </span>
-            </p>
-          </div>
-
-          {/* =================================================
-              Form Actions
-          ================================================= */}
-
-          <div className="flex flex-col gap-2 border-t border-[#eee7e2] pt-4 sm:flex-row sm:items-center sm:gap-3 sm:pt-6">
-            <button
-              type="submit"
-              disabled={
-                isSubmitting || hasNoAssignedCategories
-              }
-              className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-[#30251f] px-4 text-xs font-medium text-white transition hover:bg-[#463831] disabled:opacity-60 sm:h-11 sm:px-6 sm:text-sm"
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="h-3.5 w-3.5 animate-spin sm:h-4 sm:w-4" />
-
-                  {t(
-                    "vendor.services.form.submitting"
-                  )}
-                </>
-              ) : (
-                <>
-                  <Save className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-
-                  {t(
-                    "vendor.services.form.submitForReview"
-                  )}
-                </>
-              )}
-            </button>
-
-            <button
-              type="button"
-              onClick={handleCancel}
-              className="inline-flex h-10 items-center justify-center rounded-xl border border-[#e3d9d1] bg-white px-4 text-xs font-medium text-[#514740] transition hover:bg-[#f7f2ef] sm:h-11 sm:px-6 sm:text-sm"
-            >
-              {t("vendor.services.form.cancel")}
-            </button>
-
-            {/* Status indicator */}
-            <div className="mt-2 flex items-center gap-2 text-[10px] text-[#9b8f86] sm:ms-auto sm:mt-0 sm:text-xs">
-              <span className="inline-flex h-1.5 w-1.5 rounded-full bg-amber-400" />
-
-              <span>
-                {t("vendor.services.form.draft")}
-              </span>
-            </div>
-          </div>
-
-          {/* =================================================
-              Form Footer Info
-          ================================================= */}
-
-          <div className="mt-4 flex items-start gap-2 rounded-xl bg-[#fbf6f1] p-3 text-[10px] text-[#6f625a] sm:mt-6 sm:p-3.5 sm:text-xs">
-            <HelpCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#a47e43] sm:h-4 sm:w-4" />
-
-            <span className="leading-5">
-              <span className="font-medium text-[#40352f]">
-                {t(
-                  "vendor.services.form.needHelp"
-                )}
-              </span>{" "}
-
-              {t(
-                "vendor.services.form.needHelpText"
-              )}
-
-              <Link
-                href="/vendor/support"
-                className="ms-1 font-medium text-[#a47e43] hover:underline"
-              >
-                {t(
-                  "vendor.services.form.contactSupport"
-                )}
-              </Link>
-            </span>
-          </div>
+          <ServiceHelpNote text={t("vendor.services.form.needHelpText")} />
         </form>
+      </div>
+    </div>
+  );
+}
+
+function CategoryField({ form }: { form: ReturnType<typeof useNewServiceForm> }) {
+  const { t } = useLanguage();
+
+  return (
+    <div>
+      <p className="mb-1 text-xs text-[#a59a92]">
+        <RequiredLabel text={t("vendor.services.form.category")} />
+      </p>
+
+      {form.categoriesLoading ? (
+        <div className="flex items-center gap-3 border-b-2 border-[#ded5ce] py-3">
+          <Loader2 className="h-4 w-4 animate-spin text-[#a47e43]" />
+          <span className="text-sm text-[#9b8f86]">{t("vendor.services.form.loadingCategories")}</span>
+        </div>
+      ) : (
+        <Select
+          value={form.categoryId}
+          onChange={form.setCategoryId}
+          options={form.categoryOptions}
+          placeholder={t("vendor.services.form.selectCategory")}
+          emptyMessage={t("vendor.services.form.noCategoriesEmpty")}
+        />
+      )}
+
+      {form.hasNoAssignedCategories ? (
+        <div className="mt-2 flex items-start gap-2 rounded-xl bg-amber-50 p-2.5 text-xs text-amber-700 sm:p-3">
+          <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+          <span className="leading-5">
+            <TextWithSlot
+              text={t("vendor.services.form.noAssigned")}
+              token="{link}"
+              slot={
+                <Link href="/vendor/support" className="font-semibold underline hover:no-underline">
+                  {t("vendor.services.form.contactSupportLink")}
+                </Link>
+              }
+            />
+          </span>
+        </div>
+      ) : (
+        <FieldMessage tone="info" plain>
+          {t("vendor.services.form.categoryHint")}
+        </FieldMessage>
+      )}
+    </div>
+  );
+}
+
+function FormActions({
+  submitting,
+  disabled,
+  onCancel,
+}: {
+  submitting: boolean;
+  disabled: boolean;
+  onCancel: () => void;
+}) {
+  const { t } = useLanguage();
+
+  return (
+    <div className="flex flex-col gap-2 border-t border-[#eee7e2] pt-4 sm:flex-row sm:items-center sm:gap-3 sm:pt-6">
+      <button
+        type="submit"
+        disabled={submitting || disabled}
+        className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-[#30251f] px-4 text-xs font-medium text-white transition hover:bg-[#463831] disabled:opacity-60 sm:h-11 sm:px-6 sm:text-sm"
+      >
+        {submitting ? (
+          <>
+            <Loader2 className="h-3.5 w-3.5 animate-spin sm:h-4 sm:w-4" />
+            {t("vendor.services.form.submitting")}
+          </>
+        ) : (
+          <>
+            <Save className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            {t("vendor.services.form.submitForReview")}
+          </>
+        )}
+      </button>
+
+      <button
+        type="button"
+        onClick={onCancel}
+        className="inline-flex h-10 items-center justify-center rounded-xl border border-[#e3d9d1] bg-white px-4 text-xs font-medium text-[#514740] transition hover:bg-[#f7f2ef] sm:h-11 sm:px-6 sm:text-sm"
+      >
+        {t("vendor.services.form.cancel")}
+      </button>
+
+      <div className="mt-2 flex items-center gap-2 text-[10px] text-[#9b8f86] sm:ms-auto sm:mt-0 sm:text-xs">
+        <span className="inline-flex h-1.5 w-1.5 rounded-full bg-amber-400" />
+        <span>{t("vendor.services.form.draft")}</span>
       </div>
     </div>
   );

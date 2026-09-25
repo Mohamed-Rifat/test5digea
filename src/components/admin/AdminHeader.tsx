@@ -10,6 +10,7 @@ import type { TranslationKey } from "@/locales";
 import NotificationBell from "@/components/notifications/NotificationBell";
 import LanguageSwitcher from "@/components/layout/LanguageSwitcher";
 import SessionCountdownBadge from "@/components/shared/SessionCountdownBadge";
+import { TextField } from "@/components/ui";
 
 interface AdminHeaderProps {
   onMenuClick: () => void;
@@ -106,11 +107,7 @@ export default function AdminHeader({ onMenuClick }: AdminHeaderProps) {
           className="relative hidden max-w-md flex-1 md:block"
         >
           <form onSubmit={handleSubmit} className="relative">
-            <Search
-              size={17}
-              className="absolute inset-s-4 top-1/2 -translate-y-1/2 text-[#b0a39b]"
-            />
-            <input
+            <TextField
               type="text"
               value={query}
               onChange={(event) => {
@@ -119,7 +116,7 @@ export default function AdminHeader({ onMenuClick }: AdminHeaderProps) {
               }}
               onFocus={() => setShowTargets(true)}
               placeholder={t("admin.header.searchPlaceholder")}
-              className="h-11 w-full rounded-xl border border-[#eee5df] bg-[#faf8f6] ps-11 pe-4 text-sm text-[#30251f] outline-none transition placeholder:text-[#b2a59d] focus:border-[#c8b4a6] focus:bg-white"
+              startIcon={<Search size={17} />}
             />
           </form>
 
@@ -195,17 +192,13 @@ export default function AdminHeader({ onMenuClick }: AdminHeaderProps) {
       {mobileSearchOpen && (
         <div className="absolute inset-x-0 top-full z-30 border-b border-[#eee5df] bg-white p-3 shadow-lg md:hidden">
           <form onSubmit={handleSubmit} className="relative">
-            <Search
-              size={16}
-              className="absolute inset-s-3.5 top-1/2 -translate-y-1/2 text-[#b0a39b]"
-            />
-            <input
+            <TextField
               ref={mobileInputRef}
               type="text"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder={t("admin.header.searchPlaceholderMobile")}
-              className="h-11 w-full rounded-xl border border-[#eee5df] bg-[#faf8f6] ps-10 pe-4 text-sm text-[#30251f] outline-none transition placeholder:text-[#b2a59d] focus:border-[#c8b4a6] focus:bg-white"
+              startIcon={<Search size={16} />}
             />
           </form>
 

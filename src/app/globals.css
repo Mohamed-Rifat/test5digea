@@ -61,6 +61,27 @@ html[dir="rtl"] [class*="tracking-"]:not(:lang(en)) {
   outline-offset: 2px;
 }
 
+/* Text fields show focus through their underline colour, never through a
+   box drawn around them. */
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):focus,
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):focus-visible,
+textarea:focus,
+textarea:focus-visible,
+select:focus,
+select:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
+/* Browser autofill must not paint a coloured box behind underlined fields. */
+.field-underline:-webkit-autofill,
+.field-underline:-webkit-autofill:hover,
+.field-underline:-webkit-autofill:focus {
+  -webkit-text-fill-color: #30251f;
+  -webkit-box-shadow: 0 0 0 1000px transparent inset;
+  transition: background-color 9999s ease-out 0s;
+}
+
 /* Accessible "skip to content" link (visible only when focused). */
 .skip-link {
   position: fixed;

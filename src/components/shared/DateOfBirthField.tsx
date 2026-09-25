@@ -116,7 +116,7 @@ export default function DateOfBirthField({
     `peer block w-full appearance-none border-0 border-b-2 bg-transparent py-3 ps-0 pe-6 text-[15px] outline-none transition-all duration-300 focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60 ltr:text-left rtl:text-right ${
       invalid
         ? "border-red-300 focus:border-red-500"
-        : "border-[#ded5ce] hover:border-[#cbbdb3] focus:border-[#9a8171]"
+        : "border-[#ded5ce] focus:border-[#9a8171]"
     } ${selected ? "text-[#30251f]" : "text-[#a59a92]"}`;
 
   const chevron = (

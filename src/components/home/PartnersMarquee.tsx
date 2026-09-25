@@ -71,7 +71,10 @@ export default function PartnersMarquee({ vendors }: { vendors: Vendor[] }) {
                         className="h-full w-full object-cover grayscale-[35%] transition duration-500 group-hover/partner:grayscale-0"
                       />
                     ) : (
-                      <Building2 className="m-auto mt-7 text-[#e2b777]" size={24} />
+                      <Building2
+                        className="m-auto mt-7 text-[#e2b777]"
+                        size={24}
+                      />
                     )}
                   </span>
                   {(vendor.averageRating ?? 0) > 0 && (

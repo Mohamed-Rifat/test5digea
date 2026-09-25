@@ -5,8 +5,7 @@ import { buildMetadata } from "@/lib/seo";
 export const metadata: Metadata = buildMetadata({
   title: "تغيير كلمة المرور",
   titleEn: "Change Password",
-  description:
-    "تغيير كلمة مرور حسابك. Change your account password.",
+  description: "تغيير كلمة مرور حسابك. Change your account password.",
   path: "/change-password",
   noIndex: true,
 });

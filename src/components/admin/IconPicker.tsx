@@ -12,6 +12,7 @@ import {
   styledIconName,
   suggestIcons,
 } from "@/lib/category-icons";
+import { TextField } from "@/components/ui";
 
 type Props = {
   value: string;
@@ -99,9 +100,7 @@ export default function IconPicker({ value, onChange, hints, disabled }: Props) 
       </div>
 
       {/* search */}
-      <div className="relative">
-        <Search size={15} className="pointer-events-none absolute start-3.5 top-1/2 -translate-y-1/2 text-[#afa19a]" />
-        <input
+      <TextField
           type="search"
           dir="ltr"
           value={query}
@@ -115,12 +114,13 @@ export default function IconPicker({ value, onChange, hints, disabled }: Props) 
           disabled={disabled}
           placeholder={t("admin.categories.iconPicker.searchPlaceholder")}
           aria-label={t("admin.categories.iconPicker.searchPlaceholder")}
-          className="h-11 w-full rounded-xl border border-[#e7ded8] bg-[#fcfaf8] ps-10 pe-10 text-sm text-[#30251f] outline-none transition placeholder:text-[#afa19a] focus:border-[#bba99d] focus:bg-white focus:ring-4 focus:ring-[#f3ece7] rtl:text-right"
+          startIcon={<Search size={15} />}
+          endAdornment={
+            searching ? (
+              <Loader2 size={15} className="animate-spin text-[#a47e43]" />
+            ) : undefined
+          }
         />
-        {searching && (
-          <Loader2 size={15} className="absolute end-3.5 top-1/2 -translate-y-1/2 animate-spin text-[#a47e43]" />
-        )}
-      </div>
 
       <p className="flex items-center gap-1.5 text-[11px] font-semibold text-[#8a7a6e]">
         <Sparkles size={12} className="text-[#a47e43]" />
@@ -185,9 +185,7 @@ export default function IconPicker({ value, onChange, hints, disabled }: Props) 
 
       {/* custom link */}
       {showLink ? (
-        <div className="relative">
-          <Link2 size={15} className="pointer-events-none absolute start-3.5 top-1/2 -translate-y-1/2 text-[#afa19a]" />
-          <input
+        <TextField
             type="url"
             dir="ltr"
             value={value}
@@ -195,9 +193,8 @@ export default function IconPicker({ value, onChange, hints, disabled }: Props) 
             disabled={disabled}
             placeholder={t("admin.categories.iconPlaceholder")}
             aria-label={t("admin.categories.iconPicker.orLink")}
-            className="h-11 w-full rounded-xl border border-[#e7ded8] bg-[#fcfaf8] ps-10 pe-4 text-sm text-[#30251f] outline-none transition placeholder:text-[#afa19a] focus:border-[#bba99d] focus:bg-white focus:ring-4 focus:ring-[#f3ece7]"
+            startIcon={<Link2 size={15} />}
           />
-        </div>
       ) : (
         <button
           type="button"
