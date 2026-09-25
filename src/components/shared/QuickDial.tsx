@@ -271,9 +271,17 @@ export default function QuickDial({ vendorId }: { vendorId?: string }) {
             <span className="absolute inset-0 animate-ping rounded-full bg-[#e2b777]/40" aria-hidden="true" />
           )}
           <span className="absolute inset-0 rounded-full bg-[radial-gradient(circle_at_30%_25%,rgba(255,255,255,0.18),transparent_60%)]" aria-hidden="true" />
-          <Sparkles
-            size={22}
-            className={`absolute transition-all duration-300 ${open ? "rotate-90 scale-0 opacity-0" : "rotate-0 scale-100 opacity-100"}`}
+          {/* Brand logo (swaps to an X when open) */}
+          <img
+            src="/logo-256.png"
+            alt=""
+            aria-hidden="true"
+            width={30}
+            height={26}
+            draggable={false}
+            className={`absolute h-[26px] w-auto drop-shadow-[0_2px_6px_rgba(226,183,119,0.45)] transition-all duration-300 group-hover:scale-110 sm:h-7 ${
+              open ? "rotate-90 scale-0 opacity-0" : "rotate-0 scale-100 opacity-100"
+            }`}
           />
           <X
             size={22}
