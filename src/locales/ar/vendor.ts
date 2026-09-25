@@ -770,6 +770,7 @@ const vendor = {
       sheetAll: "كل التقييمات",
       na: "غير متاح",
       nothingToExport: "مفيش تقييمات للتصدير!",
+      exportSuccess: "تم تصدير التقييمات بنجاح.",
       fileName: "تقرير_التقييمات",
     },
   },

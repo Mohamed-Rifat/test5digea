@@ -17,6 +17,7 @@ import {
 import { compareServices, getService } from "@/features/services/api";
 import { compareVendorList, getVendorDetails } from "@/features/vendors/api";
 import { useCompare } from "@/context/CompareContext";
+import { getApiErrorMessage } from "@/lib/error";
 import { useLanguage } from "@/context/LanguageContext";
 import { useToast } from "@/components/providers/ToastProvider";
 import { formatPrice } from "@/lib/format";
@@ -242,12 +243,14 @@ export default function ComparePage() {
       } catch (err: unknown) {
         if (!cancelled) {
           if (err instanceof CompareError) {
+            // Validation states (e.g. "pick at least two") are already shown
+            // inline in the empty state - no error toast for them.
             setError({ key: err.key, params: err.params });
-            toast(tRef.current(err.key, err.params), "error");
           } else {
-            const message =
-              (err instanceof Error && err.message) ||
-              tRef.current("compare.errors.generic");
+            const message = getApiErrorMessage(
+              err,
+              tRef.current("compare.errors.generic")
+            );
             setError({ message });
             toast(message, "error");
           }
@@ -578,6 +581,8 @@ export default function ComparePage() {
                               {headerImage ? (
                                 <>
                                   <img
+                                    loading="lazy"
+                                    decoding="async"
                                     src={headerImage}
                                     alt={title}
                                     className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
@@ -749,6 +754,8 @@ export default function ComparePage() {
                                     className="group relative aspect-square overflow-hidden rounded border border-[#e5e7eb] bg-[#f9fafb] transition hover:border-[#d1d5db]"
                                   >
                                     <img
+                                      loading="lazy"
+                                      decoding="async"
                                       src={img.url}
                                       alt=""
                                       className="h-full w-full object-cover transition duration-300 group-hover:scale-105"

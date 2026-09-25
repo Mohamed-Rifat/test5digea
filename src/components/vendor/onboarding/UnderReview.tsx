@@ -383,8 +383,9 @@ export default function UnderReview({ vendor }: { vendor: Vendor }) {
             <div className="flex items-center gap-4">
               <div className="h-16 w-16 shrink-0 overflow-hidden rounded-full border-4 border-white bg-[#30251f] shadow-md ring-1 ring-[#eadfce]">
                 {vendor.profileImageUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
                   <img
+                    loading="lazy"
+                    decoding="async"
                     src={vendor.profileImageUrl}
                     alt={data.businessName}
                     className="h-full w-full object-cover"

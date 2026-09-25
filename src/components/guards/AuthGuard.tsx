@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 import { useAuth } from "@/context/AuthContext";
+import { loginPathFor } from "@/lib/auth-utils";
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -13,6 +14,7 @@ export default function AuthGuard({
   children,
 }: AuthGuardProps) {
   const router = useRouter();
+  const pathname = usePathname();
 
   const {
     isAuthenticated,
@@ -25,12 +27,13 @@ export default function AuthGuard({
     }
 
     if (!isAuthenticated) {
-      router.replace("/login");
+      router.replace(loginPathFor(pathname));
     }
   }, [
     isAuthenticated,
     isLoading,
     router,
+    pathname,
   ]);
 
   if (isLoading || !isAuthenticated) {

@@ -7,8 +7,8 @@ export default function AuthLayout({
 }>) {
   return (
     <>
-    <SiteNavbar/>
-      <div className="relative">
+      <SiteNavbar />
+      <div id="main-content" tabIndex={-1} className="relative outline-none">
         {children}
       </div>
       <Footer />

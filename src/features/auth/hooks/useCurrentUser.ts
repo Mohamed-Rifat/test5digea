@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import { getCurrentUser } from "@/features/auth/api";
 import type { CurrentUser } from "@/types/auth";
+import { translateNow } from "@/lib/translate-now";
 
 interface UseCurrentUserReturn {
   currentUser: CurrentUser | null;
@@ -26,9 +27,8 @@ export const useCurrentUser = (enabled = true): UseCurrentUserReturn => {
       setError(null);
 
       setCurrentUser(await getCurrentUser());
-    } catch (err) {
-      console.error("Failed to fetch current user:", err);
-      setError("Failed to load account details.");
+    } catch {
+      setError(translateNow("errors.loadAccount"));
     } finally {
       setLoading(false);
     }

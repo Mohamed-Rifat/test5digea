@@ -151,8 +151,9 @@ export default function ImageLightbox({
           </button>
         )}
 
-        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
+          loading="lazy"
+          decoding="async"
           src={images[index]?.url}
           alt={
             title
@@ -196,8 +197,13 @@ export default function ImageLightbox({
                   : "border-transparent opacity-50 hover:opacity-80"
               }`}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={img.url} alt="" className="h-full w-full object-cover" />
+              <img
+                loading="lazy"
+                decoding="async"
+                src={img.url}
+                alt=""
+                className="h-full w-full object-cover"
+              />
             </button>
           ))}
         </div>

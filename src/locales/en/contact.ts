@@ -30,6 +30,11 @@ const contact: Translation["contact"] = {
     message: "Message",
     messagePlaceholder: "Tell us a little about what you need...",
     submit: "Send Message",
+    errorName: "Please enter your name.",
+    errorEmail: "Please enter a valid email address.",
+    errorMessage: "Please write a message (at least 10 characters).",
+    opened: "Your email app opened with the message ready — just press send.",
+    sending: "Opening...",
   },
   footerNote: "Making Every Connection Meaningful",
 };

@@ -40,6 +40,8 @@ export default function ServiceCard({
         <div className="relative h-48 w-full shrink-0 overflow-hidden sm:h-52 bg-[#f4eee9]">
           {image ? (
             <img
+              loading="lazy"
+              decoding="async"
               src={image}
               alt={service.name}
               className="h-full w-full object-cover transition duration-500 group-hover:scale-105"

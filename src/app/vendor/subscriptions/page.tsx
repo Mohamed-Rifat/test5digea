@@ -62,7 +62,7 @@ export default function Page() {
   const { t } = useLanguage();
 
   return (
-    <main className="min-h-screen bg-[#faf8f6] px-4 py-5 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#faf8f6] px-4 py-5 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-full">
         {/* Current access bar */}
         <div className="mb-4 flex flex-col gap-3 rounded-2xl border border-[#e8dcd6] bg-white px-4 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
@@ -376,6 +376,6 @@ export default function Page() {
           </div>
         </section>
       </div>
-    </main>
+    </div>
   );
 }

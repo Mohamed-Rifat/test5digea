@@ -6,10 +6,13 @@ import { ChevronLeft, ChevronRight, MessageSquareText, User } from "lucide-react
 import RatingStars from "@/components/shared/RatingStars";
 import { useServiceReviews } from "@/features/reviews/hooks/useServiceReviews";
 import { formatDate } from "@/lib/format";
+import { useLanguage } from "@/context/LanguageContext";
+import { LANGUAGE_DATE_LOCALE } from "@/locales/config";
 
 const PAGE_SIZE = 5;
 
 export default function ReviewsSection({ serviceId }: { serviceId: string }) {
+  const { t, language } = useLanguage();
   const [page, setPage] = useState(1);
   const { data, loading, error } = useServiceReviews(
     serviceId,
@@ -24,7 +27,8 @@ export default function ReviewsSection({ serviceId }: { serviceId: string }) {
       <div className="mb-4 flex items-center gap-2">
         <MessageSquareText size={18} className="text-[#a47e43]" />
         <h2 className="font-serif text-lg text-[#30251f]">
-          Reviews{data && data.totalCount > 0 ? ` (${data.totalCount})` : ""}
+          {t("reviews.title")}
+          {data && data.totalCount > 0 ? ` (${data.totalCount})` : ""}
         </h2>
       </div>
 
@@ -47,7 +51,7 @@ export default function ReviewsSection({ serviceId }: { serviceId: string }) {
 
       {!loading && !error && reviews.length === 0 && (
         <p className="rounded-2xl border border-[#eee7e1] bg-white p-6 text-center text-sm text-[#9b8f86]">
-          No reviews yet. Be the first to share your experience.
+          {t("reviews.empty")}
         </p>
       )}
 
@@ -66,10 +70,10 @@ export default function ReviewsSection({ serviceId }: { serviceId: string }) {
                     </div>
                     <div>
                       <p className="text-sm font-semibold text-[#30251f]">
-                        {review.userFullName || "Anonymous"}
+                        {review.userFullName || t("reviews.anonymous")}
                       </p>
                       <p className="text-xs text-[#9b8f86]">
-                        {formatDate(review.createdAt)}
+                        {formatDate(review.createdAt, LANGUAGE_DATE_LOCALE[language])}
                       </p>
                     </div>
                   </div>
@@ -78,7 +82,7 @@ export default function ReviewsSection({ serviceId }: { serviceId: string }) {
                 </div>
 
                 {review.comment && (
-                  <p className="mt-3 whitespace-pre-line text-sm leading-6 text-[#5f544d]">
+                  <p dir="auto" className="mt-3 whitespace-pre-line text-start text-sm leading-6 text-[#5f544d]">
                     {review.comment}
                   </p>
                 )}
@@ -92,22 +96,24 @@ export default function ReviewsSection({ serviceId }: { serviceId: string }) {
                 type="button"
                 disabled={page <= 1}
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
+                aria-label={t("common.pagination.previous")}
                 className="flex h-9 w-9 items-center justify-center rounded-full border border-[#e4dbd0] text-[#5f544d] transition hover:border-[#b99a62] disabled:opacity-40"
               >
-                <ChevronLeft size={15} />
+                <ChevronLeft size={15} className="rtl:rotate-180" />
               </button>
 
               <span className="text-xs text-[#766d67]">
-                Page {page} of {totalPages}
+                {t("reviews.pageOf", { page, total: totalPages })}
               </span>
 
               <button
                 type="button"
                 disabled={page >= totalPages}
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                aria-label={t("common.pagination.next")}
                 className="flex h-9 w-9 items-center justify-center rounded-full border border-[#e4dbd0] text-[#5f544d] transition hover:border-[#b99a62] disabled:opacity-40"
               >
-                <ChevronRight size={15} />
+                <ChevronRight size={15} className="rtl:rotate-180" />
               </button>
             </div>
           )}

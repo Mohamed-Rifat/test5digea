@@ -420,11 +420,11 @@ export default function AdminVendorsPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-[#faf8f6] px-4 py-6 sm:px-6 lg:px-0">
+      <div className="min-h-screen bg-[#faf8f6] px-4 py-6 sm:px-6 lg:px-0">
         <div className="mx-auto max-w-full">
           <VendorsSkeleton />
         </div>
-      </main>
+      </div>
     );
   }
 
@@ -433,7 +433,7 @@ export default function AdminVendorsPage() {
   // ============================================================
 
   return (
-    <main className="min-h-screen bg-[#faf8f6] px-4 py-6 pb-28 sm:px-6 lg:px-0 lg:pb-10">
+    <div className="min-h-screen bg-[#faf8f6] px-4 py-6 pb-28 sm:px-6 lg:px-0 lg:pb-10">
       <div className="mx-auto max-w-full">
 
         {/* ======================================================
@@ -1168,7 +1168,7 @@ export default function AdminVendorsPage() {
           </div>
         </ModalOverlay>
       )}
-    </main>
+    </div>
   );
 }
 
@@ -1512,6 +1512,8 @@ function VendorAvatar({
   if (vendor.profileImageUrl) {
     return (
       <img
+        loading="lazy"
+        decoding="async"
         src={vendor.profileImageUrl}
         alt={vendor.businessName || t("admin.vendors.vendor")}
         className={`${sizeClass} shrink-0 object-cover ring-1 ring-[#eee8e4]`}
@@ -1912,7 +1914,6 @@ function InlineError({
 }: {
   message: string;
 }) {
-  const { t } = useLanguage();
   return (
     <div className="flex items-start gap-2.5 rounded-2xl border border-red-200 bg-red-50 p-3 text-xs leading-5 text-red-700">
       <AlertCircle

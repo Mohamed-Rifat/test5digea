@@ -70,6 +70,8 @@ export default function SimilarServices({ service }: SimilarServicesProps) {
               <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-[#f4eee9]">
                 {image ? (
                   <img
+                    loading="lazy"
+                    decoding="async"
                     src={image}
                     alt={item.name}
                     className="h-full w-full object-cover transition duration-300 group-hover:scale-105"

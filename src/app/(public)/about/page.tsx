@@ -1,16 +1,14 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useLanguage } from "@/context/LanguageContext";
 import {
-    ArrowRight,
-    Heart,
-    Search,
-    Sparkles,
-    Store,
-    Quote,
-    Star,
+  Heart,
+  Search,
+  Sparkles,
+  Store,
+  Quote,
+  Star,
 } from "lucide-react";
 
 export default function AboutPage() {

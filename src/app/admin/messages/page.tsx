@@ -32,6 +32,7 @@ import {
 import { findGovernorate, governorateLabel } from "@/lib/governorates";
 import { formatDateTime } from "@/lib/format";
 import { useLanguage } from "@/context/LanguageContext";
+import { useToast } from "@/components/providers/ToastProvider";
 import { LANGUAGE_DATE_LOCALE, type TranslationKey } from "@/locales";
 
 const PAGE_SIZE = 10;
@@ -59,6 +60,7 @@ const typeMeta: Record<
 
 export default function AdminContactMessagesPage() {
   const { t, language } = useLanguage();
+  const { toast } = useToast();
   const dateLocale = LANGUAGE_DATE_LOCALE[language];
 
   const typeOptions = [
@@ -95,14 +97,8 @@ export default function AdminContactMessagesPage() {
       pageSize: PAGE_SIZE,
     });
 
-  const [message, setMessage] = useState<{
-    type: "success" | "error";
-    text: string;
-  } | null>(null);
-
   const showMessage = (type: "success" | "error", text: string) => {
-    setMessage({ type, text });
-    window.setTimeout(() => setMessage(null), 3500);
+    toast(text, type);
   };
 
   const handleMarkHandled = async (item: ContactMessageAdminItem) => {
@@ -142,19 +138,6 @@ export default function AdminContactMessagesPage() {
           </p>
         </div>
       </div>
-
-      {/* Toast-style inline message */}
-      {message && (
-        <div
-          className={`mb-5 rounded-xl px-4 py-3 text-sm font-medium ${
-            message.type === "success"
-              ? "bg-emerald-50 text-emerald-700"
-              : "bg-red-50 text-red-600"
-          }`}
-        >
-          {message.text}
-        </div>
-      )}
 
       {/* ========================================================= */}
       {/* FILTERS */}

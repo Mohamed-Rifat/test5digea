@@ -19,6 +19,7 @@ import support from "./support";
 import notFound from "./notFound";
 import becomeVendor from "./becomeVendor";
 import vendorOnboarding from "./vendorOnboarding";
+import errors from "./errors";
 
 const en: Translation = {
   common,
@@ -41,6 +42,7 @@ const en: Translation = {
   notFound,
   becomeVendor,
   vendorOnboarding,
+  errors,
 };
 
 export default en;

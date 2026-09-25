@@ -58,7 +58,7 @@ const searchTargets: {
 // Shared classes for the underline-on-hover nav link treatment, so the
 // primary and secondary links (and the Categories trigger) stay identical.
 const navLinkClass = (active: boolean) =>
-  `group relative px-3 py-2 text-[12.5px] font-semibold uppercase tracking-[0.14em] transition-colors duration-200 ${
+  `group relative whitespace-nowrap px-2.5 py-2 text-[12.5px] font-semibold uppercase tracking-[0.14em] transition-colors duration-200 xl:px-3 ${
     active ? "text-[#30251f]" : "text-[#71655d] hover:text-[#30251f]"
   }`;
 
@@ -240,7 +240,7 @@ export default function SiteNavbar() {
       } ${hideOnScroll && !anyOverlayOpen ? "-translate-y-full" : "translate-y-0"}`}
     >
       <div
-        className={`mx-auto flex lg:max-w-10/12 items-center justify-between gap-4 px-4 transition-[height] duration-300 ease-out sm:px-6 lg:px-8 ${
+        className={`mx-auto flex max-w-[1600px] items-center justify-between gap-4 px-4 transition-[height] duration-300 ease-out sm:px-6 lg:px-8 ${
           scrolled ? "h-15.5" : "h-18"
         }`}
       >
@@ -254,18 +254,18 @@ export default function SiteNavbar() {
               className={`rounded-full transition-all duration-300 ${scrolled ? "h-8 w-8" : "h-9 w-9"}`}
             />
           </span>
-          <span className="hidden flex-col leading-none lg:flex">
+          <span className="hidden flex-col leading-none 2xl:flex">
             <span className="font-serif text-lg font-medium tracking-tight text-[#30251f]">
               5Digea
             </span>
-            <span className="mt-0.5 text-[9px] font-semibold uppercase tracking-[0.32em] text-[#a47e43]">
+            <span lang="en" className="mt-0.5 text-[9px] font-semibold uppercase tracking-[0.32em] text-[#a47e43]">
               Wedding Marketplace
             </span>
           </span>
         </Link>
 
         {/* DESKTOP NAV */}
-        <nav className="hidden items-center gap-0.5 lg:flex">
+        <nav className="hidden items-center gap-0.5 xl:flex">
           {primaryLinks.map((link) => {
             const active = isActive(link.href);
             return (
@@ -348,7 +348,7 @@ export default function SiteNavbar() {
           })}
         </nav>
 
-        <div className="hidden items-center gap-2.5 lg:flex">
+        <div className="hidden items-center gap-2 xl:flex 2xl:gap-2.5">
           {/* SEARCH — pick Vendors or Services, same pattern as the admin
               dashboard's quick search. */}
           <div className="relative" ref={searchRef}>
@@ -366,7 +366,7 @@ export default function SiteNavbar() {
                 onFocus={() => setShowSearchTargets(true)}
                 type="text"
                 placeholder={t("navbar.searchPlaceholder")}
-                className="peer w-40 rounded-full border border-[#e4dbd0] bg-white/70 py-2 ps-9 pe-3 text-sm text-[#30251f] outline-none transition-all duration-300 focus:w-64 focus:border-[#b99a62] focus:bg-white focus:shadow-[0_10px_24px_-14px_rgba(164,126,67,0.5)]"
+                className="peer w-32 rounded-full border 2xl:w-40 border-[#e4dbd0] bg-white/70 py-2 ps-9 pe-3 text-sm text-[#30251f] outline-none transition-all duration-300 focus:w-64 focus:border-[#b99a62] focus:bg-white focus:shadow-[0_10px_24px_-14px_rgba(164,126,67,0.5)]"
               />
             </form>
 
@@ -434,14 +434,14 @@ export default function SiteNavbar() {
             <div className="flex items-center gap-1.5 ps-2">
               <Link
                 href="/login"
-                className="rounded-full px-4 py-2 text-[12.5px] font-semibold uppercase tracking-[0.08em] text-[#5f544d] transition-colors duration-200 hover:text-[#30251f]"
+                className="whitespace-nowrap rounded-full px-3 py-2 text-[12.5px] font-semibold uppercase tracking-[0.08em] text-[#5f544d] xl:px-4 transition-colors duration-200 hover:text-[#30251f]"
               >
                 {t("navbar.login")}
               </Link>
 
               <Link
                 href="/register"
-                className="group relative overflow-hidden rounded-full border border-[#c6a66f] bg-[#30251f] px-5 py-2.5 text-[12.5px] font-semibold uppercase tracking-[0.08em] text-white transition-all duration-300 hover:border-[#dcb97c] hover:shadow-[0_14px_30px_-10px_rgba(164,126,67,0.55)]"
+                className="group relative overflow-hidden whitespace-nowrap rounded-full border border-[#c6a66f] bg-[#30251f] px-4 py-2.5 xl:px-5 text-[12.5px] font-semibold uppercase tracking-[0.08em] text-white transition-all duration-300 hover:border-[#dcb97c] hover:shadow-[0_14px_30px_-10px_rgba(164,126,67,0.55)]"
               >
                 <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full" />
                 <span className="relative">{t("navbar.signUp")}</span>
@@ -450,7 +450,7 @@ export default function SiteNavbar() {
               {canJoinAsVendor && (
                 <Link
                   href="/become-a-vendor"
-                  className={`group flex items-center gap-1.5 rounded-full px-3.5 py-2 text-[12.5px] font-semibold uppercase tracking-[0.08em] transition-colors duration-200 ${
+                  className={`group hidden items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-2 text-[12.5px] font-semibold uppercase tracking-[0.08em] transition-colors duration-200 2xl:flex ${
                     isActive("/become-a-vendor")
                       ? "bg-[#faf3ea] text-[#8a6836]"
                       : "text-[#a47e43] hover:bg-[#faf3ea] hover:text-[#8a6836]"
@@ -571,7 +571,7 @@ export default function SiteNavbar() {
         {/* MOBILE QUICK ACTIONS — search, favorites and the account menu
             (Roadmap / Profile / Security) sit right next to the hamburger
             toggle, so none of them require opening the drawer first. */}
-        <div className="flex items-center gap-1.5 lg:hidden">
+        <div className="flex items-center gap-1.5 xl:hidden">
           <button
             type="button"
             onClick={() => {
@@ -682,7 +682,7 @@ export default function SiteNavbar() {
 
       {/* MOBILE SEARCH PANEL */}
       {mobileSearchOpen && (
-        <div className="animate-menu-pop absolute inset-x-0 top-full z-30 origin-top border-b border-[#eee2d6] bg-white/98 p-3 shadow-[0_24px_50px_-16px_rgba(48,37,31,0.3)] backdrop-blur-xl lg:hidden">
+        <div className="animate-menu-pop absolute inset-x-0 top-full z-30 origin-top border-b border-[#eee2d6] bg-white/98 p-3 shadow-[0_24px_50px_-16px_rgba(48,37,31,0.3)] backdrop-blur-xl xl:hidden">
           <form onSubmit={handleSearchSubmit} className="relative">
             <Search
               size={16}
@@ -732,7 +732,7 @@ export default function SiteNavbar() {
        the full viewport) */}
       <div
         aria-hidden={!mobileOpen}
-        className={`fixed inset-0 z-50 overflow-hidden lg:hidden ${mobileOpen ? "" : "pointer-events-none"}`}
+        className={`fixed inset-0 z-50 overflow-hidden xl:hidden ${mobileOpen ? "" : "pointer-events-none"}`}
       >
         {/* backdrop */}
         <div

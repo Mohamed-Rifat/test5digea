@@ -9,6 +9,7 @@ import {
   toggleReviewDisplay as toggleReviewDisplayApi,
 } from "@/features/reviews/api";
 import type { RejectReviewRequest, Review } from "@/types/review";
+import { translateNow } from "@/lib/translate-now";
 
 interface UseAdminReviewsReturn {
   reviews: Review[];
@@ -36,8 +37,8 @@ export const useAdminReviews = (): UseAdminReviewsReturn => {
       const data = await fetchPendingReviews();
 
       setReviews(data);
-    } catch (err) {
-      setError("Failed to load pending reviews.");
+    } catch {
+      setError(translateNow("errors.loadPendingReviews"));
     } finally {
       setLoading(false);
     }
@@ -56,7 +57,7 @@ export const useAdminReviews = (): UseAdminReviewsReturn => {
         await fetchReviews();
 
         return true;
-      } catch (err) {
+      } catch {
         return false;
       } finally {
         setActionLoading(null);
@@ -74,7 +75,7 @@ export const useAdminReviews = (): UseAdminReviewsReturn => {
         await fetchReviews();
 
         return true;
-      } catch (err) {
+      } catch {
         return false;
       } finally {
         setActionLoading(null);
@@ -95,7 +96,7 @@ export const useAdminReviews = (): UseAdminReviewsReturn => {
         await fetchReviews();
 
         return true;
-      } catch (err) {
+      } catch {
         return false;
       } finally {
         setActionLoading(null);

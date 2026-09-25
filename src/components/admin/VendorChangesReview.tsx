@@ -97,8 +97,9 @@ function FieldValue({
   switch (row) {
     case "profileImageUrl":
       return data.profileImageUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element
         <img
+          loading="lazy"
+          decoding="async"
           src={data.profileImageUrl}
           alt=""
           className="h-20 w-20 rounded-xl object-cover"

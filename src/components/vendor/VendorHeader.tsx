@@ -1,13 +1,11 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   Menu,
   ChevronDown,
   Building2,
-  Sparkles,
   LogOut,
   Settings,
   User,
@@ -32,7 +30,7 @@ import {
   CircularProgress,
 } from "@mui/material";
 
-import { useVendor } from "@/features/vendors/hooks/useVendor";
+import { useVendorContext } from "@/context/VendorContext";
 import { useAuth } from "@/context/AuthContext";
 import { useLanguage } from "@/context/LanguageContext";
 import { LANGUAGE_DATE_LOCALE } from "@/locales/config";
@@ -48,7 +46,7 @@ export default function VendorHeader({ onMenuClick }: VendorHeaderProps) {
   const router = useRouter();
   const { logout } = useAuth();
   const { t, language, isArabic } = useLanguage();
-  const { vendor, loading, refetch } = useVendor();
+  const { vendor, loading, refetch } = useVendorContext();
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -196,9 +194,9 @@ export default function VendorHeader({ onMenuClick }: VendorHeaderProps) {
 
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-sm font-semibold text-[#30251f] sm:text-base">
+              <p className="text-sm font-semibold text-[#30251f] sm:text-base">
                 {t("vendor.header.dashboard")}
-              </h1>
+              </p>
 
               <span
                 className={`hidden items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-medium ${status?.className || ""} sm:inline-flex`}
@@ -309,6 +307,8 @@ export default function VendorHeader({ onMenuClick }: VendorHeaderProps) {
           <button
             type="button"
             onClick={handleClick}
+            aria-haspopup="menu"
+            aria-label={t("vendor.header.vendor")}
             className="group flex items-center gap-2 rounded-xl px-1.5 py-1 transition hover:bg-[#faf7f4] sm:gap-2.5 sm:px-2 sm:py-1.5"
           >
             {/* Avatar */}
@@ -321,6 +321,8 @@ export default function VendorHeader({ onMenuClick }: VendorHeaderProps) {
                 />
               ) : vendor?.profileImageUrl ? (
                 <img
+                  loading="lazy"
+                  decoding="async"
                   src={vendor.profileImageUrl}
                   alt={vendor.businessName || t("vendor.header.vendor")}
                   className="h-full w-full object-cover"
@@ -390,6 +392,8 @@ export default function VendorHeader({ onMenuClick }: VendorHeaderProps) {
                 <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-[#f4eee9]">
                   {vendor?.profileImageUrl ? (
                     <img
+                      loading="lazy"
+                      decoding="async"
                       src={vendor.profileImageUrl}
                       alt={vendor.businessName || t("vendor.header.vendor")}
                       className="h-full w-full rounded-xl object-cover"

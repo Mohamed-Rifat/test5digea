@@ -10,12 +10,14 @@ import {
 import { getApiErrorMessage } from "@/lib/error";
 import { useToast } from "@/components/providers/ToastProvider";
 import { useLanguage } from "@/context/LanguageContext";
+import { useAuth } from "@/context/AuthContext";
 
 import type {
   Favorite,
   FavoriteTargetType,
   GetFavoritesParams,
 } from "@/types/favorite";
+import { translateNow } from "@/lib/translate-now";
 
 interface UseFavoritesReturn {
   favorites: Favorite[];
@@ -48,6 +50,11 @@ export const useFavorites = (
 ): UseFavoritesReturn => {
   const { toast } = useToast();
   const { t } = useLanguage();
+  const targetType = params?.targetType;
+  // Guests have no favorites: don't call the API (it would only return 401).
+  const { isUser, isLoading: authLoading } = useAuth();
+  // Only couples (role "User") have favorites / a roadmap.
+  const isAuthenticated = isUser;
   const [favorites, setFavorites] = useState<Favorite[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -60,19 +67,22 @@ export const useFavorites = (
       setLoading(true);
       setError(null);
 
-      const data = await getFavorites(params);
+      const data = await getFavorites(
+        targetType === undefined ? undefined : { targetType }
+      );
 
       setFavorites(data);
-    } catch (err) {
-      setError("Failed to load your favorites.");
+    } catch {
+      setError(translateNow("errors.loadFavorites"));
     } finally {
       setLoading(false);
     }
-  }, [params?.targetType]);
+  }, [targetType]);
 
   useEffect(() => {
+    if (authLoading || !isAuthenticated) return;
     fetchFavorites();
-  }, [fetchFavorites]);
+  }, [fetchFavorites, authLoading, isAuthenticated]);
 
   const isFavorited = useCallback(
     (targetType: FavoriteTargetType, targetId: string) => {
@@ -160,9 +170,9 @@ export const useFavorites = (
   );
 
   return {
-    favorites,
-    loading,
-    error,
+    favorites: isAuthenticated ? favorites : [],
+    loading: authLoading || (isAuthenticated && loading),
+    error: isAuthenticated ? error : null,
     actionLoading,
     refetch: fetchFavorites,
     isFavorited,

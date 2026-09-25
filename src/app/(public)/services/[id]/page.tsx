@@ -7,7 +7,6 @@ import { useEffect, useState } from "react";
 import {
   ArrowLeft,
   ImageOff,
-  CheckCircle2,
   Store,
   Loader2,
   GitCompare,
@@ -21,8 +20,8 @@ import ReviewsSection from "@/components/reviews/ReviewsSection";
 import SimilarServices from "@/components/public/SimilarServices";
 import { useFavorites } from "@/features/favorites/hooks/useFavorites";
 import { useCompare } from "@/context/CompareContext";
-import { useRoadmap } from "@/features/roadmap/hooks/useRoadmap";
-import { useAuth } from "@/context/AuthContext";
+import { useRoadmapPicker } from "@/features/roadmap/hooks/useRoadmapPicker";
+import RoadmapPickButton from "@/components/roadmap/RoadmapPickButton";
 import { getService } from "@/features/services/api";
 import { formatPrice } from "@/lib/format";
 import { FavoriteTargetType } from "@/types/favorite";
@@ -31,7 +30,6 @@ import type { Service } from "@/types/service";
 export default function ServiceDetailPage() {
   const params = useParams<{ id: string }>();
   const { t } = useLanguage();
-  const { isAuthenticated, isUser } = useAuth();
 
   const [service, setService] = useState<Service | null>(null);
   const [loading, setLoading] = useState(true);
@@ -41,12 +39,7 @@ export default function ServiceDetailPage() {
 
   const { isFavorited, toggleFavorite, actionLoading } = useFavorites();
   const { isSelected, toggleService } = useCompare();
-  const {
-    roadmap,
-    selectVendor,
-    actionLoading: roadmapActionLoading,
-  } = useRoadmap();
-  const [addedToRoadmap, setAddedToRoadmap] = useState(false);
+  const roadmapPicker = useRoadmapPicker();
 
   useEffect(() => {
     const load = async () => {
@@ -55,12 +48,11 @@ export default function ServiceDetailPage() {
         setError(false);
         setActiveImage(0);
         setLightboxOpen(false);
-        setAddedToRoadmap(false);
 
         const data = await getService(params.id);
 
         setService(data);
-      } catch (err) {
+      } catch {
         setError(true);
       } finally {
         setLoading(false);
@@ -99,18 +91,6 @@ export default function ServiceDetailPage() {
     );
   }
 
-  const roadmapItem = roadmap?.items.find(
-    (item) => item.categoryId === service.categoryId
-  );
-
-  const handleAddToRoadmap = async () => {
-    if (!roadmapItem) return;
-
-    const ok = await selectVendor(service.categoryId, service.vendorId);
-
-    if (ok) setAddedToRoadmap(true);
-  };
-
   return (
     <main className="min-h-screen bg-[#faf8f6]">
 
@@ -137,6 +117,9 @@ export default function ServiceDetailPage() {
               {service.images && service.images.length > 0 ? (
                 <>
                   <img
+                    loading="eager"
+                    fetchPriority="high"
+                    decoding="async"
                     src={service.images[activeImage]?.url}
                     alt={service.name}
                     className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
@@ -210,6 +193,8 @@ export default function ServiceDetailPage() {
                     key={img.id}
                     type="button"
                     onClick={() => setActiveImage(index)}
+                    aria-label={t("common.imageNumber", { number: index + 1 })}
+                    aria-pressed={index === activeImage}
                     onDoubleClick={() => setLightboxOpen(true)}
                     className={`relative h-16 w-16 shrink-0 overflow-hidden rounded-xl border-2 transition sm:h-20 sm:w-20 ${
                       index === activeImage
@@ -218,6 +203,8 @@ export default function ServiceDetailPage() {
                     }`}
                   >
                     <img
+                      loading="lazy"
+                      decoding="async"
                       src={img.url}
                       alt=""
                       className="h-full w-full object-cover"
@@ -319,42 +306,11 @@ export default function ServiceDetailPage() {
                     {t("services.detail.viewVendorProfile")}
                   </Link>
 
-                  {isAuthenticated && isUser && roadmapItem && (
-                    <button
-                      type="button"
-                      onClick={handleAddToRoadmap}
-                      disabled={
-                        roadmapActionLoading ===
-                          `select-${service.categoryId}` ||
-                        roadmapItem.selectedVendorId === service.vendorId
-                      }
-                      className="flex w-full items-center justify-center gap-2 rounded-full bg-[#30251f] px-5 py-3 text-sm font-medium text-white transition hover:bg-[#42332a] disabled:opacity-60"
-                    >
-                      {roadmapItem.selectedVendorId === service.vendorId ? (
-                        <>
-                          <CheckCircle2 size={16} />
-                          {t("services.detail.selectedInRoadmap")}
-                        </>
-                      ) : addedToRoadmap ? (
-                        <>
-                          <CheckCircle2 size={16} />
-                          {t("services.detail.addedToRoadmap")}
-                        </>
-                      ) : (
-                        t("services.detail.selectForRoadmap")
-                      )}
-                    </button>
-                  )}
-
-                  {isAuthenticated && isUser && !roadmapItem && (
-                    <p className="rounded-xl bg-[#f8f1e4] px-4 py-3 text-center text-xs text-[#9b8367]">
-                      {t("services.detail.startRoadmapPrefix")}{" "}
-                      <Link href="/roadmap" className="underline">
-                        {t("services.detail.startRoadmapLink")}
-                      </Link>{" "}
-                      {t("services.detail.startRoadmapSuffix")}
-                    </p>
-                  )}
+                  <RoadmapPickButton
+                    picker={roadmapPicker}
+                    vendor={{ id: service.vendorId, name: service.vendorBusinessName }}
+                    item={roadmapPicker.findItem(service.categoryId, service.categoryName)}
+                  />
                 </div>
               </div>
 

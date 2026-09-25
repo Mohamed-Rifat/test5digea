@@ -27,6 +27,7 @@ import {
   ContactMessageType,
   encodeMessageDetails,
 } from "@/features/contactMessages/types";
+import type { Category } from "@/types/category";
 
 // =========================================================
 // Category Card - عرض فقط بدون إضافة
@@ -37,9 +38,9 @@ export const CategoryCard = ({
   isAssigned,
   onRequest,
 }: {
-  category: any;
+  category: Category;
   isAssigned: boolean;
-  onRequest: (category: any) => void;
+  onRequest: (category: Category) => void;
 }) => {
   const { t } = useLanguage();
 
@@ -131,7 +132,7 @@ export const ContactAdminDialog = ({
   onSuccess,
 }: {
   open: boolean;
-  category: any;
+  category: Category | null;
   vendorName: string;
   vendorEmail?: string;
   vendorPhone?: string;
@@ -174,7 +175,7 @@ export const ContactAdminDialog = ({
       setIsSending(false);
       onSuccess?.();
       onClose();
-    } catch (err) {
+    } catch {
       setSendError(t("vendor.services.detail.dialog.sendFailed"));
       setIsSending(false);
     }

@@ -443,7 +443,6 @@ export default function OnboardingForm({ vendor }: { vendor: Vendor }) {
                   {logoSrc ? (
                     // Local preview / remote URL: a plain <img> avoids
                     // next/image domain configuration.
-                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={logoSrc}
                       alt={t("vendorOnboarding.form.logoTitle")}

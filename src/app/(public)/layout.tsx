@@ -10,7 +10,9 @@ export default function PublicLayout({
   return (
     <CompareProvider>
       <SiteNavbar />
-      {children}
+      <div id="main-content" tabIndex={-1} className="outline-none">
+        {children}
+      </div>
       <Footer />
     </CompareProvider>
   );

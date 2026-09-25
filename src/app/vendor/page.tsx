@@ -3,57 +3,32 @@
 import { useMemo, useState, useCallback } from "react";
 import Link from "next/link";
 import {
-  ArrowRight,
   BriefcaseBusiness,
   CheckCircle2,
   Clock3,
-  MapPin,
-  MessageCircle,
   Plus,
   RefreshCw,
   Star,
   TrendingUp,
   XCircle,
-  Sparkles,
   Award,
   BarChart3,
   PieChart,
   LineChart,
   Activity,
   ChevronRight,
-  AlertCircle,
-  Users,
-  Eye,
-  Calendar,
-  TrendingDown,
-  Target,
-  Zap,
-  Shield,
   Clock,
-  Package,
-  ThumbsUp,
-  MessageSquare,
-  ShoppingBag,
-  UserPlus,
-  Gift,
-  Crown,
 } from "lucide-react";
 
-import {
-  Tooltip,
-  Badge,
-  Chip,
-  LinearProgress,
-  Avatar,
-  AvatarGroup,
-} from "@mui/material";
+import { LinearProgress } from "@mui/material";
 
 import AttentionPanel from "@/components/vendor/dashboard/AttentionPanel";
 import ProfileCompleteness from "@/components/vendor/dashboard/ProfileCompleteness";
-import { useVendor } from "@/features/vendors/hooks/useVendor";
+import { useVendorContext } from "@/context/VendorContext";
 import { useVendorServices } from "@/features/services/hooks/useVendorServices";
 import { useVendorReviews } from "@/features/reviews/hooks/useVendorReviews";
-import { ReviewStatus } from "@/types/review";
+import { ReviewStatus, type Review } from "@/types/review";
+import type { Service } from "@/types/service";
 import { useLanguage } from "@/context/LanguageContext";
 import { LANGUAGE_DATE_LOCALE } from "@/locales/config";
 
@@ -71,7 +46,6 @@ import {
   Pie,
   Cell,
   Area,
-  AreaChart,
   Line,
   ComposedChart,
   Radar,
@@ -79,9 +53,6 @@ import {
   PolarGrid,
   PolarAngleAxis,
   PolarRadiusAxis,
-  Scatter,
-  ScatterChart,
-  ZAxis,
 } from "recharts";
 
 // =========================================================
@@ -120,7 +91,27 @@ const COLORS = ["#a47e43", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#06b6d4"
 // Custom Tooltips - محسن للموبايل
 // =========================================================
 
-const CustomTooltip = ({ active, payload, label, unit = "", prefix = "" }: any) => {
+type ChartTooltipPayload = {
+  value?: unknown;
+  payload?: {
+    name?: string;
+    month?: string;
+    category?: string;
+    percentage?: number | string;
+    [key: string]: unknown;
+  };
+};
+
+type ChartTooltipProps = {
+  active?: boolean;
+  payload?: readonly ChartTooltipPayload[] | ReadonlyArray<unknown>;
+  label?: string | number;
+  unit?: string;
+  prefix?: string;
+};
+
+const CustomTooltip = ({ active, payload: rawPayload, label, unit = "", prefix = "" }: ChartTooltipProps) => {
+  const payload = rawPayload as readonly ChartTooltipPayload[] | undefined;
   const { t } = useLanguage();
 
   if (active && payload && payload.length) {
@@ -130,7 +121,7 @@ const CustomTooltip = ({ active, payload, label, unit = "", prefix = "" }: any) 
           {label || payload[0]?.payload?.name || payload[0]?.payload?.month || payload[0]?.payload?.category}
         </p>
         <p className="text-[10px] sm:text-xs text-[#9b8f86]">
-          {prefix}{payload[0]?.value} {unit}
+          {prefix}{String(payload[0]?.value ?? "")} {unit}
         </p>
         {payload[0]?.payload?.percentage && (
           <p className="text-[10px] sm:text-xs text-[#a47e43] font-medium">
@@ -227,7 +218,7 @@ const KPICard = ({
 // =========================================================
 
 // ✅ Rating Distribution Chart
-const RatingDistribution = ({ reviews }: { reviews: any[] }) => {
+const RatingDistribution = ({ reviews }: { reviews: Review[] }) => {
   const { t } = useLanguage();
   const data = useMemo(() => {
     const counts = [0, 0, 0, 0, 0];
@@ -277,7 +268,7 @@ const RatingDistribution = ({ reviews }: { reviews: any[] }) => {
 };
 
 // ✅ Monthly Activity Chart - كلها خطوط
-const MonthlyActivity = ({ reviews }: { reviews: any[] }) => {
+const MonthlyActivity = ({ reviews }: { reviews: Review[] }) => {
   const { t, language } = useLanguage();
   const dateLocale = LANGUAGE_DATE_LOCALE[language];
   const data = useMemo(() => {
@@ -386,7 +377,7 @@ const MonthlyActivity = ({ reviews }: { reviews: any[] }) => {
 };
 
 // ✅ Service Status Pie Chart
-const StatusDistribution = ({ services }: { services: any[] }) => {
+const StatusDistribution = ({ services }: { services: Service[] }) => {
   const { t } = useLanguage();
   const data = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -448,7 +439,7 @@ const StatusDistribution = ({ services }: { services: any[] }) => {
 };
 
 // ✅ Performance Radar Chart
-const PerformanceRadar = ({ reviews, services }: { reviews: any[]; services: any[] }) => {
+const PerformanceRadar = ({ reviews, services }: { reviews: Review[]; services: Service[] }) => {
   const { t } = useLanguage();
   const data = useMemo(() => {
     const totalReviews = reviews.length;
@@ -493,12 +484,13 @@ const PerformanceRadar = ({ reviews, services }: { reviews: any[]; services: any
             animationDuration={1500}
           />
           <ReTooltip 
-            content={({ active, payload }: any) => {
+            content={({ active, payload: rawPayload }) => {
+              const payload = rawPayload as readonly ChartTooltipPayload[] | undefined;
               if (active && payload && payload.length) {
                 return (
                   <div className="rounded-xl border border-[#e8dfd8] bg-white px-3 py-2 shadow-lg">
                     <p className="text-sm font-semibold text-[#30251f]">{payload[0]?.payload?.category}</p>
-                    <p className="text-xs text-[#a47e43] font-medium">{payload[0]?.value?.toFixed(0)}%</p>
+                    <p className="text-xs text-[#a47e43] font-medium">{Number(payload[0]?.value ?? 0).toFixed(0)}%</p>
                   </div>
                 );
               }
@@ -558,7 +550,7 @@ const ReviewStatusBadge = ({ status }: { status: ReviewStatus }) => {
 
 export default function VendorDashboardPage() {
   const { t, language } = useLanguage();
-  const { vendor, loading: vendorLoading, error: vendorError, refetch: refetchVendor } = useVendor();
+  const { vendor, loading: vendorLoading, error: vendorError, refetch: refetchVendor } = useVendorContext();
   const { services, loading: servicesLoading, error: servicesError, refetch: refetchServices } = useVendorServices();
   const { reviews, loading: reviewsLoading, error: reviewsError, refetch: refetchReviews } = useVendorReviews();
 
@@ -631,7 +623,7 @@ export default function VendorDashboardPage() {
   const StatusIcon = status.icon;
 
   return (
-    <main className="min-h-screen bg-[#faf8f6]">
+    <div className="min-h-screen bg-[#faf8f6]">
       <div className="mx-auto max-w-full px-3 py-4 sm:px-4 sm:py-6 lg:px-6 lg:py-8 xl:px-8 xl:py-10">
         {/* =================================================
             HEADER
@@ -987,7 +979,7 @@ export default function VendorDashboardPage() {
           </div>
         )}
       </div>
-    </main>
+    </div>
   );
 }
 

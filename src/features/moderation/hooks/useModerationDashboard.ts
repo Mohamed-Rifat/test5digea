@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { getModerationDashboard } from "@/features/moderation/api";
 
 import type { ModerationDashboardSummary } from "@/types/moderation";
+import { translateNow } from "@/lib/translate-now";
 
 interface UseModerationDashboardReturn {
   summary: ModerationDashboardSummary | null;
@@ -29,7 +30,7 @@ export const useModerationDashboard = (): UseModerationDashboardReturn => {
 
       setSummary(data);
     } catch {
-      setError("Failed to load the dashboard summary.");
+      setError(translateNow("errors.loadDashboard"));
     } finally {
       setLoading(false);
     }

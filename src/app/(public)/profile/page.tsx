@@ -8,7 +8,6 @@ import {
   ChevronRight,
   Heart,
   KeyRound,
-  LogOut,
   Mail,
   MessageCircle,
   Phone,
@@ -16,7 +15,6 @@ import {
   Sparkles,
   Store,
   Target,
-  UserRound,
 } from "lucide-react";
 
 import { useAuth } from "@/context/AuthContext";
@@ -315,7 +313,7 @@ function ActionCard({
 }
 
 export default function ProfilePage() {
-  const { user, role, isAuthenticated, logout } = useAuth();
+  const { user, role, isAuthenticated } = useAuth();
   const { favorites, loading: favoritesLoading } = useFavorites();
   const { roadmap, loading: roadmapLoading } = useRoadmap();
   const { t, language } = useLanguage();

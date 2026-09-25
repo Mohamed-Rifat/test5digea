@@ -25,11 +25,13 @@ import { approveVendor, rejectVendor } from "@/features/vendors/api";
 import { getApiErrorMessage } from "@/lib/error";
 import { formatDateTime } from "@/lib/format";
 import { useLanguage } from "@/context/LanguageContext";
+import { useToast } from "@/components/providers/ToastProvider";
 import { LANGUAGE_DATE_LOCALE } from "@/locales/config";
 import type { Vendor } from "@/types/vendor";
 
 export default function AdminVendorUpdatesPage() {
   const { t, language } = useLanguage();
+  const { toast } = useToast();
   const dateLocale = LANGUAGE_DATE_LOCALE[language];
 
   const { vendors, loading, error, progress, failedCount, refetch, remove } =
@@ -42,14 +44,9 @@ export default function AdminVendorUpdatesPage() {
   } | null>(null);
   const [rejectTarget, setRejectTarget] = useState<Vendor | null>(null);
   const [rejectReason, setRejectReason] = useState("");
-  const [message, setMessage] = useState<{
-    type: "success" | "error";
-    text: string;
-  } | null>(null);
 
   const showMessage = (type: "success" | "error", text: string) => {
-    setMessage({ type, text });
-    window.setTimeout(() => setMessage(null), 5000);
+    toast(text, type);
   };
 
   const handleApprove = async (vendor: Vendor) => {
@@ -135,25 +132,6 @@ export default function AdminVendorUpdatesPage() {
         </button>
       </div>
 
-      {/* Feedback */}
-      {message && (
-        <div
-          role="status"
-          className={`mb-4 flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium ${
-            message.type === "success"
-              ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-              : "border-red-200 bg-red-50 text-red-600"
-          }`}
-        >
-          {message.type === "success" ? (
-            <CheckCircle2 size={16} />
-          ) : (
-            <AlertCircle size={16} />
-          )}
-          {message.text}
-        </div>
-      )}
-
       {/* Status line: scan progress / count */}
       <div className="mb-4 flex min-h-6 flex-wrap items-center gap-3 text-xs text-[#8a7f78]">
         {scanning && (
@@ -234,8 +212,9 @@ export default function AdminVendorUpdatesPage() {
                 <div className="flex flex-col gap-4 p-4 sm:p-5 lg:flex-row lg:items-center lg:justify-between">
                   <div className="flex min-w-0 items-center gap-4">
                     {vendor.profileImageUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
                       <img
+                        loading="lazy"
+                        decoding="async"
                         src={vendor.profileImageUrl}
                         alt=""
                         className="h-14 w-14 shrink-0 rounded-xl object-cover"

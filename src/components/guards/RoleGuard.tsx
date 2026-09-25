@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 import {
   getHomePath,
+  loginPathFor,
   type UserRole,
 } from "@/lib/auth-utils";
 
@@ -20,6 +21,7 @@ export default function RoleGuard({
   allowedRoles,
 }: RoleGuardProps) {
   const router = useRouter();
+  const pathname = usePathname();
 
   const {
     role,
@@ -34,7 +36,7 @@ export default function RoleGuard({
 
     // User is not logged in
     if (!isAuthenticated) {
-      router.replace("/login");
+      router.replace(loginPathFor(pathname));
       return;
     }
 
@@ -48,6 +50,7 @@ export default function RoleGuard({
     isLoading,
     allowedRoles,
     router,
+    pathname,
   ]);
 
   if (isLoading) {

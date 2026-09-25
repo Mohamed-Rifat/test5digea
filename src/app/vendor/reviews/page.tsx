@@ -11,7 +11,6 @@ import {
   Filter,
   MessageSquareText,
   Search,
-  Sparkles,
   Star,
   User,
   X,
@@ -31,11 +30,7 @@ import {
   Select,
   TextField,
   Tooltip,
-  Badge,
   InputAdornment,
-  Menu,
-  ListItemIcon,
-  ListItemText,
   Button,
   IconButton,
   Divider,
@@ -47,9 +42,10 @@ import {
 import RatingStars from "@/components/shared/RatingStars";
 import { useVendorReviews } from "@/features/reviews/hooks/useVendorReviews";
 import { useVendorServices } from "@/features/services/hooks/useVendorServices";
-import { useVendor } from "@/features/vendors/hooks/useVendor";
+import { useVendorContext } from "@/context/VendorContext";
 import { formatDate } from "@/lib/format";
 import { useLanguage } from "@/context/LanguageContext";
+import { useToast } from "@/components/providers/ToastProvider";
 import { LANGUAGE_DATE_LOCALE } from "@/locales/config";
 import type { Language, TranslationKey } from "@/locales";
 import { ReviewStatus } from "@/types/review";
@@ -186,8 +182,7 @@ function exportReviewsToExcel(
   const dateLocale = LANGUAGE_DATE_LOCALE[language];
 
   if (reviews.length === 0) {
-    alert(x("nothingToExport"));
-    return;
+    return false;
   }
 
   const reviewsByService = reviews.reduce<Record<string, { serviceName: string; reviews: Review[] }>>((acc, review) => {
@@ -213,7 +208,7 @@ function exportReviewsToExcel(
     .filter(r => r.status === ReviewStatus.Approved)
     .reduce((acc, r) => acc + r.rating, 0) / (totalApproved || 1);
 
-  const summaryData: any[][] = [
+  const summaryData: (string | number)[][] = [
     [x("summaryTitle")],
     [''],
     [x("vendor"), vendorName || x("na")],
@@ -251,7 +246,7 @@ function exportReviewsToExcel(
       : "—";
 
   Object.values(reviewsByService).forEach(({ serviceName, reviews: serviceReviews }) => {
-    const rows: any[][] = [
+    const rows: (string | number)[][] = [
       [x("serviceReportTitle", { service: serviceName })],
       [""],
       [x("no"), x("customer"), x("rating"), x("status"), x("visibility"), x("comment"), x("date")],
@@ -277,7 +272,7 @@ function exportReviewsToExcel(
     XLSX.utils.book_append_sheet(workbook, ws, makeSheetName(serviceName, usedSheetNames));
   });
 
-  const allReviewsData: any[][] = [
+  const allReviewsData: (string | number)[][] = [
     [x("allTitle")],
     [''],
     [x("no"), x("customer"), x("service"), x("rating"), x("status"), x("visibility"), x("comment"), x("date")],
@@ -304,6 +299,7 @@ function exportReviewsToExcel(
   XLSX.utils.book_append_sheet(workbook, allWS, x("sheetAll"));
 
   XLSX.writeFile(workbook, `${x("fileName")}_${new Date().toISOString().split('T')[0]}.xlsx`);
+  return true;
 }
 
 /* =========================================================
@@ -675,7 +671,7 @@ function MobileFilterDrawer({
   visibilityFilter: string;
   setVisibilityFilter: (value: string) => void;
   sortBy: string;
-  setSortBy: (value: any) => void;
+  setSortBy: (value: "newest" | "oldest" | "highest" | "lowest") => void;
   searchQuery: string;
   setSearchQuery: (value: string) => void;
   hasActiveFilters: boolean;
@@ -709,7 +705,7 @@ function MobileFilterDrawer({
               {t("vendor.reviews.filters.clearAll")}
             </button>
           )}
-          <IconButton onClick={onClose} size="small">
+          <IconButton onClick={onClose} size="small" aria-label={t("common.close")}>
             <X size={20} />
           </IconButton>
         </div>
@@ -870,7 +866,7 @@ function MobileFilterDrawer({
           <label className="text-xs font-medium text-[#8d8077] block mb-1.5">{t("vendor.reviews.drawer.sortBy")}</label>
           <Select
             value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
+            onChange={(e) => setSortBy(e.target.value as "newest" | "oldest" | "highest" | "lowest")}
             fullWidth
             IconComponent={ChevronDown}
             renderValue={(value) => {
@@ -916,7 +912,8 @@ function VendorReviewsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { t, language } = useLanguage();
-  const { vendor } = useVendor();
+  const { toast } = useToast();
+  const { vendor } = useVendorContext();
   const { services } = useVendorServices();
   const { reviews, loading, error, refetch } = useVendorReviews();
 
@@ -931,7 +928,6 @@ function VendorReviewsContent() {
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [pickedReview, setPickedReview] = useState<Review | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [exportMenuAnchor, setExportMenuAnchor] = useState<null | HTMLElement>(null);
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
 
   /* =======================================================
@@ -1003,7 +999,7 @@ function VendorReviewsContent() {
 
   const serviceOptions = useMemo(() => {
     const known = new Map<string, string>();
-    services.forEach((service: any) => known.set(service.id, service.name));
+    services.forEach((service) => known.set(service.id, service.name));
     reviews.forEach((review) => {
       if (!known.has(review.serviceId)) known.set(review.serviceId, review.serviceName);
     });
@@ -1017,7 +1013,7 @@ function VendorReviewsContent() {
   ======================================================= */
 
   const filteredReviews = useMemo(() => {
-    let filtered = reviews.filter((review) => {
+    const filtered = reviews.filter((review) => {
       const matchesService = serviceFilter === "all" || review.serviceId === serviceFilter;
       const matchesStatus = statusFilter === "all" || String(review.status) === statusFilter;
       const matchesSearch = searchQuery === "" ||
@@ -1093,32 +1089,33 @@ function VendorReviewsContent() {
     setVisibleCount(PAGE_SIZE);
   }, []);
 
-  const handleExportClick = useCallback((event: React.MouseEvent<HTMLElement>) => {
-    setExportMenuAnchor(event.currentTarget);
-  }, []);
-
-  const handleExportClose = useCallback(() => {
-    setExportMenuAnchor(null);
-  }, []);
-
   const vendorDisplayName = vendor?.businessName || t("vendor.header.vendor");
 
-  const handleExportAll = useCallback(() => {
-    exportReviewsToExcel(reviews, t, language, vendorDisplayName);
-    handleExportClose();
-  }, [reviews, vendorDisplayName, handleExportClose, t, language]);
+  const runExport = useCallback(
+    (list: Review[]) => {
+      try {
+        const exported = exportReviewsToExcel(list, t, language, vendorDisplayName);
+        if (exported) {
+          toast(t("vendor.reviews.excel.exportSuccess"), "success");
+        } else {
+          toast(t("vendor.reviews.excel.nothingToExport"), "warning");
+        }
+      } catch {
+        toast(t("common.errorTitle"), "error");
+      }
+    },
+    [vendorDisplayName, t, language, toast]
+  );
 
-  const handleExportFiltered = useCallback(() => {
-    exportReviewsToExcel(filteredReviews, t, language, vendorDisplayName);
-    handleExportClose();
-  }, [filteredReviews, vendorDisplayName, handleExportClose, t, language]);
+  const handleExportAll = useCallback(() => runExport(reviews), [runExport, reviews]);
+
 
   /* =======================================================
      Render
   ======================================================= */
 
   return (
-    <main className="min-h-screen bg-[#faf8f6]">
+    <div className="min-h-screen bg-[#faf8f6]">
       <div className="mx-auto max-w-full px-3 py-4 sm:px-4 sm:py-6 lg:px-6 lg:py-8 xl:px-8 xl:py-10">
         {/* Header */}
         <header className="mb-4 sm:mb-6 lg:mb-8">
@@ -1692,7 +1689,7 @@ function VendorReviewsContent() {
           </div>
         )}
       </div>
-    </main>
+    </div>
   );
 }
 

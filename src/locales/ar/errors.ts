@@ -1,0 +1,25 @@
+const errors = {
+  loadRoadmap: "تعذّر تحميل خطة فرحك.",
+  createRoadmap: "تعذّر إنشاء خطة فرحك.",
+  updateRoadmap: "تعذّر تحديث خطة فرحك.",
+  selectVendor: "تعذّر اختيار مقدم الخدمة.",
+  removeVendor: "تعذّر إزالة مقدم الخدمة.",
+  updateCategory: "تعذّر تحديث هذا القسم.",
+  loadPartners: "تعذّر تحميل مقدمي الخدمات.",
+  loadAccount: "تعذّر تحميل بيانات الحساب.",
+  loadServices: "تعذّر تحميل الخدمات.",
+  loadDashboard: "تعذّر تحميل ملخص لوحة التحكم.",
+  loadModeration: "تعذّر تحميل قائمة المراجعة.",
+  loadReviews: "تعذّر تحميل التقييمات.",
+  loadReviewable: "تعذّر تحميل الخدمات المتاحة للتقييم.",
+  submitReview: "تعذّر إرسال تقييمك.",
+  loadPendingReviews: "تعذّر تحميل التقييمات المعلّقة.",
+  loadCategories: "تعذّر تحميل الأقسام.",
+  loadFavorites: "تعذّر تحميل المفضلة.",
+  loadMessages: "تعذّر تحميل الرسائل.",
+  generic: "حدث خطأ ما. يرجى المحاولة مرة أخرى.",
+  network: "تعذّر الاتصال بالخادم. تأكد من اتصالك بالإنترنت وحاول مرة أخرى.",
+  sessionExpired: "انتهت جلستك. يرجى تسجيل الدخول مرة أخرى.",
+};
+
+export default errors;

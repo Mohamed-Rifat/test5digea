@@ -796,6 +796,7 @@ const vendor: Translation["vendor"] = {
       sheetAll: "All Reviews",
       na: "N/A",
       nothingToExport: "No reviews to export!",
+      exportSuccess: "Reviews exported successfully.",
       fileName: "reviews_report",
     },
   },

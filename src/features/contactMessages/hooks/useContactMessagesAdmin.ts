@@ -10,6 +10,7 @@ import type {
   ContactMessageAdminItem,
   GetContactMessagesParams,
 } from "@/features/contactMessages/types";
+import { translateNow } from "@/lib/translate-now";
 
 interface UseContactMessagesAdminReturn {
   items: ContactMessageAdminItem[];
@@ -50,11 +51,10 @@ export function useContactMessagesAdmin(
       setTotalCount(data.totalCount ?? 0);
       setTotalPages(data.totalPages ?? 0);
     } catch {
-      setError("Failed to load contact messages.");
+      setError(translateNow("errors.loadMessages"));
     } finally {
       setLoading(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [type, isHandled, page, pageSize]);
 
   useEffect(() => {

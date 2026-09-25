@@ -1,9 +1,7 @@
-// app/support/page.tsx
 "use client";
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
   AlertCircle,
   Building2,
@@ -31,7 +29,7 @@ import {
 } from "@mui/material";
 
 import { useAuth } from "@/context/AuthContext";
-import { useVendor } from "@/features/vendors/hooks/useVendor";
+import { useOptionalVendorContext } from "@/context/VendorContext";
 import { useLanguage } from "@/context/LanguageContext";
 import type { TranslationKey } from "@/locales";
 
@@ -61,32 +59,58 @@ type SupportOption = {
 // =========================================================
 
 const ADMIN_QUICK_ACTIONS: QuickAction[] = [
-  { titleKey: "support.quickActions.reviewReports", icon: FileText, href: "/admin/reports", color: "#a47e43" },
+  { titleKey: "support.quickActions.reviewReports", icon: FileText, href: "/admin/reviews", color: "#a47e43" },
   { titleKey: "support.quickActions.adminDashboard", icon: Users, href: "/admin", color: "#8b5cf6" },
-  { titleKey: "support.quickActions.systemStatus", icon: Shield, href: "/admin/status", color: "#06b6d4" },
-  { titleKey: "support.quickActions.supportTickets", icon: Ticket, href: "/admin/tickets", color: "#ef4444" },
+  { titleKey: "support.quickActions.systemStatus", icon: Shield, href: "/admin/moderation", color: "#06b6d4" },
+  { titleKey: "support.quickActions.supportTickets", icon: Ticket, href: "/admin/messages", color: "#ef4444" },
 ];
 
 const VENDOR_QUICK_ACTIONS: QuickAction[] = [
   { titleKey: "support.quickActions.myServices", icon: Building2, href: "/vendor/services", color: "#a47e43" },
-  { titleKey: "support.quickActions.submitTicket", icon: Ticket, href: "/vendor/support/ticket", color: "#f59e0b" },
-  { titleKey: "support.quickActions.viewFaq", icon: FileText, href: "/support/faq", color: "#06b6d4" },
+  { titleKey: "support.quickActions.submitTicket", icon: Ticket, href: "/contact", color: "#f59e0b" },
+  { titleKey: "support.quickActions.viewFaq", icon: FileText, href: "#faq", color: "#06b6d4" },
 ];
 
 const USER_QUICK_ACTIONS: QuickAction[] = [
   { titleKey: "support.quickActions.myAccount", icon: User, href: "/profile", color: "#a47e43" },
-  { titleKey: "support.quickActions.submitTicket", icon: Ticket, href: "/support/ticket", color: "#f59e0b" },
-  { titleKey: "support.quickActions.viewFaq", icon: FileText, href: "/support/faq", color: "#06b6d4" },
+  { titleKey: "support.quickActions.submitTicket", icon: Ticket, href: "/contact", color: "#f59e0b" },
+  { titleKey: "support.quickActions.viewFaq", icon: FileText, href: "#faq", color: "#06b6d4" },
 ];
 
 const SUPPORT_OPTIONS: SupportOption[] = [
-  { id: "docs", titleKey: "support.resources.docs.title", descriptionKey: "support.resources.docs.description", icon: FileText, color: "#a47e43", href: "/support/docs", badge: null },
-  { id: "chat", titleKey: "support.resources.chat.title", descriptionKey: "support.resources.chat.description", icon: MessageCircle, color: "#10b981", href: "/support/chat", badge: "available" },
+  { id: "docs", titleKey: "support.resources.docs.title", descriptionKey: "support.resources.docs.description", icon: FileText, color: "#a47e43", href: "/about", badge: null },
+  { id: "chat", titleKey: "support.resources.chat.title", descriptionKey: "support.resources.chat.description", icon: MessageCircle, color: "#10b981", href: "/contact", badge: null },
   { id: "email", titleKey: "support.resources.email.title", descriptionKey: "support.resources.email.description", icon: Mail, color: "#8b5cf6", href: "mailto:support@5digea.com", badge: null },
-  { id: "faq", titleKey: "support.resources.faq.title", descriptionKey: "support.resources.faq.description", icon: HelpCircle, color: "#06b6d4", href: "/support/faq", badge: null },
-  { id: "ticket", titleKey: "support.resources.ticket.title", descriptionKey: "support.resources.ticket.description", icon: Ticket, color: "#f59e0b", href: "/support/ticket", badge: "new" },
-  { id: "phone", titleKey: "support.resources.phone.title", descriptionKey: "support.resources.phone.description", icon: Phone, color: "#ef4444", href: "tel:+15551234567", badge: null },
+  { id: "faq", titleKey: "support.resources.faq.title", descriptionKey: "support.resources.faq.description", icon: HelpCircle, color: "#06b6d4", href: "#faq", badge: null },
+  { id: "ticket", titleKey: "support.resources.ticket.title", descriptionKey: "support.resources.ticket.description", icon: Ticket, color: "#f59e0b", href: "/contact", badge: "new" },
+  { id: "phone", titleKey: "support.resources.phone.title", descriptionKey: "support.resources.phone.description", icon: Phone, color: "#ef4444", href: "tel:+201222800121", badge: null },
 ];
+
+const FAQ_KEYS = ["q1", "q2", "q3", "q4", "q5", "q6", "q7", "q8"] as const;
+
+// Internal routes use client-side navigation; mailto:/tel:/#hash use <a>.
+function SmartLink({
+  href,
+  className,
+  children,
+}: {
+  href: string;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  if (href.startsWith("/")) {
+    return (
+      <Link href={href} className={className}>
+        {children}
+      </Link>
+    );
+  }
+  return (
+    <a href={href} className={className}>
+      {children}
+    </a>
+  );
+}
 
 // Renders a translated sentence containing a {bold} placeholder, so the
 // highlighted word can sit anywhere in the sentence in either language.
@@ -116,7 +140,8 @@ export default function SupportHubPage() {
     isUser,
   } = useAuth();
 
-  const { vendor } = useVendor();
+  // Only available inside the vendor dashboard - no extra API call elsewhere.
+  const vendor = useOptionalVendorContext()?.vendor ?? null;
   const { t } = useLanguage();
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -244,7 +269,7 @@ export default function SupportHubPage() {
   // =======================================================
 
   return (
-    <main className="min-h-screen bg-[#faf8f6]">
+    <div className="min-h-screen bg-[#faf8f6]">
       <div className="mx-auto max-w-full px-3 py-4 sm:px-4 sm:py-6 lg:px-6 lg:py-8 xl:px-8 xl:py-10">
 
         {/* =================================================
@@ -443,7 +468,7 @@ export default function SupportHubPage() {
                 const Icon = option.icon;
 
                 return (
-                  <Link
+                  <SmartLink
                     key={option.id}
                     href={option.href}
                     className="group rounded-2xl border border-[#e8dfd8] bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:p-5"
@@ -505,16 +530,14 @@ export default function SupportHubPage() {
 
                     <div className="mt-3 flex items-center justify-between border-t border-[#f0eae5] pt-3">
                       <span className="text-[10px] text-[#9a8d85] sm:text-xs">
-                        {option.id === "chat"
-                          ? t("support.resources.online")
-                          : option.id === "phone"
+                        {option.id === "phone"
                             ? t("support.resources.callNow")
                             : t("support.resources.learnMore")}
                       </span>
 
                       <ChevronRight className="h-4 w-4 text-[#a47e43] opacity-0 transition group-hover:translate-x-0.5 group-hover:opacity-100 rtl:rotate-180 rtl:group-hover:-translate-x-0.5" />
                     </div>
-                  </Link>
+                  </SmartLink>
                 );
               })}
             </div>
@@ -670,6 +693,34 @@ export default function SupportHubPage() {
         </div>
 
         {/* =================================================
+            FAQ (also exported as FAQPage structured data)
+        ================================================= */}
+
+        <section id="faq" aria-labelledby="faq-title" className="mt-6 scroll-mt-24 rounded-2xl border border-[#e8dfd8] bg-white p-4 shadow-sm sm:p-6">
+          <div className="flex items-center gap-2">
+            <HelpCircle className="h-5 w-5 text-[#a47e43]" aria-hidden="true" />
+            <h2 id="faq-title" className="text-base font-semibold text-[#30251f] sm:text-lg">
+              {t("support.faq.title")}
+            </h2>
+          </div>
+          <p className="mt-1 text-xs text-[#756b65] sm:text-sm">{t("support.faq.subtitle")}</p>
+
+          <div className="mt-4 divide-y divide-[#f0eae5]">
+            {FAQ_KEYS.map((key) => (
+              <details key={key} className="group py-3 [&_summary::-webkit-details-marker]:hidden">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-lg text-sm font-semibold text-[#30251f] sm:text-[15px]">
+                  <span>{t(`support.faq.items.${key}.q` as TranslationKey)}</span>
+                  <ChevronRight className="h-4 w-4 shrink-0 text-[#a47e43] transition group-open:rotate-90 rtl:rotate-180 rtl:group-open:rotate-90" aria-hidden="true" />
+                </summary>
+                <p className="mt-2 text-sm leading-7 text-[#5f544d]">
+                  {t(`support.faq.items.${key}.a` as TranslationKey)}
+                </p>
+              </details>
+            ))}
+          </div>
+        </section>
+
+        {/* =================================================
             CONTACT
         ================================================= */}
 
@@ -681,28 +732,28 @@ export default function SupportHubPage() {
             </p>
 
             <div className="flex flex-wrap items-center gap-3">
-              <Link
+              <a
                 href="mailto:support@5digea.com"
                 className="inline-flex items-center gap-1.5 text-sm font-medium text-[#a47e43] hover:underline"
               >
                 <Mail className="h-4 w-4" />
-                support@5digea.com
-              </Link>
+                <span dir="ltr">support@5digea.com</span>
+              </a>
 
               <span className="hidden h-4 w-px bg-[#d5c8be] sm:block" />
 
-              <Link
-                href="tel:+15551234567"
+              <a
+                href="tel:+201222800121"
                 className="inline-flex items-center gap-1.5 text-sm font-medium text-[#a47e43] hover:underline"
               >
                 <Phone className="h-4 w-4" />
-                +1 (555) 123-4567
-              </Link>
+                <span dir="ltr">+20 122 280 0121</span>
+              </a>
             </div>
 
           </div>
         </div>
       </div>
-    </main>
+    </div>
   );
 }

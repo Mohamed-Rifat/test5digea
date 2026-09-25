@@ -18,6 +18,7 @@ import support from "./support";
 import notFound from "./notFound";
 import becomeVendor from "./becomeVendor";
 import vendorOnboarding from "./vendorOnboarding";
+import errors from "./errors";
 
 const ar = {
   common,
@@ -40,6 +41,7 @@ const ar = {
   notFound,
   becomeVendor,
   vendorOnboarding,
+  errors,
 };
 
 export default ar;

@@ -26,3 +26,8 @@ export function useVendorContext(): VendorContextValue {
 
   return context;
 }
+
+/** Same as useVendorContext, but returns null outside the vendor area. */
+export function useOptionalVendorContext(): VendorContextValue | null {
+  return useContext(VendorContext) ?? null;
+}

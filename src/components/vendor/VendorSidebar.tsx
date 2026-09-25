@@ -13,35 +13,19 @@ import {
   LogOut,
   ChevronRight,
   X,
-  Sparkles,
-  Award,
-  Bell,
   HelpCircle,
   Settings,
   Shield,
-  ChevronDown,
-  Package,
-  Star,
-  TrendingUp,
   Users,
-  Calendar,
-  Clock,
-  AlertCircle,
   Crown,
 } from "lucide-react";
 
-import {
-  Tooltip,
-  Badge,
-  Avatar,
-  Chip,
-  Divider,
-} from "@mui/material";
+import { Tooltip, Badge } from "@mui/material";
 
 import { useAuth } from "@/context/AuthContext";
 import { useLanguage } from "@/context/LanguageContext";
 import type { TranslationKey } from "@/locales";
-import { useVendor } from "@/features/vendors/hooks/useVendor";
+import { useVendorContext } from "@/context/VendorContext";
 import { useVendorServices } from "@/features/services/hooks/useVendorServices";
 import { useVendorReviews } from "@/features/reviews/hooks/useVendorReviews";
 import { ReviewStatus } from "@/types/review";
@@ -131,7 +115,7 @@ export default function VendorSidebar({
   const { logout } = useAuth();
   const { t } = useLanguage();
 
-  const { vendor, loading: vendorLoading } = useVendor();
+  const { vendor, loading: vendorLoading } = useVendorContext();
   const { services, loading: servicesLoading } = useVendorServices();
   const { reviews, loading: reviewsLoading } = useVendorReviews();
 
@@ -260,6 +244,8 @@ export default function VendorSidebar({
                 <div className="h-full w-full animate-pulse bg-[#e8dfd8]" />
               ) : vendor?.profileImageUrl ? (
                 <img
+                  loading="lazy"
+                  decoding="async"
                   src={vendor.profileImageUrl}
                   alt={
                     vendor.businessName ||

@@ -6,6 +6,7 @@ import { FaFacebookF, FaInstagram, FaTiktok, } from "react-icons/fa";
 import Image from "next/image";
 
 import { useLanguage } from "@/context/LanguageContext";
+import { SOCIAL_LINKS } from "@/lib/site";
 import type { TranslationKey } from "@/locales";
 
 const footerLinks: Record<
@@ -32,23 +33,12 @@ const footerLinks: Record<
     ],
 };
 
+// Only profiles configured in NEXT_PUBLIC_*_URL are shown (no dead "#" links).
 const socialLinks = [
-    {
-        label: "Instagram",
-        href: "#",
-        icon: FaInstagram,
-    },
-    {
-        label: "Facebook",
-        href: "#",
-        icon: FaFacebookF,
-    },
-    {
-        label: "TikTok",
-        href: "#",
-        icon: FaTiktok,
-    },
-];
+    { label: "Instagram", href: SOCIAL_LINKS.instagram, icon: FaInstagram },
+    { label: "Facebook", href: SOCIAL_LINKS.facebook, icon: FaFacebookF },
+    { label: "TikTok", href: SOCIAL_LINKS.tiktok, icon: FaTiktok },
+].filter((social) => social.href);
 
 export default function Footer() {
     const { t } = useLanguage();
@@ -83,7 +73,6 @@ export default function Footer() {
                                 width={80}
                                 height={80}
                                 className="object-contain"
-                                priority
                             />
                             <span className="text-[30px] font-semibold leading-none tracking-[-0.06em] text-white transition-opacity duration-300 group-hover:opacity-80">
                                 5digea
@@ -109,14 +98,14 @@ export default function Footer() {
                             </a>
 
                             <a
-                                href="tel:+2001222800121"
+                                href="tel:+201222800121"
                                 className="group flex w-fit items-center gap-3 text-[13px] text-white/45 transition-colors duration-300 hover:text-white sm:text-sm"
                             >
                                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/3 transition-all duration-300 group-hover:border-white/20 group-hover:bg-white/[0.07]">
                                     <Phone className="h-3.5 w-3.5" />
                                 </span>
 
-                                <span dir="ltr">+2001222800121</span>
+                                <span dir="ltr">+20 122 280 0121</span>
                             </a>
 
                             <div className="flex items-center gap-3 text-[13px] text-white/45 sm:text-sm">
@@ -174,6 +163,8 @@ export default function Footer() {
                                     key={social.label}
                                     href={social.href}
                                     aria-label={social.label}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
                                     className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 text-white/40 transition-all duration-300 hover:border-white/25 hover:bg-white/10 hover:text-white sm:h-9 sm:w-9"
                                 >
                                     <Icon className="h-3 w-3 sm:h-3.5 sm:w-3.5" />

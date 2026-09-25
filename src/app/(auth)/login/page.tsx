@@ -1,10 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, Suspense, useState } from "react";
+import { FormEvent, Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
-  ArrowLeft,
   Eye,
   EyeOff,
   Loader2,
@@ -18,7 +17,7 @@ import { getApiErrorMessage } from "@/lib/error";
 import { useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
 import {
-  getHomePath,
+  getPostLoginPath,
   getRoleFromToken,
 } from "@/lib/auth-utils";
 
@@ -26,7 +25,13 @@ function LoginForm() {
   const router = useRouter();
   const { t } = useLanguage();
   const searchParams = useSearchParams();
-  const { setAuth } = useAuth();
+  const { setAuth, isAuthenticated, isLoading: authLoading, role: currentRole } = useAuth();
+
+  // Already signed in: skip the form.
+  useEffect(() => {
+    if (authLoading || !isAuthenticated) return;
+    router.replace(getPostLoginPath(currentRole, searchParams.get("next")));
+  }, [authLoading, isAuthenticated, currentRole, router, searchParams]);
 
   const justReset = searchParams.get("reset") === "success";
 
@@ -98,9 +103,8 @@ function LoginForm() {
       const role = getRoleFromToken(data.token);
 
       // Redirect according to the user's role
-      router.replace(getHomePath(role));
+      router.replace(getPostLoginPath(role, searchParams.get("next")));
     } catch (err: unknown) {
-      console.error("Login failed:", err);
 
       setError(getApiErrorMessage(err, t("auth.loginPage.invalidCredentials")));
     } finally {

@@ -524,6 +524,8 @@ function FavoriteFallbackCard({
       >
         {favorite.imageUrl ? (
           <img
+            loading="lazy"
+            decoding="async"
             src={favorite.imageUrl}
             alt={favorite.name}
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"

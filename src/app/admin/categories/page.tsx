@@ -222,11 +222,7 @@ export default function AdminCategoriesPage() {
             setSuccessMessage(
                 t('admin.categories.createdSuccess')
             );
-        } catch (error) {
-            console.error(
-                "Failed to create category:",
-                error
-            );
+        } catch {
 
             setActionError(
                 t('admin.categories.createFailedRetry')
@@ -289,11 +285,7 @@ export default function AdminCategoriesPage() {
             setSuccessMessage(
                 t('admin.categories.updated')
             );
-        } catch (error) {
-            console.error(
-                "Failed to update category:",
-                error
-            );
+        } catch {
 
             setActionError(
                 t('admin.categories.updateFailedRetry')
@@ -327,11 +319,7 @@ export default function AdminCategoriesPage() {
                     ? t('admin.categories.disabledMsg', { name: category.name })
                     : t('admin.categories.activatedMsg', { name: category.name })
             );
-        } catch (error) {
-            console.error(
-                "Failed to toggle category:",
-                error
-            );
+        } catch {
 
             setActionError(
                 t('admin.categories.statusFailed')
@@ -372,11 +360,7 @@ export default function AdminCategoriesPage() {
             setSuccessMessage(
                 t('admin.categories.deletedMsg', { name: deletedName })
             );
-        } catch (error) {
-            console.error(
-                "Failed to delete category:",
-                error
-            );
+        } catch {
 
             setActionError(
                 t('admin.categories.deleteFailedRetry')
@@ -811,6 +795,8 @@ export default function AdminCategoriesPage() {
 
                                         {category.iconUrl ? (
                                             <img
+                                                loading="lazy"
+                                                decoding="async"
                                                 src={category.iconUrl}
                                                 alt={category.name}
                                                 className="relative h-16 w-16 object-contain transition duration-300 group-hover:scale-105"
@@ -1153,6 +1139,8 @@ export default function AdminCategoriesPage() {
                                         <div className="mt-3 flex items-center gap-3 rounded-xl border border-[#eee7e2] bg-[#faf8f6] p-3">
                                             <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-white">
                                                 <img
+                                                    loading="lazy"
+                                                    decoding="async"
                                                     src={
                                                         modal === "create"
                                                             ? iconUrl

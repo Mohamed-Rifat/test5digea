@@ -160,6 +160,8 @@ export default function FavoritesCompareModal({
                       <div className="relative mb-3 flex h-28 items-center justify-center overflow-hidden rounded-2xl bg-[#f4eee9]">
                         {image ? (
                           <img
+                            loading="lazy"
+                            decoding="async"
                             src={image}
                             alt={service.name}
                             className="h-full w-full object-cover"
@@ -211,6 +213,8 @@ export default function FavoritesCompareModal({
                       <div className="relative mb-3 flex h-28 items-center justify-center overflow-hidden rounded-2xl bg-[#f4eee9]">
                         {vendor.profileImageUrl ? (
                           <img
+                            loading="lazy"
+                            decoding="async"
                             src={vendor.profileImageUrl}
                             alt={vendor.businessName}
                             className="h-full w-full object-cover"

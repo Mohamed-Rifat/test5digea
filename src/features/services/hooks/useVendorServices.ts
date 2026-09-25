@@ -74,7 +74,6 @@ export const useVendorServices = (): UseVendorServicesReturn => {
 
       setServices(data);
     } catch (error) {
-      console.error("Failed to fetch vendor services:", error);
       setError(localizedError("vendor.errors.loadServices", error));
     } finally {
       if (!options.silent) setLoading(false);
@@ -111,7 +110,6 @@ export const useVendorServices = (): UseVendorServicesReturn => {
 
         return id;
       } catch (error) {
-        console.error("Failed to create service:", error);
         setActionError(localizedError("vendor.errors.createService", error));
 
         return null;
@@ -134,7 +132,6 @@ export const useVendorServices = (): UseVendorServicesReturn => {
 
         return true;
       } catch (error) {
-        console.error("Failed to update service:", error);
         setActionError(localizedError("vendor.errors.updateService", error));
 
         return false;
@@ -160,7 +157,6 @@ export const useVendorServices = (): UseVendorServicesReturn => {
 
         return true;
       } catch (error) {
-        console.error("Failed to update service prices:", error);
         setActionError(localizedError("vendor.errors.updatePrices", error));
 
         return false;
@@ -183,7 +179,6 @@ export const useVendorServices = (): UseVendorServicesReturn => {
 
         return true;
       } catch (error) {
-        console.error("Failed to resubmit service:", error);
         setActionError(localizedError("vendor.errors.resubmitService", error));
 
         return false;
@@ -206,7 +201,6 @@ export const useVendorServices = (): UseVendorServicesReturn => {
 
         return true;
       } catch (error) {
-        console.error("Failed to upload service images:", error);
         setActionError(localizedError("vendor.errors.uploadImages", error));
 
         return false;
@@ -229,7 +223,6 @@ export const useVendorServices = (): UseVendorServicesReturn => {
 
         return true;
       } catch (error) {
-        console.error("Failed to delete service image:", error);
         setActionError(localizedError("vendor.errors.deleteImage", error));
 
         return false;

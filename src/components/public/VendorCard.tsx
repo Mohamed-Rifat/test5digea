@@ -16,6 +16,10 @@ interface VendorCardProps {
   onToggleFavorite?: (targetType: FavoriteTargetType, targetId: string) => void;
   selected?: boolean;
   onSelect?: (vendorId: string) => void;
+  /** Link target (defaults to the vendor profile). */
+  href?: string;
+  /** Optional action rendered under the card (e.g. "Choose for my wedding"). */
+  footer?: React.ReactNode;
 }
 
 export default function VendorCard({
@@ -25,6 +29,8 @@ export default function VendorCard({
   onToggleFavorite,
   selected,
   onSelect,
+  href,
+  footer,
 }: VendorCardProps) {
   const { t } = useLanguage();
 
@@ -34,11 +40,13 @@ export default function VendorCard({
         selected ? "border-[#30251f] ring-2 ring-[#30251f]/10" : "border-[#eee7e1]"
       }`}
     >
-      <Link href={`/vendors/${vendor.id}`} className="flex min-h-0 flex-1 flex-col">
+      <Link href={href ?? `/vendors/${vendor.id}`} className="flex min-h-0 flex-1 flex-col">
         <div className="relative h-36 w-full shrink-0 bg-linear-to-br sm:h-40 from-[#f0e9e0] to-[#e4d8c8]">
           <div className="absolute -bottom-8 start-5 flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-[#f4eee9] shadow-sm">
             {vendor.profileImageUrl ? (
               <img
+                loading="lazy"
+                decoding="async"
                 src={vendor.profileImageUrl}
                 alt={vendor.businessName}
                 className="h-full w-full object-cover"
@@ -85,6 +93,8 @@ export default function VendorCard({
           )}
         </div>
       </Link>
+
+      {footer && <div className="px-4 pb-4 sm:px-5 sm:pb-5">{footer}</div>}
 
       {onToggleFavorite && (
         <FavoriteButton

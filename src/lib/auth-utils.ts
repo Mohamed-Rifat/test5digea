@@ -29,8 +29,7 @@ export const getRoleFromToken = (
     }
 
     return null;
-  } catch (error) {
-    console.error("Failed to decode JWT role:", error);
+  } catch {
     return null;
   }
 };
@@ -69,3 +68,29 @@ export const isRoleAllowed = (
 
   return allowedRoles.includes(role);
 };
+
+/**
+ * Where to send the user after login: the page they originally wanted
+ * (`?next=`) when it is a safe, same-site path their role may open,
+ * otherwise their role's home page.
+ */
+export const getPostLoginPath = (
+  role: UserRole | null,
+  next: string | null | undefined
+): string => {
+  const home = getHomePath(role);
+  if (!next || !next.startsWith("/") || next.startsWith("//")) return home;
+  if (/^\/(login|register|forgot-password|verify-otp|reset-password)\b/.test(next)) return home;
+
+  const inAdmin = next === "/admin" || next.startsWith("/admin/");
+  const inVendor = next === "/vendor" || next.startsWith("/vendor/");
+
+  if (role === "Admin") return inAdmin ? next : home;
+  if (role === "Vendor") return inVendor ? next : home;
+  if (role === "User") return inAdmin || inVendor ? home : next;
+  return home;
+};
+
+/** Login URL that brings the user back to `path` afterwards. */
+export const loginPathFor = (path: string | null | undefined) =>
+  path && path !== "/" ? `/login?next=${encodeURIComponent(path)}` : "/login";

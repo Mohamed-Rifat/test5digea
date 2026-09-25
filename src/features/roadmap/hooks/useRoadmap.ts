@@ -13,12 +13,14 @@ import {
   uncompleteRoadmapCategory,
 } from "@/features/roadmap/api";
 import { getApiErrorMessage } from "@/lib/error";
+import { useAuth } from "@/context/AuthContext";
 
 import type {
   Roadmap,
   CreateRoadmapRequest,
   UpdateRoadmapRequest,
 } from "@/types/roadmap";
+import { translateNow } from "@/lib/translate-now";
 
 interface UseRoadmapReturn {
   roadmap: Roadmap | null;
@@ -41,6 +43,10 @@ interface UseRoadmapReturn {
 }
 
 export const useRoadmap = (): UseRoadmapReturn => {
+  // Guests have no roadmap: don't call the API (it would only fail).
+  const { isUser, isLoading: authLoading } = useAuth();
+  // Only couples (role "User") have favorites / a roadmap.
+  const isAuthenticated = isUser;
   const [roadmap, setRoadmap] = useState<Roadmap | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -74,7 +80,7 @@ export const useRoadmap = (): UseRoadmapReturn => {
       if (noRoadmapYet || (isAxiosError(err) && err.response?.status === 404)) {
         setRoadmap(null);
       } else {
-        setError(getApiErrorMessage(err, "Failed to load your wedding roadmap."));
+        setError(getApiErrorMessage(err, translateNow("errors.loadRoadmap")));
       }
     } finally {
       setLoading(false);
@@ -82,8 +88,9 @@ export const useRoadmap = (): UseRoadmapReturn => {
   }, []);
 
   useEffect(() => {
+    if (authLoading || !isAuthenticated) return;
     fetchRoadmap();
-  }, [fetchRoadmap]);
+  }, [fetchRoadmap, authLoading, isAuthenticated]);
 
   const create = useCallback(
     async (data: CreateRoadmapRequest): Promise<boolean> => {
@@ -96,7 +103,7 @@ export const useRoadmap = (): UseRoadmapReturn => {
 
         return true;
       } catch (err) {
-        setActionError(getApiErrorMessage(err, "Failed to create your roadmap."));
+        setActionError(getApiErrorMessage(err, translateNow("errors.createRoadmap")));
         return false;
       } finally {
         setActionLoading(null);
@@ -116,7 +123,7 @@ export const useRoadmap = (): UseRoadmapReturn => {
 
         return true;
       } catch (err) {
-        setActionError(getApiErrorMessage(err, "Failed to update your roadmap."));
+        setActionError(getApiErrorMessage(err, translateNow("errors.updateRoadmap")));
         return false;
       } finally {
         setActionLoading(null);
@@ -139,7 +146,7 @@ export const useRoadmap = (): UseRoadmapReturn => {
 
         return true;
       } catch (err) {
-        setActionError(getApiErrorMessage(err, "Failed to select this vendor."));
+        setActionError(getApiErrorMessage(err, translateNow("errors.selectVendor")));
         return false;
       } finally {
         setActionLoading(null);
@@ -159,7 +166,7 @@ export const useRoadmap = (): UseRoadmapReturn => {
 
         return true;
       } catch (err) {
-        setActionError(getApiErrorMessage(err, "Failed to remove this vendor."));
+        setActionError(getApiErrorMessage(err, translateNow("errors.removeVendor")));
         return false;
       } finally {
         setActionLoading(null);
@@ -179,7 +186,7 @@ export const useRoadmap = (): UseRoadmapReturn => {
 
         return true;
       } catch (err) {
-        setActionError(getApiErrorMessage(err, "Failed to update this category."));
+        setActionError(getApiErrorMessage(err, translateNow("errors.updateCategory")));
         return false;
       } finally {
         setActionLoading(null);
@@ -199,7 +206,7 @@ export const useRoadmap = (): UseRoadmapReturn => {
 
         return true;
       } catch (err) {
-        setActionError(getApiErrorMessage(err, "Failed to update this category."));
+        setActionError(getApiErrorMessage(err, translateNow("errors.updateCategory")));
         return false;
       } finally {
         setActionLoading(null);
@@ -209,9 +216,9 @@ export const useRoadmap = (): UseRoadmapReturn => {
   );
 
   return {
-    roadmap,
-    loading,
-    error,
+    roadmap: isAuthenticated ? roadmap : null,
+    loading: authLoading || (isAuthenticated && loading),
+    error: isAuthenticated ? error : null,
     actionLoading,
     actionError,
     refetch: fetchRoadmap,

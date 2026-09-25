@@ -64,7 +64,7 @@ const STATUS_KEYS: Record<Vendor["status"], TranslationKey> = {
 
 function DetailsSkeleton() {
   return (
-    <main className="min-h-screen bg-[#faf8f6] px-4 py-6 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#faf8f6] px-4 py-6 sm:px-6 lg:px-8">
       <div className="mx-auto animate-pulse space-y-5">
         <div className="h-5 w-28 rounded bg-[#e7dfda]" />
 
@@ -84,7 +84,7 @@ function DetailsSkeleton() {
           <div className="h-64 rounded-2xl bg-[#eee9e5]" />
         </div>
       </div>
-    </main>
+    </div>
   );
 }
 
@@ -202,7 +202,6 @@ export default function AdminVendorDetailsPage({
             .map((category) => category.id)
         );
       } catch (err: unknown) {
-        console.error("Failed to load vendor details:", err);
 
         if (isMounted()) {
           setError(
@@ -364,7 +363,6 @@ export default function AdminVendorDetailsPage({
 
       setCategoriesSuccess(t("admin.vendorDetails.categories.updated"));
     } catch (err: unknown) {
-      console.error("Failed to update vendor categories:", err);
 
       setCategoriesError(
         getApiErrorMessage(err, t("admin.vendorDetails.categories.failed"))
@@ -390,7 +388,7 @@ export default function AdminVendorDetailsPage({
   // ================================
 
   return (
-    <main className="min-h-screen bg-[#faf8f6] px-4 py-6 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#faf8f6] px-4 py-6 sm:px-6 lg:px-8">
       <div className="mx-auto">
         {/* Back */}
         <Link
@@ -529,8 +527,9 @@ export default function AdminVendorDetailsPage({
               <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex min-w-0 items-center gap-4">
                   {vendor.profileImageUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
                     <img
+                      loading="lazy"
+                      decoding="async"
                       src={vendor.profileImageUrl}
                       alt={vendor.businessName || t("admin.vendorDetails.unnamed")}
                       className="h-20 w-20 shrink-0 rounded-2xl object-cover"
@@ -836,6 +835,6 @@ export default function AdminVendorDetailsPage({
           </>
         )}
       </div>
-    </main>
+    </div>
   );
 }

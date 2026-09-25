@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
@@ -37,7 +37,10 @@ import { getVendorDetails } from "@/features/vendors/api";
 import { fetchServiceReviews } from "@/features/reviews/api";
 import { formatDate, formatPrice, startingPrice } from "@/lib/format";
 import { useLanguage } from "@/context/LanguageContext";
-import { LANGUAGE_DATE_LOCALE, type TranslationKey } from "@/locales";
+import { useRoadmapPicker } from "@/features/roadmap/hooks/useRoadmapPicker";
+import RoadmapPickButton from "@/components/roadmap/RoadmapPickButton";
+import type { RoadmapItem } from "@/types/roadmap";
+import { LANGUAGE_DATE_LOCALE } from "@/locales";
 import { normalizeExternalUrl } from "@/lib/safe-url";
 import { FavoriteTargetType } from "@/types/favorite";
 import type { Review } from "@/types/review";
@@ -250,7 +253,9 @@ function ContactRow({
 
 export default function VendorDetailPage() {
   const params = useParams<{ id: string }>();
-  const { t, language } = useLanguage();
+  const searchParams = useSearchParams();
+  const { t } = useLanguage();
+  const roadmapPicker = useRoadmapPicker();
 
   const [vendor, setVendor] = useState<Vendor | null>(null);
   const [loading, setLoading] = useState(true);
@@ -375,11 +380,12 @@ export default function VendorDetailPage() {
      Parse Social Links
   ========================================================= */
 
+  const socialLinksJson = vendor?.socialLinksJson;
+  const workingHoursJson = vendor?.workingHoursJson;
+
   const socialLinks = useMemo<SocialLinks>(() => {
     try {
-      const parsed = vendor?.socialLinksJson
-        ? JSON.parse(vendor.socialLinksJson)
-        : {};
+      const parsed = socialLinksJson ? JSON.parse(socialLinksJson) : {};
 
       // Vendors type these links themselves: keep only real http(s) links so
       // a "javascript:" value can never end up in an href.
@@ -397,7 +403,7 @@ export default function VendorDetailPage() {
     } catch {
       return {};
     }
-  }, [vendor?.socialLinksJson]);
+  }, [socialLinksJson]);
 
   /* =========================================================
      Parse Working Hours
@@ -405,13 +411,11 @@ export default function VendorDetailPage() {
 
   const workingHours = useMemo<WorkingHours>(() => {
     try {
-      return vendor?.workingHoursJson
-        ? JSON.parse(vendor.workingHoursJson)
-        : {};
+      return workingHoursJson ? JSON.parse(workingHoursJson) : {};
     } catch {
       return {};
     }
-  }, [vendor?.workingHoursJson]);
+  }, [workingHoursJson]);
 
   const hasSocialLinks =
     !!socialLinks.instagram ||
@@ -488,6 +492,24 @@ export default function VendorDetailPage() {
   /* =========================================================
      Loading
   ========================================================= */
+
+  // Roadmap steps this vendor can fill: the category the couple came from
+  // (?categoryId=… from the roadmap), otherwise every roadmap category the
+  // vendor offers (from its services and its assigned categories).
+  const roadmapTargets: RoadmapItem[] = (() => {
+    if (!roadmapPicker.roadmap) return [];
+    const fromUrl = roadmapPicker.findItem(searchParams.get("categoryId"));
+    if (fromUrl) return [fromUrl];
+    const found = new Map<string, RoadmapItem>();
+    services.forEach((s) => {
+      const item = roadmapPicker.findItem(s.categoryId, s.categoryName);
+      if (item) found.set(String(item.categoryId), item);
+    });
+    roadmapPicker.matchingItems(vendor?.categories).forEach((item) =>
+      found.set(String(item.categoryId), item)
+    );
+    return Array.from(found.values());
+  })();
 
   if (loading) {
     return <PageSkeleton />;
@@ -640,9 +662,6 @@ export default function VendorDetailPage() {
     0,
     visibleServiceCount
   );
-
-  const hasMoreServices =
-    orderedServices.length > displayedServices.length;
 
   const sortOptions: { value: SortMode; label: string }[] = [
     { value: "recommended", label: t("vendors.detail.services.sort.recommended") },
@@ -837,6 +856,35 @@ export default function VendorDetailPage() {
                     </span>
                   )}
                 </div>
+
+                {/* Add to wedding roadmap */}
+                {(roadmapTargets.length > 0 ||
+                  roadmapPicker.isGuest ||
+                  (roadmapPicker.canUse && roadmapPicker.ready && !roadmapPicker.roadmap)) && (
+                  <div className="mt-4 flex max-w-2xl flex-col gap-2 sm:flex-row sm:flex-wrap">
+                    {roadmapTargets.length > 0 ? (
+                      roadmapTargets.map((item) => (
+                        <RoadmapPickButton
+                          key={String(item.categoryId)}
+                          picker={roadmapPicker}
+                          vendor={{ id: vendor.id, name: vendor.businessName }}
+                          item={item}
+                          size="sm"
+                          showCategory={roadmapTargets.length > 1}
+                          className="sm:w-auto sm:min-w-60"
+                        />
+                      ))
+                    ) : (
+                      <RoadmapPickButton
+                        picker={roadmapPicker}
+                        vendor={{ id: vendor.id, name: vendor.businessName }}
+                        item={null}
+                        size="sm"
+                        className="sm:w-auto sm:min-w-60"
+                      />
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Social icons — right side */}

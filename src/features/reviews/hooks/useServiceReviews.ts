@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import { fetchServiceReviews } from "@/features/reviews/api";
 import type { PaginatedReviews } from "@/types/review";
+import { translateNow } from "@/lib/translate-now";
 
 interface UseServiceReviewsReturn {
   data: PaginatedReviews | null;
@@ -49,8 +50,8 @@ export const useServiceReviews = (
       });
 
       setData(result);
-    } catch (err) {
-      setError("Failed to load reviews.");
+    } catch {
+      setError(translateNow("errors.loadReviews"));
     } finally {
       setLoading(false);
     }

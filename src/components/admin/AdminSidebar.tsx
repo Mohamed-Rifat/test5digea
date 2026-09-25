@@ -13,7 +13,6 @@ import {
   FilePenLine,
   LogOut,
   X,
-  Heart,
   Mail,
 } from "lucide-react";
 
@@ -96,9 +95,9 @@ export default function AdminSidebar({ mobileOpen, onClose }: AdminSidebarProps)
                         />
             </div>
             <div>
-              <h1 className="text-lg font-semibold tracking-wide text-[#30251f]">
+              <p className="text-lg font-semibold tracking-wide text-[#30251f]">
                 5Digea
-              </h1>
+              </p>
               <p className="text-[10px] font-medium uppercase tracking-[0.2em] rtl:tracking-normal text-[#a28d7e]">
                 {t("admin.sidebar.administration")}
               </p>

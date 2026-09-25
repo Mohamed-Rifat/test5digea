@@ -18,6 +18,7 @@ import {
   GitCompare,
   X,
   MapPin,
+  Map as MapIcon,
   Star,
   Tag,
   Check,
@@ -25,6 +26,8 @@ import {
 
 import CompareCategoryDialog from "@/components/public/CompareCategoryDialog";
 import VendorCard from "@/components/public/VendorCard";
+import RoadmapPickButton from "@/components/roadmap/RoadmapPickButton";
+import { useRoadmapPicker } from "@/features/roadmap/hooks/useRoadmapPicker";
 import GovernorateSelect from "@/components/shared/GovernorateSelect";
 import Pagination from "@/components/shared/Pagination";
 import { useCategories } from "@/features/categories/hooks/useCategories";
@@ -58,6 +61,7 @@ function VendorsPageContent() {
 
   const { categories } = useCategories();
   const { isFavorited, toggleFavorite, actionLoading } = useFavorites();
+  const roadmapPicker = useRoadmapPicker();
   const { toast } = useToast();
 
   const [searchInput, setSearchInput] = useState(initialSearch);
@@ -118,13 +122,7 @@ function VendorsPageContent() {
     } finally {
       setLoading(false);
     }
-  }, [
-    params.searchTerm,
-    params.categoryId,
-    params.location,
-    params.minRating,
-    params.page,
-  ]);
+  }, [params]);
 
   useEffect(() => {
     fetchResults();
@@ -272,6 +270,12 @@ function VendorsPageContent() {
   const items = result?.items ?? [];
   const totalPages = result?.totalPages ?? 1;
   const selectedCategory = categories.find((c) => c.id === categoryId);
+  // Couple browsing a category that is part of their roadmap: each card gets
+  // a one-click "Choose for my wedding" button.
+  const roadmapStep =
+    categoryId && roadmapPicker.canUse
+      ? roadmapPicker.findItem(categoryId, selectedCategory?.name)
+      : null;
 
   return (
     <main className="min-h-screen bg-[#faf8f6]">
@@ -595,6 +599,29 @@ function VendorsPageContent() {
           </>
         )}
 
+        {/* Came from the roadmap: keep the couple oriented */}
+        {roadmapStep && (
+          <div className="mb-6 flex flex-col gap-3 rounded-2xl border border-[#ecd9bf] bg-[#fdf6ec] p-4 sm:flex-row sm:items-center sm:justify-between">
+            <p className="flex items-start gap-2.5 text-sm font-medium text-[#6f5433]">
+              <MapIcon size={18} className="mt-0.5 shrink-0 text-[#a47e43]" aria-hidden="true" />
+              <span>
+                {t("roadmap.pick.browsingFor", { category: roadmapStep.categoryName })}
+                {roadmapStep.selectedVendorName && (
+                  <span className="mt-0.5 block text-xs text-[#9b8367]">
+                    {t("roadmap.pick.currently", { name: roadmapStep.selectedVendorName })}
+                  </span>
+                )}
+              </span>
+            </p>
+            <Link
+              href="/roadmap"
+              className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-xl bg-[#30251f] px-4 text-sm font-semibold text-white transition hover:bg-[#46382f]"
+            >
+              {t("roadmap.pick.backToRoadmap")}
+            </Link>
+          </div>
+        )}
+
         {/* Error */}
         {!loading && error && (
           <div className="rounded-2xl border border-red-200 bg-red-50 p-10 text-center">
@@ -655,6 +682,22 @@ function VendorsPageContent() {
                 <VendorCard
                   key={vendor.id}
                   vendor={vendor}
+                  href={
+                    categoryId
+                      ? `/vendors/${vendor.id}?categoryId=${encodeURIComponent(categoryId)}`
+                      : undefined
+                  }
+                  footer={
+                    roadmapStep ? (
+                      <RoadmapPickButton
+                        picker={roadmapPicker}
+                        vendor={{ id: vendor.id, name: vendor.businessName }}
+                        item={roadmapStep}
+                        size="sm"
+                        showHelpers={false}
+                      />
+                    ) : undefined
+                  }
                   favorited={isFavorited(FavoriteTargetType.Vendor, vendor.id)}
                   favoriteLoading={
                     actionLoading === `${FavoriteTargetType.Vendor}:${vendor.id}`

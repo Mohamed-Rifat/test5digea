@@ -1,9 +1,10 @@
 "use client";
 
 import { Heart } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 import { useAuth } from "@/context/AuthContext";
+import { loginPathFor } from "@/lib/auth-utils";
 import { useLanguage } from "@/context/LanguageContext";
 import { FavoriteTargetType } from "@/types/favorite";
 
@@ -27,18 +28,22 @@ export default function FavoriteButton({
   className = "",
 }: FavoriteButtonProps) {
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
+  const pathname = usePathname();
+  const { isAuthenticated, isUser } = useAuth();
   const { t } = useLanguage();
 
   const dimensions = size === "lg" ? "h-11 w-11" : "h-9 w-9";
   const iconSize = size === "lg" ? 20 : 16;
+
+  // Favorites belong to couples' accounts: hide the heart for vendors/admins.
+  if (isAuthenticated && !isUser) return null;
 
   const handleClick = (event: React.MouseEvent) => {
     event.preventDefault();
     event.stopPropagation();
 
     if (!isAuthenticated) {
-      router.push("/login");
+      router.push(loginPathFor(pathname));
       return;
     }
 

@@ -23,7 +23,7 @@ import {
 import Select from "@/components/shared/Select";
 import { useVendorServices } from "@/features/services/hooks/useVendorServices";
 import { useCategories } from "@/features/categories/hooks/useCategories";
-import { useVendor } from "@/features/vendors/hooks/useVendor";
+import { useVendorContext } from "@/context/VendorContext";
 import { useLanguage } from "@/context/LanguageContext";
 import TextWithSlot from "@/components/shared/TextWithSlot";
 import type { CreateServicePriceRequest } from "@/types/service";
@@ -41,7 +41,7 @@ export default function NewVendorServicePage() {
 
   const { create, uploadImages, actionError } = useVendorServices();
   const { categories, loading: categoriesLoading } = useCategories();
-  const { vendor, loading: vendorLoading } = useVendor();
+  const { vendor, loading: vendorLoading } = useVendorContext();
 
   // A vendor can only publish services under categories that were assigned
   // to their business — showing the full category catalog would let them
@@ -285,7 +285,7 @@ export default function NewVendorServicePage() {
   }, [router]);
 
   return (
-    <main className="min-h-screen bg-[#faf8f6]">
+    <div className="min-h-screen bg-[#faf8f6]">
       <div className="mx-auto px-3 py-4 sm:px-4 sm:py-6 lg:max-w-full lg:px-6 lg:py-8 xl:px-8 xl:py-10">
         {/* =================================================
             Header
@@ -663,8 +663,9 @@ export default function NewVendorServicePage() {
                   key={src}
                   className="group relative h-20 w-20 overflow-hidden rounded-xl border border-[#e3d9d1] sm:h-24 sm:w-24"
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
+                    loading="lazy"
+                    decoding="async"
                     src={src}
                     alt={t(
                       "vendor.services.form.selectedImageAlt",
@@ -792,6 +793,6 @@ export default function NewVendorServicePage() {
           </div>
         </form>
       </div>
-    </main>
+    </div>
   );
 }

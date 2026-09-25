@@ -3,13 +3,15 @@
 
 import {
   createContext,
+  useCallback,
   useContext,
-  useState,
+  useMemo,
+  useSyncExternalStore,
   type ReactNode,
 } from "react";
 
 import type { LoginResponse } from "@/types/auth";
-import { authStorage } from "@/lib/auth-storage";
+import { authStorage, parseAuth } from "@/lib/auth-storage";
 import {
   getRoleFromToken,
   type UserRole,
@@ -35,14 +37,27 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
+const subscribeNothing = () => () => {};
+
 export function AuthProvider({
   children,
 }: AuthProviderProps) {
-  const [user, setUser] = useState<LoginResponse | null>(() => {
-    return authStorage.get();
-  });
+  // Raw localStorage string: stable between reads, null on the server.
+  const raw = useSyncExternalStore(
+    authStorage.subscribe,
+    authStorage.getRaw,
+    () => null,
+  );
 
-  const [isLoading] = useState(false);
+  // false on the server and during hydration, true afterwards.
+  const hydrated = useSyncExternalStore(
+    subscribeNothing,
+    () => true,
+    () => false,
+  );
+
+  const user = useMemo(() => parseAuth(raw), [raw]);
+  const isLoading = !hydrated;
 
   /**
    * Get the current user's role from the JWT.
@@ -51,50 +66,38 @@ export function AuthProvider({
     ? getRoleFromToken(user.token)
     : null;
 
-  /**
-   * Authentication state.
-   */
   const isAuthenticated = !!user;
-
-  /**
-   * Role helpers.
-   */
   const isAdmin = role === "Admin";
   const isVendor = role === "Vendor";
   const isUser = role === "User";
 
-  /**
-   * Save authentication data.
-   */
-  const setAuth = (data: LoginResponse) => {
+  /** Save authentication data (also syncs other open tabs). */
+  const setAuth = useCallback((data: LoginResponse) => {
     authStorage.set(data);
-    setUser(data);
-  };
+  }, []);
 
-  /**
-   * Logout user.
-   */
-  const logout = () => {
+  /** Logout user (also logs out other open tabs). */
+  const logout = useCallback(() => {
     authStorage.remove();
-    setUser(null);
-  };
+  }, []);
+
+  const value = useMemo<AuthContextValue>(
+    () => ({
+      user,
+      role,
+      isAuthenticated,
+      isLoading,
+      isAdmin,
+      isVendor,
+      isUser,
+      setAuth,
+      logout,
+    }),
+    [user, role, isAuthenticated, isLoading, isAdmin, isVendor, isUser, setAuth, logout],
+  );
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        role,
-        isAuthenticated,
-        isLoading,
-        isAdmin,
-        isVendor,
-        isUser,
-        setAuth,
-        logout,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
+    <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
   );
 }
 

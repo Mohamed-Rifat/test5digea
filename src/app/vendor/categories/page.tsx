@@ -18,12 +18,13 @@ import {
   TextField,
   InputAdornment,
 } from "@mui/material";
-import { useVendor } from "@/features/vendors/hooks/useVendor";
+import { useVendorContext } from "@/context/VendorContext";
 import { useCategories } from "@/features/categories/hooks/useCategories";
 import { useLanguage } from "@/context/LanguageContext";
 import type { TranslationKey } from "@/locales";
 import TextWithSlots from "@/components/shared/TextWithSlots";
 import { CategoryCard, ContactAdminDialog } from "@/components/vendor/CategoryRequest";
+import type { Category } from "@/types/category";
 
 // Vendor account status -> label + dot colour (comes from the API, not fixed).
 const VENDOR_STATUS: Record<string, { labelKey: TranslationKey; dot: string }> = {
@@ -35,13 +36,13 @@ const VENDOR_STATUS: Record<string, { labelKey: TranslationKey; dot: string }> =
 
 export default function VendorCategoriesPage() {
   const { t } = useLanguage();
-  const { vendor, loading, refetch } = useVendor();
+  const { vendor, loading, refetch } = useVendorContext();
   const { categories: allCategories, loading: categoriesLoading } = useCategories();
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const [categorySearch, setCategorySearch] = useState("");
   const [contactDialogOpen, setContactDialogOpen] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<any>(null);
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [toastMessage, setToastMessage] = useState("");
 
   const assignedCategoryNames = useMemo(
@@ -85,7 +86,7 @@ export default function VendorCategoriesPage() {
     [filteredAllCategories, assignedCategoryNames]
   );
 
-  const handleContactAdmin = (category: any) => {
+  const handleContactAdmin = (category: Category) => {
     setSelectedCategory(category);
     setContactDialogOpen(true);
   };
@@ -96,7 +97,7 @@ export default function VendorCategoriesPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#faf8f6]">
+    <div className="min-h-screen bg-[#faf8f6]">
       <div className="mx-auto max-w-full px-3 py-4 sm:px-4 sm:py-6 lg:px-6 lg:py-8 xl:px-8 xl:py-10">
 
         {toastMessage && (
@@ -449,6 +450,6 @@ export default function VendorCategoriesPage() {
         }}
         onSuccess={handleContactSuccess}
       />
-    </main>
+    </div>
   );
 }

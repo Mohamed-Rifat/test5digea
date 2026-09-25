@@ -23,6 +23,7 @@ import { approveServiceImage, rejectServiceImage } from "@/features/services/api
 import { getApiErrorMessage } from "@/lib/error";
 import { formatDate } from "@/lib/format";
 import { useLanguage } from "@/context/LanguageContext";
+import { useToast } from "@/components/providers/ToastProvider";
 import { LANGUAGE_DATE_LOCALE } from "@/locales/config";
 import type { TranslationKey } from "@/locales";
 import {
@@ -95,6 +96,7 @@ function reviewHref(item: ModerationQueueItem): string {
 
 export default function AdminModerationPage() {
   const { t, language } = useLanguage();
+  const { toast } = useToast();
   const dateLocale = LANGUAGE_DATE_LOCALE[language];
 
   const entityTypeOptions = [
@@ -143,14 +145,9 @@ export default function AdminModerationPage() {
   const [previewItem, setPreviewItem] = useState<ModerationQueueItem | null>(
     null
   );
-  const [message, setMessage] = useState<{
-    type: "success" | "error";
-    text: string;
-  } | null>(null);
 
   const showMessage = (type: "success" | "error", text: string) => {
-    setMessage({ type, text });
-    window.setTimeout(() => setMessage(null), 3500);
+    toast(text, type);
   };
 
   const handleApproveImage = async (item: ModerationQueueItem) => {
@@ -253,18 +250,6 @@ export default function AdminModerationPage() {
           {t("admin.moderation.refresh")}
         </button>
       </div>
-
-      {message && (
-        <div
-          className={`mb-4 rounded-xl border px-4 py-2.5 text-sm font-medium ${
-            message.type === "success"
-              ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-              : "border-red-200 bg-red-50 text-red-600"
-          }`}
-        >
-          {message.text}
-        </div>
-      )}
 
       {/* Filters */}
       <div className="mb-6 grid gap-3 rounded-2xl border border-[#eee7e1] bg-white p-4 sm:grid-cols-2 lg:grid-cols-5">
@@ -407,6 +392,8 @@ export default function AdminModerationPage() {
                       className="group/thumb relative h-10 w-10 shrink-0 overflow-hidden rounded-xl"
                     >
                       <img
+                        loading="lazy"
+                        decoding="async"
                         src={item.imageUrl}
                         alt={item.title}
                         className="h-full w-full object-cover"

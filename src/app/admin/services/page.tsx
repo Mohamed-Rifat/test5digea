@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { useConfirm } from "@/components/providers/ConfirmProvider";
 import { useLanguage } from "@/context/LanguageContext";
+import { useToast } from "@/components/providers/ToastProvider";
 import { LANGUAGE_DATE_LOCALE, type TranslationKey } from "@/locales";
 import { useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -128,6 +130,8 @@ const getStartingPrice = (service: Service) => {
 
 export default function AdminServicesPage() {
   const { t, language } = useLanguage();
+  const { toast } = useToast();
+  const confirm = useConfirm();
   const dateLocale = LANGUAGE_DATE_LOCALE[language];
   const getStatusLabel = (status: string) => {
     const key = getStatusKey(status);
@@ -164,11 +168,6 @@ export default function AdminServicesPage() {
     useState<Service | null>(null);
 
   const [rejectReason, setRejectReason] = useState("");
-
-  const [message, setMessage] = useState<{
-    type: "success" | "error";
-    text: string;
-  } | null>(null);
 
   /* =========================
      Status Options
@@ -265,18 +264,8 @@ export default function AdminServicesPage() {
      Messages
      ========================= */
 
-  const showMessage = (
-    type: "success" | "error",
-    text: string
-  ) => {
-    setMessage({
-      type,
-      text,
-    });
-
-    window.setTimeout(() => {
-      setMessage(null);
-    }, 3500);
+  const showMessage = (type: "success" | "error", text: string) => {
+    toast(text, type);
   };
 
   /* =========================
@@ -286,9 +275,7 @@ export default function AdminServicesPage() {
   const handleApprove = async (
     service: Service
   ) => {
-    const confirmed = window.confirm(
-      t('admin.services.confirmApprove', { name: service.name })
-    );
+    const confirmed = await confirm({ message: t('admin.services.confirmApprove', { name: service.name }) });
 
     if (!confirmed) return;
 
@@ -369,9 +356,7 @@ export default function AdminServicesPage() {
   const handleActivate = async (
     service: Service
   ) => {
-    const confirmed = window.confirm(
-      t('admin.services.confirmActivate', { name: service.name })
-    );
+    const confirmed = await confirm({ message: t('admin.services.confirmActivate', { name: service.name }) });
 
     if (!confirmed) return;
 
@@ -397,9 +382,7 @@ export default function AdminServicesPage() {
   const handleDeactivate = async (
     service: Service
   ) => {
-    const confirmed = window.confirm(
-      t('admin.services.confirmDeactivate', { name: service.name })
-    );
+    const confirmed = await confirm({ message: t('admin.services.confirmDeactivate', { name: service.name }), tone: "danger" });
 
     if (!confirmed) return;
 
@@ -524,28 +507,6 @@ export default function AdminServicesPage() {
           {t('admin.services.refresh')}
         </button>
       </div>
-
-      {/* =========================
-          Message
-      ========================= */}
-
-      {message && (
-        <div
-          className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-sm ${
-            message.type === "success"
-              ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-              : "border-red-200 bg-red-50 text-red-700"
-          }`}
-        >
-          {message.type === "success" ? (
-            <CheckCircle2 size={18} />
-          ) : (
-            <AlertCircle size={18} />
-          )}
-
-          <span>{message.text}</span>
-        </div>
-      )}
 
       {/* =========================
           Stats
@@ -734,6 +695,8 @@ export default function AdminServicesPage() {
                   <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gray-100">
                     {service.images?.[0]?.url ? (
                       <img
+                        loading="lazy"
+                        decoding="async"
                         src={service.images[0].url}
                         alt={service.name}
                         className="h-full w-full object-cover"
@@ -1002,6 +965,8 @@ export default function AdminServicesPage() {
                           <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gray-100">
                             {service.images?.[0]?.url ? (
                               <img
+                                loading="lazy"
+                                decoding="async"
                                 src={
                                   service.images[0]
                                     .url

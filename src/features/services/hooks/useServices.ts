@@ -6,6 +6,7 @@ import type {
   Service,
   GetServicesParams,
 } from "@/types/service";
+import { translateNow } from "@/lib/translate-now";
 
 interface UseServicesReturn {
   services: Service[];
@@ -29,13 +30,9 @@ export const useServices = (
       const data = await getServices(params);
 
       setServices(data);
-    } catch (error) {
-      console.error(
-        "Failed to fetch services:",
-        error
-      );
+    } catch {
 
-      setError("Failed to load services.");
+      setError(translateNow("errors.loadServices"));
     } finally {
       setLoading(false);
     }

@@ -1,4 +1,40 @@
-// Populated in Phase 3.
-const reviews = {};
+const reviews = {
+  title: "التقييمات",
+  empty: "لسه مفيش تقييمات. كن أول من يشارك تجربته.",
+  anonymous: "مستخدم",
+  pageOf: "صفحة {page} من {total}",
+  write: {
+    title: "اكتب تقييمك",
+    chooseService: "بتقيّم أنهي خدمة؟",
+    selectService: "اختار الخدمة",
+    yourRating: "تقييمك",
+    yourComment: "تعليقك (اختياري)",
+    commentPlaceholder: "احكي لنا التجربة كانت عاملة إزاي...",
+    nothingToReview: "لسه مفيش خدمات متاحة للتقييم في القسم ده.",
+    submit: "إرسال التقييم",
+    errorChooseService: "من فضلك اختار الخدمة اللي عايز تقيّمها.",
+    errorRating: "من فضلك اختار عدد النجوم.",
+    success: "شكراً! تقييمك اتبعت وهيظهر بعد المراجعة.",
+    failed: "تعذّر إرسال تقييمك.",
+    stars: "{count} من 5 نجوم",
+  },
+  mine: {
+    alreadyToast: "انت قيّمت الخدمة دي قبل كده — كل خدمة ليها تقييم واحد بس.",
+    checking: "بنتأكد من تقييماتك…",
+    seeYours: "شوف تقييمك",
+    alreadyTooltip: "انت كتبت تقييم قبل كده — اضغط عشان تشوفه",
+    title: "تقييمك",
+    reviewedOn: "اتكتب في {date}",
+    onceNote: "كل خدمة ليها تقييم واحد بس. شكراً إنك شاركت تجربتك!",
+    viewService: "شوف الخدمة",
+    statusPending: "قيد المراجعة",
+    statusApproved: "منشور",
+    statusRejected: "اترفض",
+    reason: "السبب: {reason}",
+    reviewed: "اتقيّم",
+    noComment: "مفيش تعليق مكتوب.",
+    alreadyAll: "انت قيّمت خدمات الخطوة دي قبل كده.",
+  },
+};
 
 export default reviews;

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { getAdminCategories } from "@/features/categories/api";
 import type { Category } from "@/types/category";
+import { translateNow } from "@/lib/translate-now";
 
 interface UseAdminCategoriesReturn {
   categories: Category[];
@@ -23,13 +24,9 @@ export const useAdminCategories =
         const data = await getAdminCategories();
 
         setCategories(data);
-      } catch (error) {
-        console.error(
-          "Failed to fetch admin categories:",
-          error
-        );
+      } catch {
 
-        setError("Failed to load admin categories.");
+        setError(translateNow("errors.loadCategories"));
       } finally {
         setLoading(false);
       }

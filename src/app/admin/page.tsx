@@ -7,8 +7,6 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
-  Legend,
-  Line,
   Pie,
   PieChart,
   ResponsiveContainer,
@@ -455,7 +453,7 @@ export default function AdminPage() {
       .map(([location, count]) => ({ location, count }))
       .sort((a, b) => b.count - a.count)
       .slice(0, 6);
-  }, [vendors]);
+  }, [vendors, t]);
 
   /* ========================================================= */
   /* RECENT VENDORS */
@@ -1415,6 +1413,8 @@ export default function AdminPage() {
                   <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg bg-[#f6f0ec]">
                     {vendor.profileImageUrl ? (
                       <img
+                        loading="lazy"
+                        decoding="async"
                         src={vendor.profileImageUrl}
                         alt=""
                         className="h-full w-full object-cover"
@@ -1525,7 +1525,6 @@ function VendorStatusRow({
   total: number;
   color: string;
 }) {
-  const { t } = useLanguage();
   const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
 
   return (
@@ -1578,7 +1577,6 @@ function InsightCard({
   suffix?: string;
   description: string;
 }) {
-  const { t } = useLanguage();
   return (
     <div className="flex items-center gap-3 rounded-xl bg-[#fcfaf8] p-3.5">
       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#f3ebe5] text-[#806d61]">
@@ -1625,6 +1623,8 @@ function VendorListItem({
       <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-[#f6f0ec]">
         {vendor.profileImageUrl ? (
           <img
+            loading="lazy"
+            decoding="async"
             src={vendor.profileImageUrl}
             alt=""
             className="h-full w-full object-cover"
@@ -1715,7 +1715,6 @@ function QuickAction({
   title: string;
   description: string;
 }) {
-  const { t } = useLanguage();
   return (
     <Link
       href={href}
@@ -1744,7 +1743,6 @@ function QuickAction({
 /* ========================================================= */
 
 function EmptyState({ icon: Icon, text }: { icon: typeof Tags; text: string }) {
-  const { t } = useLanguage();
   return (
     <div className="rounded-xl border border-dashed border-[#e6ddd7] bg-[#fcfaf8] px-4 py-8 text-center">
       <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-lg bg-[#f5eee9] text-[#9b8e86]">

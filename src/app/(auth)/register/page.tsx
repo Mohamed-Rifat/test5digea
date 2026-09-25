@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Check, Eye, EyeOff, Loader2, X, AlertCircle } from "lucide-react";
 import Image from "next/image";
@@ -206,7 +206,6 @@ export default function RegisterPage() {
       setAuth(data);
       router.push("/");
     } catch (err: unknown) {
-      console.error("Registration failed:", err);
 
       setError(getApiErrorMessage(err, t("auth.registerPage.failed")));
     } finally {

@@ -47,7 +47,7 @@ import {
 
 import { useVendorServices } from "@/features/services/hooks/useVendorServices";
 import { useCategories } from "@/features/categories/hooks/useCategories";
-import { useVendor } from "@/features/vendors/hooks/useVendor";
+import { useVendorContext } from "@/context/VendorContext";
 import type {
   CreateServicePriceRequest,
   Service,
@@ -59,6 +59,7 @@ import {
   ContactAdminDialog,
 } from "@/components/vendor/CategoryRequest";
 import TextWithSlot from "@/components/shared/TextWithSlot";
+import type { Category } from "@/types/category";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -138,7 +139,7 @@ export default function EditVendorServicePage({
   const { categories, loading: categoriesLoading } =
     useCategories();
 
-  const { vendor } = useVendor();
+  const { vendor } = useVendorContext();
 
   const service: Service | undefined = services.find(
     (s) => s.id === id
@@ -160,7 +161,7 @@ export default function EditVendorServicePage({
     useState(false);
 
   const [selectedCategory, setSelectedCategory] =
-    useState<any>(null);
+    useState<Category | null>(null);
 
   const [toastMessage, setToastMessage] = useState("");
 
@@ -665,7 +666,7 @@ export default function EditVendorServicePage({
   };
 
   const handleContactAdmin = (
-    category: any
+    category: Category
   ) => {
     setSelectedCategory(category);
     setContactDialogOpen(true);
@@ -690,7 +691,7 @@ export default function EditVendorServicePage({
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-[#faf8f6]">
+      <div className="min-h-screen bg-[#faf8f6]">
         <div className="mx-auto max-w-full px-3 py-4 sm:px-4 sm:py-6 lg:px-6 lg:py-8">
           <div className="animate-pulse space-y-6">
             <div className="h-6 w-40 rounded bg-[#e9e1db]" />
@@ -705,7 +706,7 @@ export default function EditVendorServicePage({
             </div>
           </div>
         </div>
-      </main>
+      </div>
     );
   }
 
@@ -715,7 +716,7 @@ export default function EditVendorServicePage({
 
   if (!service) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#faf8f6] px-6">
+      <div className="flex min-h-screen items-center justify-center bg-[#faf8f6] px-6">
         <div className="w-full max-w-md rounded-3xl border border-[#e8dfd8] bg-white p-8 text-center shadow-sm">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-red-50">
             <AlertCircle className="h-7 w-7 text-red-500" />
@@ -743,7 +744,7 @@ export default function EditVendorServicePage({
             )}
           </Link>
         </div>
-      </main>
+      </div>
     );
   }
 
@@ -768,7 +769,7 @@ export default function EditVendorServicePage({
   // =======================================================
 
   return (
-    <main className="min-h-screen bg-[#faf8f6]">
+    <div className="min-h-screen bg-[#faf8f6]">
       <div className="mx-auto max-w-full px-3 py-4 sm:px-4 sm:py-6 lg:px-6 lg:py-8 xl:px-8 xl:py-10">
 
         {/* Toast */}
@@ -1366,8 +1367,9 @@ export default function EditVendorServicePage({
                         className="space-y-1.5"
                       >
                         <div className="group relative aspect-square overflow-hidden rounded-xl border-2 border-[#e3d9d1]">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
+                            loading="lazy"
+                            decoding="async"
                             src={image.url}
                             alt={
                               service.name
@@ -1436,8 +1438,9 @@ export default function EditVendorServicePage({
                       className="space-y-1.5"
                     >
                       <div className="relative aspect-square overflow-hidden rounded-xl border-2 border-dashed border-[#a47e43]">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
+                          loading="lazy"
+                          decoding="async"
                           src={
                             item.preview
                           }
@@ -1979,6 +1982,6 @@ export default function EditVendorServicePage({
           handleContactSuccess
         }
       />
-    </main>
+    </div>
   );
 }

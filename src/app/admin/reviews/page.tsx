@@ -2,7 +2,7 @@
 
 import { useLanguage } from "@/context/LanguageContext";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import {
   Check,
   Eye,
@@ -700,7 +700,6 @@ function PendingReviews() {
 
 function ApprovedReviewsManager() {
   const { t, language } = useLanguage();
-  const { services } = useAdminServices();
 
   const [allReviews, setAllReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
@@ -712,28 +711,28 @@ function ApprovedReviewsManager() {
   const [visibilityFilter, setVisibilityFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
 
-  const loadReviews = async () => {
+  const loadReviews = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
       const data = await fetchApprovedReviews();
       setAllReviews(data);
-    } catch (err) {
+    } catch {
       setError(t('admin.reviews.loadApprovedFailed'));
     } finally {
       setLoading(false);
     }
-  };
+  }, [t]);
 
   useEffect(() => {
     loadReviews();
-  }, []);
+  }, [loadReviews]);
 
   const vendors = useMemo(() => {
     const vendorMap = new Map<string, { id: string; name: string; count: number }>();
 
     allReviews.forEach((r) => {
-      const vendorName = r.vendorBusinessName || "Unknown";
+      const vendorName = r.vendorBusinessName || t("admin.dashboard.unknown");
       if (!vendorMap.has(vendorName)) {
         vendorMap.set(vendorName, {
           id: vendorName,
@@ -747,7 +746,7 @@ function ApprovedReviewsManager() {
     return Array.from(vendorMap.values()).sort((a, b) =>
       a.name.localeCompare(b.name)
     );
-  }, [allReviews]);
+  }, [allReviews, t]);
 
   const servicesForVendor = useMemo(() => {
     let filtered = allReviews;
@@ -831,7 +830,7 @@ function ApprovedReviewsManager() {
           r.id === review.id ? { ...r, isDisplayed: !r.isDisplayed } : r
         )
       );
-    } catch (err) {
+    } catch {
       // no-op
     } finally {
       setBusyId(null);
@@ -881,8 +880,10 @@ function ApprovedReviewsManager() {
 
           <div className="flex items-center gap-2">
             <button
+              type="button"
               onClick={loadReviews}
               disabled={loading}
+              aria-label={t('admin.reviews.refresh')}
               className="inline-flex items-center gap-1.5 rounded-lg border border-[#e3d9d1] bg-white px-2.5 py-1.5 text-xs font-medium text-[#665950] transition hover:bg-[#faf8f6] disabled:opacity-50"
             >
               <RefreshCw size={12} className={loading ? "animate-spin" : ""} />

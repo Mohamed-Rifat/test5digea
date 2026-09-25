@@ -8,6 +8,7 @@ import type {
   GetModerationQueueParams,
   ModerationQueueItem,
 } from "@/types/moderation";
+import { translateNow } from "@/lib/translate-now";
 
 interface UseModerationQueueReturn {
   items: ModerationQueueItem[];
@@ -32,7 +33,7 @@ export const useModerationQueue = (
 
       setItems(data);
     } catch {
-      setError("Failed to load the moderation queue.");
+      setError(translateNow("errors.loadModeration"));
     } finally {
       setLoading(false);
     }

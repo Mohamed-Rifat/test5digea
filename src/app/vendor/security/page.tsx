@@ -275,7 +275,7 @@ export default function VendorSecurityPage() {
   });
 
   return (
-    <main className="min-h-full bg-[#faf8f6]">
+    <div className="min-h-full bg-[#faf8f6]">
       <div className="mx-auto max-w-full px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
         {/* Header */}
         <header className="mb-7 lg:mb-9">
@@ -522,6 +522,6 @@ export default function VendorSecurityPage() {
           </aside>
         </div>
       </div>
-    </main>
+    </div>
   );
 }

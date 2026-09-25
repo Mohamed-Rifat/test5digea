@@ -24,7 +24,7 @@ import {
   FaInstagram,
   FaTiktok,
 } from "react-icons/fa";
-import { useVendor } from "@/features/vendors/hooks/useVendor";
+import { useVendorContext } from "@/context/VendorContext";
 import { useLanguage } from "@/context/LanguageContext";
 import type { TranslationKey } from "@/locales";
 import { normalizeExternalUrl } from "@/lib/safe-url";
@@ -91,6 +91,52 @@ type ValidationErrors = Record<string, TranslationKey | "">;
 // MAIN COMPONENT
 // ================================================================
 
+// Pure validators (module level so callbacks don't need them as deps).
+const validateEmail = (email: string): boolean => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+};
+
+const validatePhone = (phone: string): boolean => {
+  // يسمح بالأرقام فقط مع مسافات و + و - و ()
+  const phoneRegex = /^[+\d\s\-()]{6,20}$/;
+  return phoneRegex.test(phone);
+};
+
+const validateField = (field: string, value: string): TranslationKey | "" => {
+  switch (field) {
+    case "businessName":
+      if (!value.trim()) return "vendor.profile.errors.nameRequired";
+      if (value.trim().length < 2) return "vendor.profile.errors.nameShort";
+      return "";
+
+    case "location":
+      if (!value.trim()) return "vendor.profile.errors.locationRequired";
+      return "";
+
+    case "contactPhone":
+      if (!value.trim()) return "vendor.profile.errors.phoneRequired";
+      if (!validatePhone(value)) return "vendor.profile.errors.phoneInvalid";
+      return "";
+
+    case "contactEmail":
+      if (!value.trim()) return "vendor.profile.errors.emailRequired";
+      if (!validateEmail(value)) return "vendor.profile.errors.emailInvalid";
+      return "";
+
+    case "slogan":
+      if (value.length > 100) return "vendor.profile.errors.sloganLong";
+      return "";
+
+    case "bio":
+      if (value.length > 2000) return "vendor.profile.errors.bioLong";
+      return "";
+
+    default:
+      return "";
+  }
+};
+
 export default function VendorProfilePage() {
   const { t } = useLanguage();
   const {
@@ -104,7 +150,7 @@ export default function VendorProfilePage() {
     update,
     resubmit,
     uploadProfileImage,
-  } = useVendor();
+  } = useVendorContext();
 
   const [form, setForm] = useState<UpdateVendorRequest>(emptyForm);
   const [isEditing, setIsEditing] = useState(false);
@@ -193,60 +239,6 @@ export default function VendorProfilePage() {
   // VALIDATION FUNCTIONS
   // ==============================================================
 
-  const validateEmail = (email: string): boolean => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  };
-
-  const validatePhone = (phone: string): boolean => {
-    // يسمح بالأرقام فقط مع مسافات و + و - و ()
-    const phoneRegex = /^[+\d\s\-()]{6,20}$/;
-    return phoneRegex.test(phone);
-  };
-
-  const validateUrl = (url: string): boolean => {
-    if (!url) return true;
-    try {
-      new URL(url);
-      return true;
-    } catch {
-      return false;
-    }
-  };
-
-  const validateField = (field: string, value: string): TranslationKey | "" => {
-    switch (field) {
-      case "businessName":
-        if (!value.trim()) return "vendor.profile.errors.nameRequired";
-        if (value.trim().length < 2) return "vendor.profile.errors.nameShort";
-        return "";
-
-      case "location":
-        if (!value.trim()) return "vendor.profile.errors.locationRequired";
-        return "";
-
-      case "contactPhone":
-        if (!value.trim()) return "vendor.profile.errors.phoneRequired";
-        if (!validatePhone(value)) return "vendor.profile.errors.phoneInvalid";
-        return "";
-
-      case "contactEmail":
-        if (!value.trim()) return "vendor.profile.errors.emailRequired";
-        if (!validateEmail(value)) return "vendor.profile.errors.emailInvalid";
-        return "";
-
-      case "slogan":
-        if (value.length > 100) return "vendor.profile.errors.sloganLong";
-        return "";
-
-      case "bio":
-        if (value.length > 2000) return "vendor.profile.errors.bioLong";
-        return "";
-
-      default:
-        return "";
-    }
-  };
 
   // ==============================================================
   // HANDLERS
@@ -472,7 +464,7 @@ export default function VendorProfilePage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-[#faf8f6] px-4 py-8">
+      <div className="min-h-screen bg-[#faf8f6] px-4 py-8">
         <div className="mx-auto max-w-full animate-pulse space-y-6">
           <div className="h-72 rounded-4xl bg-white" />
           <div className="grid gap-6 lg:grid-cols-3">
@@ -480,7 +472,7 @@ export default function VendorProfilePage() {
             <div className="h-64 rounded-4xl bg-white lg:col-span-2" />
           </div>
         </div>
-      </main>
+      </div>
     );
   }
 
@@ -489,7 +481,7 @@ export default function VendorProfilePage() {
   // ==============================================================
 
   return (
-    <main className="min-h-screen bg-[#faf8f6]">
+    <div className="min-h-screen bg-[#faf8f6]">
       <div className="mx-auto max-w-full px-4 py-8 sm:px-6 lg:px-8">
         {/* =========================================================
             TOP BAR
@@ -500,9 +492,9 @@ export default function VendorProfilePage() {
               {t("vendor.profile.eyebrow")}
             </p>
  
-            <h2 className="text-2xl font-semibold tracking-tight text-[#30251f] sm:text-3xl">
+            <h1 className="text-2xl font-semibold tracking-tight text-[#30251f] sm:text-3xl">
              {form.businessName || t("vendor.profile.defaultName")}
-            </h2>
+            </h1>
           </div>
 
           <div className="flex items-center gap-3">
@@ -899,6 +891,8 @@ export default function VendorProfilePage() {
                       <div className="h-24 w-24 overflow-hidden rounded-full border-4 border-white bg-[#30251f] shadow-lg">
                         {vendor?.profileImageUrl ? (
                           <img
+                            loading="lazy"
+                            decoding="async"
                             src={vendor.profileImageUrl}
                             alt={form.businessName || t("vendor.header.vendor")}
                             className="h-full w-full object-cover"
@@ -1169,7 +1163,7 @@ export default function VendorProfilePage() {
           </div>
         )}
       </div>
-    </main>
+    </div>
   );
 }
 

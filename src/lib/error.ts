@@ -1,6 +1,7 @@
 import { isAxiosError } from "axios";
 
 import type { TranslationKey } from "@/locales";
+import { translateNow } from "@/lib/translate-now";
 
 interface ApiErrorBody {
   detail?: string;
@@ -20,9 +21,14 @@ interface ApiErrorBody {
  */
 export const getApiErrorMessage = (
   err: unknown,
-  fallback = "Something went wrong. Please try again."
+  fallback: string = translateNow("errors.generic")
 ): string => {
   if (isAxiosError<ApiErrorBody>(err)) {
+    // No response at all: offline, DNS, CORS or the API is down.
+    if (!err.response) {
+      return translateNow("errors.network");
+    }
+
     return (
       err.response?.data?.detail ||
       err.response?.data?.message ||

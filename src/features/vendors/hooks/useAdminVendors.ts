@@ -32,11 +32,7 @@ export const useAdminVendors =
 
                 const data = await getAdminVendorsList();
                 setVendors(data);
-            } catch (error) {
-                console.error(
-                    "Failed to fetch admin vendors:",
-                    error
-                );
+            } catch {
 
                 setError(
                     "Failed to load vendors."

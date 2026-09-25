@@ -15,19 +15,15 @@ import {
   RefreshCw,
   RotateCcw,
   XCircle,
-  Sparkles,
   Filter,
   Search,
   X,
   ChevronDown,
-  Tag,
 } from "lucide-react";
 
 import {
   Tooltip,
   Badge,
-  CircularProgress,
-  Button,
   Chip,
   TextField,
   InputAdornment,
@@ -174,7 +170,7 @@ function VendorServicesContent() {
   }, []);
 
   return (
-    <main className="min-h-screen bg-[#faf8f6]">
+    <div className="min-h-screen bg-[#faf8f6]">
       <div className="mx-auto max-w-full px-3 py-4 sm:px-4 sm:py-6 lg:px-6 lg:py-8 xl:px-8 xl:py-10">
         {/* =================================================
             Header
@@ -624,7 +620,7 @@ function VendorServicesContent() {
           </div>
         )}
       </div>
-    </main>
+    </div>
   );
 }
 

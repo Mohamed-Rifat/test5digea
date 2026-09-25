@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import { useConfirm } from "@/components/providers/ConfirmProvider";
 import { useLanguage } from "@/context/LanguageContext";
+import { useToast } from "@/components/providers/ToastProvider";
 import { LANGUAGE_DATE_LOCALE, type TranslationKey } from "@/locales";
-import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
+import { useEffect, useState, useCallback } from "react";
 import {
   ArrowLeft,
   AlertCircle,
@@ -15,7 +17,6 @@ import {
   Clock3,
   ImageIcon,
   Loader2,
-  Mail,
   Package,
   Power,
   Tag,
@@ -153,6 +154,8 @@ const getStatusStyles = (status: string) => {
 
 export default function AdminServiceDetailsPage() {
   const { t, language } = useLanguage();
+  const { toast } = useToast();
+  const confirm = useConfirm();
   const dateLocale = LANGUAGE_DATE_LOCALE[language];
   const getStatusLabel = (status: string) => {
     const key = getStatusKey(status);
@@ -161,7 +164,6 @@ export default function AdminServiceDetailsPage() {
   };
   const money = (value: number) => `${formatPrice(value)} ${t("common.currency")}`;
   const params = useParams();
-  const router = useRouter();
 
   const serviceId =
     typeof params.id === "string"
@@ -180,11 +182,6 @@ export default function AdminServiceDetailsPage() {
   const [actionLoading, setActionLoading] =
     useState<string | null>(null);
 
-  const [message, setMessage] = useState<{
-    type: "success" | "error";
-    text: string;
-  } | null>(null);
-
   const [rejectModalOpen, setRejectModalOpen] =
     useState(false);
 
@@ -198,7 +195,7 @@ export default function AdminServiceDetailsPage() {
      Fetch Service
   ========================= */
 
-  const fetchService = async () => {
+  const fetchService = useCallback(async () => {
     if (!serviceId) return;
 
     try {
@@ -210,11 +207,7 @@ export default function AdminServiceDetailsPage() {
       );
 
       setService(data);
-    } catch (err) {
-      console.error(
-        "Failed to fetch service:",
-        err
-      );
+    } catch {
 
       setError(
         t('admin.serviceDetails.loadFailed')
@@ -222,28 +215,18 @@ export default function AdminServiceDetailsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [serviceId, t]);
 
   useEffect(() => {
     fetchService();
-  }, [serviceId]);
+  }, [fetchService]);
 
   /* =========================
      Message
   ========================= */
 
-  const showMessage = (
-    type: "success" | "error",
-    text: string
-  ) => {
-    setMessage({
-      type,
-      text,
-    });
-
-    window.setTimeout(() => {
-      setMessage(null);
-    }, 3500);
+  const showMessage = (type: "success" | "error", text: string) => {
+    toast(text, type);
   };
 
   /* =========================
@@ -259,11 +242,7 @@ export default function AdminServiceDetailsPage() {
       );
 
       setService(data);
-    } catch (err) {
-      console.error(
-        "Failed to refresh service:",
-        err
-      );
+    } catch {
     }
   };
 
@@ -274,9 +253,7 @@ export default function AdminServiceDetailsPage() {
   const handleApprove = async () => {
     if (!service) return;
 
-    const confirmed = window.confirm(
-      t('admin.services.confirmApprove', { name: service.name })
-    );
+    const confirmed = await confirm({ message: t('admin.services.confirmApprove', { name: service.name }) });
 
     if (!confirmed) return;
 
@@ -291,11 +268,7 @@ export default function AdminServiceDetailsPage() {
         "success",
         t('admin.services.approvedSuccess')
       );
-    } catch (err) {
-      console.error(
-        "Failed to approve service:",
-        err
-      );
+    } catch {
 
       showMessage(
         "error",
@@ -356,11 +329,7 @@ export default function AdminServiceDetailsPage() {
         "success",
         t('admin.services.rejectedSuccess')
       );
-    } catch (err) {
-      console.error(
-        "Failed to reject service:",
-        err
-      );
+    } catch {
 
       showMessage(
         "error",
@@ -378,9 +347,7 @@ export default function AdminServiceDetailsPage() {
   const handleActivate = async () => {
     if (!service) return;
 
-    const confirmed = window.confirm(
-      t('admin.services.confirmActivate', { name: service.name })
-    );
+    const confirmed = await confirm({ message: t('admin.services.confirmActivate', { name: service.name }) });
 
     if (!confirmed) return;
 
@@ -395,11 +362,7 @@ export default function AdminServiceDetailsPage() {
         "success",
         t('admin.services.activatedSuccess')
       );
-    } catch (err) {
-      console.error(
-        "Failed to activate service:",
-        err
-      );
+    } catch {
 
       showMessage(
         "error",
@@ -417,9 +380,7 @@ export default function AdminServiceDetailsPage() {
   const handleDeactivate = async () => {
     if (!service) return;
 
-    const confirmed = window.confirm(
-      t('admin.services.confirmDeactivate', { name: service.name })
-    );
+    const confirmed = await confirm({ message: t('admin.services.confirmDeactivate', { name: service.name }), tone: "danger" });
 
     if (!confirmed) return;
 
@@ -434,11 +395,7 @@ export default function AdminServiceDetailsPage() {
         "success",
         t('admin.services.deactivatedSuccess')
       );
-    } catch (err) {
-      console.error(
-        "Failed to deactivate service:",
-        err
-      );
+    } catch {
 
       showMessage(
         "error",
@@ -704,28 +661,6 @@ export default function AdminServiceDetailsPage() {
       </div>
 
       {/* =========================
-          Message
-      ========================= */}
-
-      {message && (
-        <div
-          className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-sm ${
-            message.type === "success"
-              ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-              : "border-red-200 bg-red-50 text-red-700"
-          }`}
-        >
-          {message.type === "success" ? (
-            <CheckCircle2 size={18} />
-          ) : (
-            <AlertCircle size={18} />
-          )}
-
-          {message.text}
-        </div>
-      )}
-
-      {/* =========================
           Main Grid
       ========================= */}
 
@@ -841,6 +776,8 @@ export default function AdminServiceDetailsPage() {
                         className="group relative aspect-4/3 overflow-hidden rounded-xl bg-gray-100 text-left"
                       >
                         <img
+                          loading="lazy"
+                          decoding="async"
                           src={image.url}
                           alt={`${service.name} image ${
                             index + 1

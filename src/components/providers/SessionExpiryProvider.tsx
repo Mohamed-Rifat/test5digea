@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import {
   AlertTriangle,
@@ -146,7 +146,7 @@ export default function SessionExpiryProvider({
    * The final 30-second warning cannot be dismissed,
    * so this function does nothing during the final stage.
    */
-  const handleDismiss = () => {
+  const handleDismiss = useCallback(() => {
     if (warningStage === "warning") {
       setWarningDismissed(true);
       return;
@@ -155,7 +155,7 @@ export default function SessionExpiryProvider({
     if (warningStage === "critical") {
       setCriticalDismissed(true);
     }
-  };
+  }, [warningStage]);
 
   /**
    * Logout immediately.
@@ -195,7 +195,7 @@ export default function SessionExpiryProvider({
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [warningStage]);
+  }, [warningStage, handleDismiss]);
 
   /**
    * Don't render anything if there is no active warning.

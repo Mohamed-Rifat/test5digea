@@ -7,6 +7,8 @@ import {
   submitReview,
 } from "@/features/reviews/api";
 import type { ReviewableService, CreateReviewRequest } from "@/types/review";
+import { translateNow } from "@/lib/translate-now";
+import { getApiErrorMessage } from "@/lib/error";
 
 interface UseWriteReviewReturn {
   reviewableServices: ReviewableService[];
@@ -16,7 +18,8 @@ interface UseWriteReviewReturn {
   actionError: string | null;
 
   refetch: () => Promise<void>;
-  submit: (data: CreateReviewRequest) => Promise<boolean>;
+  /** true on success, otherwise the (server) error message. */
+  submit: (data: CreateReviewRequest) => Promise<true | string>;
 }
 
 // Loads the services a user is allowed to review for a given roadmap item
@@ -48,8 +51,8 @@ export const useWriteReview = (
       const data = await fetchReviewableServices(roadmapItemId);
 
       setReviewableServices(data);
-    } catch (err) {
-      setError("Failed to load services available to review.");
+    } catch {
+      setError(translateNow("errors.loadReviewable"));
     } finally {
       setLoading(false);
     }
@@ -60,7 +63,7 @@ export const useWriteReview = (
   }, [fetchReviewable]);
 
   const submit = useCallback(
-    async (data: CreateReviewRequest): Promise<boolean> => {
+    async (data: CreateReviewRequest): Promise<true | string> => {
       try {
         setActionLoading(true);
         setActionError(null);
@@ -70,8 +73,9 @@ export const useWriteReview = (
 
         return true;
       } catch (err) {
-        setActionError("Failed to submit your review.");
-        return false;
+        const message = getApiErrorMessage(err, translateNow("errors.submitReview"));
+        setActionError(message);
+        return message;
       } finally {
         setActionLoading(false);
       }

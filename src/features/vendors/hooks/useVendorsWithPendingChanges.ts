@@ -7,6 +7,7 @@ import {
   getAdminVendorsList,
 } from "@/features/vendors/api";
 import type { Vendor } from "@/types/vendor";
+import { translateNow } from "@/lib/translate-now";
 
 // How many vendor detail requests run at the same time.
 const CONCURRENCY = 6;
@@ -97,8 +98,7 @@ export const useVendorsWithPendingChanges =
                   );
                 }
               }
-            } catch (err) {
-              console.error("Failed to check vendor for pending edits:", err);
+            } catch {
               failed += 1;
             } finally {
               done += 1;
@@ -118,10 +118,9 @@ export const useVendorsWithPendingChanges =
         );
 
         if (!cancelled()) setFailedCount(failed);
-      } catch (err) {
-        console.error("Failed to load vendors:", err);
+      } catch {
 
-        if (!cancelled()) setError("Failed to load partners.");
+        if (!cancelled()) setError(translateNow("errors.loadPartners"));
       } finally {
         if (!cancelled()) setLoading(false);
       }
