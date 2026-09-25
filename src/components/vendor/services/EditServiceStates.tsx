@@ -56,7 +56,7 @@ export function SuccessToast({ message }: { message: string }) {
   if (!message) return null;
 
   return (
-    <div className="fixed bottom-6 end-6 z-50 animate-in slide-in-from-bottom-4 fade-in duration-300">
+    <div className="fixed bottom-24 end-6 z-50 animate-in slide-in-from-bottom-4 fade-in duration-300">
       <div className="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-white px-4 py-3 shadow-xl">
         <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-50">
           <CheckCircle className="h-4 w-4 text-emerald-600" />

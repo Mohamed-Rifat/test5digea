@@ -113,6 +113,51 @@ const common: Translation["common"] = {
     },
     join: "{first} {second}",
   },
+  quick: {
+    open: "Quick actions",
+    close: "Close quick actions",
+    title: "Quick actions",
+    hint: "Everything you need, one tap away",
+    current: "You're here",
+    subtitle: {
+      admin: "Admin dashboard",
+      vendor: "Vendor dashboard",
+      user: "Your wedding plan",
+      guest: "Start here",
+    },
+    admin: {
+      moderation: "Review requests",
+      addVendor: "Add a vendor",
+      addCategory: "Add a category",
+      messages: "Contact messages",
+      reviews: "Moderate reviews",
+      support: "Support tickets",
+    },
+    vendor: {
+      addService: "Add a new service",
+      requestCategory: "Request a category",
+      profile: "Edit profile",
+      reviews: "Customer reviews",
+      publicPage: "View my public page",
+      support: "Support",
+    },
+    user: {
+      roadmap: "My wedding plan",
+      services: "Browse services",
+      favorites: "Favorites",
+      compare: "Compare",
+      faq: "FAQ",
+      help: "Need help?",
+    },
+    guest: {
+      start: "Start your wedding plan",
+      services: "Browse services",
+      vendors: "Vendors",
+      faq: "FAQ",
+      contact: "Contact us",
+      joinVendor: "Join as a vendor",
+    },
+  },
 };
 
 export default common;

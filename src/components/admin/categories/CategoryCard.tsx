@@ -4,7 +4,6 @@ import {
   Edit3,
   Image as ImageIcon,
   Languages,
-  Loader2,
   MoreVertical,
   Trash2,
   Zap,
@@ -13,6 +12,7 @@ import {
 import { useLanguage } from "@/context/LanguageContext";
 import { isBilingual } from "@/lib/bilingual";
 import type { Category } from "@/types/category";
+import Switch from "@/components/ui/Switch";
 
 interface CategoryCardProps {
   category: Category;
@@ -161,44 +161,26 @@ export function CategoryCard({
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={onToggleActive}
-            disabled={busy || isToggling}
-            className="group/toggle inline-flex items-center gap-2 disabled:cursor-not-allowed disabled:opacity-60"
-            aria-label={`${
-              category.isActive
-                ? t("admin.categories.disable")
-                : t("admin.categories.activate")
-            } ${localize(category.name)}`}
-          >
-            <span className="text-[9px] font-semibold text-[#8c7d74]">
+          <div className="inline-flex items-center gap-2">
+            <span className="text-[9px] font-semibold text-[#8c7d74]" aria-hidden="true">
               {isToggling
                 ? t("admin.categories.updating")
                 : category.isActive
                   ? t("admin.categories.active")
                   : t("admin.categories.inactive")}
             </span>
-
-            <span
-              className={`relative h-5 w-9 rounded-full p-0.5 transition-colors ${
-                category.isActive ? "bg-[#718b77]" : "bg-[#c9beb7]"
-              }`}
-            >
-              <span
-                className={`block h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${
-                  category.isActive ? "translate-x-4" : "translate-x-0"
-                }`}
-              />
-
-              {isToggling && (
-                <Loader2
-                  size={11}
-                  className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 animate-spin text-[#6f625a]"
-                />
-              )}
-            </span>
-          </button>
+            <Switch
+              checked={category.isActive}
+              onChange={onToggleActive}
+              disabled={busy}
+              loading={isToggling}
+              label={`${
+                category.isActive
+                  ? t("admin.categories.disable")
+                  : t("admin.categories.activate")
+              } ${localize(category.name)}`}
+            />
+          </div>
         </div>
 
         <div className="mt-3 flex items-center justify-between border-t border-[#f1ebe7] pt-3">

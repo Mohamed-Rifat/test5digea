@@ -5,6 +5,7 @@ import { useState } from "react";
 import RoleGuard from "@/components/guards/RoleGuard";
 import AdminSidebar from "@/components/admin/AdminSidebar";
 import AdminHeader from "@/components/admin/AdminHeader";
+import QuickDial from "@/components/shared/QuickDial";
 
 export default function AdminShell({
   children,
@@ -25,6 +26,7 @@ export default function AdminShell({
             {children}
           </main>
         </div>
+        <QuickDial />
       </div>
     </RoleGuard>
   );

@@ -1,7 +1,7 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { useLanguage } from "@/context/LanguageContext";
 import { useAdminCategories } from "@/features/categories/hooks/useAdminCategories";
@@ -157,6 +157,17 @@ export function useAdminCategoriesPage() {
     setFilterOpen(false);
     setModal("create");
   };
+
+  // ?create=1 (from the quick-actions menu) opens the "new category" form.
+  const router = useRouter();
+  const createParamHandled = useRef(false);
+  useEffect(() => {
+    if (createParamHandled.current || searchParams.get("create") !== "1") return;
+    createParamHandled.current = true;
+    openCreateModal();
+    router.replace("/admin/categories", { scroll: false });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   const handleCreateCategory = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();

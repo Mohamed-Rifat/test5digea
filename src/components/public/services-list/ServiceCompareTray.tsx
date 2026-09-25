@@ -3,6 +3,9 @@
 import Link from "next/link";
 import { useLanguage } from "@/context/LanguageContext";
 import { GitCompare } from "lucide-react";
+import { useRef } from "react";
+
+import { useReserveFabSpace } from "@/lib/fab-offset";
 
 import type { ServicesListState } from "./useServicesList";
 
@@ -10,11 +13,14 @@ import type { ServicesListState } from "./useServicesList";
 export function ServiceCompareTray({ state }: { state: ServicesListState }) {
   const { t, localize } = useLanguage();
   const { handleClearCompare, selected } = state;
+  const trayRef = useRef<HTMLDivElement>(null);
+  useReserveFabSpace(trayRef, selected.length > 0);
 
   return (
     <>
       {selected.length > 0 && (
         <div
+          ref={trayRef}
           className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-[#30251f] px-4 pt-3 text-white shadow-[0_-12px_30px_rgba(48,37,31,0.25)] sm:px-6"
           style={{
             paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom, 0px))",

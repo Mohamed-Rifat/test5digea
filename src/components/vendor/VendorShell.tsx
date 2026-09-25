@@ -7,6 +7,7 @@ import { AlertTriangle, Clock3, LogOut, Sparkles } from "lucide-react";
 import RoleGuard from "@/components/guards/RoleGuard";
 import VendorSidebar from "@/components/vendor/VendorSidebar";
 import VendorHeader from "@/components/vendor/VendorHeader";
+import QuickDial from "@/components/shared/QuickDial";
 import { VendorProvider, useVendorContext } from "@/context/VendorContext";
 import { useAuth } from "@/context/AuthContext";
 import { useLanguage } from "@/context/LanguageContext";
@@ -124,6 +125,7 @@ function VendorStatusGate({ children }: { children: React.ReactNode }) {
           <main id="main-content" tabIndex={-1} className="min-w-0 flex-1 outline-none">{children}</main>
         </div>
       </div>
+      <QuickDial vendorId={vendor.id} />
     </div>
   );
 }

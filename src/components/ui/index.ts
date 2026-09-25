@@ -5,3 +5,4 @@ export { default as FieldMessage } from "./FieldMessage";
 export * from "./fieldStyles";
 export { default as RequiredLabel } from "./RequiredLabel";
 export { default as OptionalLabel } from "./OptionalLabel";
+export { default as Switch } from "./Switch";

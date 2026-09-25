@@ -1,5 +1,6 @@
 import SiteNavbar from "@/components/layout/SiteNavbar";
 import Footer from "@/components/layout/footer/footer";
+import QuickDial from "@/components/shared/QuickDial";
 import { CompareProvider } from "@/context/CompareContext";
 
 export default function PublicLayout({
@@ -14,6 +15,7 @@ export default function PublicLayout({
         {children}
       </div>
       <Footer />
+      <QuickDial />
     </CompareProvider>
   );
 }

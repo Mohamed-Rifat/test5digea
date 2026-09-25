@@ -1,6 +1,9 @@
 "use client";
 
+import { useRef } from "react";
 import { ArrowUpRight, Check, Share2 } from "lucide-react";
+
+import { useReserveFabSpace } from "@/lib/fab-offset";
 
 import { useLanguage } from "@/context/LanguageContext";
 import FavoriteButton from "@/components/shared/FavoriteButton";
@@ -17,9 +20,11 @@ export function MobileContactBar({
   onShare,
 }: VendorFavoriteProps & { shareCopied: boolean; onShare: () => void }) {
   const { t } = useLanguage();
+  const barRef = useRef<HTMLDivElement>(null);
+  useReserveFabSpace(barRef);
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-30 border-t border-[#e7ded6] bg-white/95 px-4 py-3 shadow-[0_-8px_30px_rgba(48,37,31,0.08)] backdrop-blur-xl lg:hidden">
+    <div ref={barRef} className="fixed inset-x-0 bottom-0 z-30 border-t border-[#e7ded6] bg-white/95 px-4 py-3 shadow-[0_-8px_30px_rgba(48,37,31,0.08)] backdrop-blur-xl lg:hidden">
       <div className="mx-auto flex max-w-xl items-center gap-2.5">
 
         <a

@@ -111,6 +111,51 @@ const common = {
     },
     join: "{first} و{second}",
   },
+  quick: {
+    open: "إجراءات سريعة",
+    close: "اقفل الإجراءات السريعة",
+    title: "إجراءات سريعة",
+    hint: "كل اللي بتحتاجه في ضغطة واحدة",
+    current: "انت هنا",
+    subtitle: {
+      admin: "لوحة الإدارة",
+      vendor: "لوحة مقدم الخدمة",
+      user: "خطة فرحك",
+      guest: "ابدأ من هنا",
+    },
+    admin: {
+      moderation: "مراجعة الطلبات",
+      addVendor: "إضافة مقدم خدمة",
+      addCategory: "إضافة تصنيف",
+      messages: "رسائل التواصل",
+      reviews: "مراجعة التقييمات",
+      support: "تذاكر الدعم",
+    },
+    vendor: {
+      addService: "إضافة خدمة جديدة",
+      requestCategory: "طلب تصنيف جديد",
+      profile: "تعديل البروفايل",
+      reviews: "تقييمات العملاء",
+      publicPage: "شوف صفحتي زي العرسان",
+      support: "الدعم الفني",
+    },
+    user: {
+      roadmap: "خطة فرحي",
+      services: "تصفح الخدمات",
+      favorites: "المفضلة",
+      compare: "المقارنة",
+      faq: "الأسئلة الشائعة",
+      help: "محتاج مساعدة؟",
+    },
+    guest: {
+      start: "ابدأ خطة فرحك",
+      services: "تصفح الخدمات",
+      vendors: "مقدمي الخدمات",
+      faq: "الأسئلة الشائعة",
+      contact: "تواصل معانا",
+      joinVendor: "انضم كمقدم خدمة",
+    },
+  },
 };
 
 export default common;

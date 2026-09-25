@@ -62,8 +62,10 @@ export function useAdminVendorsPage() {
     const prefillName = searchParams.get("prefillName");
     const prefillEmail = searchParams.get("prefillEmail");
     const prefillBusinessName = searchParams.get("prefillBusinessName");
+    // ?create=1 (from the quick-actions menu) just opens the empty form.
+    const openCreate = searchParams.get("create") === "1";
 
-    if (!prefillName && !prefillEmail && !prefillBusinessName) return;
+    if (!prefillName && !prefillEmail && !prefillBusinessName && !openCreate) return;
 
     appliedPrefillRef.current = true;
 

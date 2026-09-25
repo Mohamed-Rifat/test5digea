@@ -1,8 +1,5 @@
 "use client";
 
-import { Plus } from "lucide-react";
-
-import { useLanguage } from "@/context/LanguageContext";
 import CreateVendorModal from "@/components/admin/vendors/CreateVendorModal";
 import DeactivateVendorModal from "@/components/admin/vendors/DeactivateVendorModal";
 import EmptyVendors from "@/components/admin/vendors/EmptyVendors";
@@ -16,7 +13,6 @@ import VendorsToolbar from "@/components/admin/vendors/VendorsToolbar";
 import { useAdminVendorsPage } from "@/components/admin/vendors/useAdminVendorsPage";
 
 export default function AdminVendorsPage() {
-  const { t } = useLanguage();
   const page = useAdminVendorsPage();
 
   if (page.loading) {
@@ -71,15 +67,6 @@ export default function AdminVendorsPage() {
         )}
       </div>
 
-      {/* Floating "add vendor" button on phones */}
-      <button
-        type="button"
-        onClick={page.openCreate}
-        className="fixed bottom-6 right-5 z-40 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#30251f] text-white shadow-[0_16px_35px_-10px_rgba(48,37,31,0.65)] transition hover:-translate-y-0.5 hover:bg-[#45362e] active:scale-95 sm:hidden"
-        aria-label={t("admin.vendors.add")}
-      >
-        <Plus size={22} />
-      </button>
 
       {page.showCreateModal && (
         <CreateVendorModal
